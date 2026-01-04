@@ -32,29 +32,13 @@ class OpenAIClientConfig(BaseModel):
         )
 
 
-_openai_client = None
-_gemini_client = None
-
-
-def get_openai_client() -> OpenAI:
-    """Get or create OpenAI client instance."""
-    global _openai_client
-    if _openai_client is None:
-        _openai_client = OpenAIClientConfig().create_client()
-    return _openai_client
-
-
-def get_gemini_client() -> genai.Client:
-    """Get or create Gemini client instance."""
-    global _gemini_client
-    if _gemini_client is None:
-        _gemini_client = GeminiClientConfig().create_client()
-    return _gemini_client
+OPENAI_CLIENT = OpenAIClientConfig().create_client()
+GEMINI_CLIENT = GeminiClientConfig().create_client()
 
 
 def invoke_gemini(
     prompt: str,
-    model: GeminiModels = GeminiModels.GEMINI_20_FLASH_LITE,
+    model: GeminiModels = GeminiModels.DEEP_RESEARCH_PRO_PREVIEW_12_2025,
     config: types.GenerateContentConfig | None = None,
 ) -> str | None:
     """
@@ -63,7 +47,7 @@ def invoke_gemini(
     Args:
         prompt (str): Text prompt to send to the model.
         model (GeminiModels, optional): Gemini model to use.
-            Defaults to GeminiModels.GEMINI_20_FLASH_LITE.
+            Defaults to GeminiModels.DEEP_RESEARCH_PRO_PREVIEW_12_2025.
         config (GenerateContentConfig, optional): Generation configuration.
             Defaults to None.
 
@@ -81,7 +65,7 @@ def invoke_gemini(
         ),
     ]
 
-    response = get_gemini_client().models.generate_content(
+    response = GEMINI_CLIENT.models.generate_content(
         model=model,
         contents=contents,
         config=config,
@@ -97,7 +81,7 @@ def invoke_gemini(
 
 def invoke_openai(
     prompt: str,
-    model: OpenAIModels = OpenAIModels.GPT_5_NANO,
+    model: OpenAIModels = OpenAIModels.O3_DEEP_RESEARCH,
     response_format: BaseModel | None = None,
 ) -> BaseModel:
     """
@@ -106,14 +90,14 @@ def invoke_openai(
     Args:
         prompt (str): Text prompt to send to the model.
         model (OpenAIModels, optional): OpenAI model to use.
-            Defaults to OpenAIModels.GPT_5_NANO.
+            Defaults to OpenAIModels.O3_DEEP_RESEARCH.
         response_format (BaseModel, optional): Pydantic model for structured response.
             Defaults to None.
 
     Returns:
         BaseModel: Parsed response matching response_format schema.
     """
-    result = get_openai_client().chat.completions.parse(
+    result = OPENAI_CLIENT.chat.completions.parse(
         model=model,
         messages=[{"role": "user", "content": prompt}],
         response_format=response_format,

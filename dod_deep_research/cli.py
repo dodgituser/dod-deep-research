@@ -5,8 +5,8 @@ from pathlib import Path
 import typer
 
 from dod_deep_research.clients import invoke_gemini, invoke_openai
-from dod_deep_research.core import determine_provider, load_prompt
-from dod_deep_research.models import GeminiModels, OpenAIModels
+from dod_deep_research.core import load_prompt
+from dod_deep_research.models import GeminiModels, OpenAIModels, Provider, get_provider
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,15 +36,15 @@ def main(
     logger.info(f"Starting deep research with model: {model}")
 
     prompt_text = load_prompt(prompt)
-    provider = determine_provider(model)
+    provider = get_provider(model)
     logger.info(f"Determined provider: {provider}")
 
-    if provider == "gemini":
+    if provider == Provider.GEMINI:
         try:
             gemini_model = GeminiModels(model)
             logger.debug(f"Using Gemini model: {gemini_model}")
         except ValueError:
-            gemini_model = GeminiModels.GEMINI_20_FLASH_LITE
+            gemini_model = GeminiModels.DEEP_RESEARCH_PRO_PREVIEW_12_2025
             logger.warning(f"Invalid model '{model}', defaulting to {gemini_model}")
         logger.info("Invoking Gemini API")
         result = invoke_gemini(prompt_text, model=gemini_model)
@@ -53,7 +53,7 @@ def main(
             openai_model = OpenAIModels(model)
             logger.debug(f"Using OpenAI model: {openai_model}")
         except ValueError:
-            openai_model = OpenAIModels.GPT_5_NANO
+            openai_model = OpenAIModels.O3_DEEP_RESEARCH
             logger.warning(f"Invalid model '{model}', defaulting to {openai_model}")
         logger.info("Invoking OpenAI API")
         result = invoke_openai(prompt_text, model=openai_model)
