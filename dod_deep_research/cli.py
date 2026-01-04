@@ -5,7 +5,7 @@ from pathlib import Path
 import typer
 
 from dod_deep_research.clients import invoke_gemini, invoke_openai
-from dod_deep_research.core import load_prompt
+from dod_deep_research.core import list_prompts, load_prompt
 from dod_deep_research.models import GeminiModels, OpenAIModels, Provider, get_provider
 
 logging.basicConfig(
@@ -68,6 +68,18 @@ def main(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(str(result))
     logger.info(f"Saved output to: {output}")
+
+
+@app.command()
+def list_prompts_cmd():
+    """List all available prompt files."""
+    prompts = list_prompts()
+    if prompts:
+        print("Available prompts:")
+        for prompt in prompts:
+            print(f"  - {prompt}")
+    else:
+        print("No prompt files found in prompts directory.")
 
 
 if __name__ == "__main__":

@@ -14,3 +14,16 @@ def load_prompt(prompt_arg: str) -> str:
         return prompt_path.read_text()
     logger.debug("Using prompt as direct text")
     return prompt_arg
+
+
+def list_prompts() -> list[str]:
+    """List all available prompt files in the prompts directory."""
+    if not PROMPTS_DIR.exists():
+        return []
+    return sorted(
+        [
+            f.name
+            for f in PROMPTS_DIR.iterdir()
+            if f.is_file() and f.name.startswith("prompt_")
+        ]
+    )
