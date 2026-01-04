@@ -1,0 +1,140 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# macOS Trash
+.Trashes
+Icon?
+._*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+.envrc
+
+# VS Code
+.vscode/
+
+# Byte-compiled / optimized / DLL files
+*.pyo
+*.pyd
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pyright
+.pyright/
+
+# pytype
+.pytype/
+
+# C extensions
+*.c
+*.cpp
+*.h
+*.o
+*.obj
+*.so
+*.pyd
+
+# Logs
+*.log
+logs/
+
+# System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs
+.idea/
+.spyderproject
+.spyproject
+.ropeproject
+
+# Other
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+*.orig
+*.old
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+TwitchDownloaderCLI
+THIRD-PARTY-LICENSES.txt
+
+data/streamers
+.env
+
+COPYRIGHT.txt
+.ruff_cache
+.cursor/plans
+
+outputs/youtube_token.pkl
+youtube_token.pkl
+crontab.txt
+com.streamerai.batch1.plist
+com.streamerai.batch2.plist
+run_batch.sh

@@ -4,4 +4,13 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "google-genai>=1.56.0",
+    "openai>=2.14.0",
+    "pydantic>=2.12.5",
+    "ruff>=0.14.10",
+    "typer>=0.21.0",
+]
+
+[project.scripts]
+dod-deep-research = "dod_deep_research.cli:app"
