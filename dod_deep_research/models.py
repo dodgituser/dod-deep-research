@@ -7,7 +7,12 @@ class Provider(StrEnum):
 
 
 class GeminiModels(StrEnum):
-    DEEP_RESEARCH_PRO_PREVIEW_12_2025 = "deep-research-pro-preview-12-2025"
+    GEMINI_20_FLASH_LITE = "models/gemini-2.0-flash-lite"
+    GEMINI_25_FLASH_LITE = "models/gemini-2.5-flash-lite"
+    GEMINI_FLASH_LATEST = "models/gemini-flash-latest"
+    GEMINI_FLASH_LITE_LATEST = "models/gemini-flash-lite-latest"
+    GEMINI_25_PRO = "models/gemini-2.5-pro"
+    GEMINI_30_PRO = "models/gemini-3.0-pro"
 
 
 class OpenAIModels(StrEnum):

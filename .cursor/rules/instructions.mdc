@@ -1,0 +1,60 @@
+---
+description: "Core Python development guidelines for this project."
+alwaysApply: true
+---
+
+# Development Principles
+
+- **Data Objects**: Use Pydantic models for data objects. This is preferred for its clear, model-based approach to data validation.
+- **Code Structure**: Favor functions over classes for simplicity and readability where appropriate.
+- **Simplicity and Explicitness**: Prefer clear, straightforward code over complex abstractions. Well-structured, explicit "boilerplate" patterns are preferred over clever abstractions. Boilerplate code that is clear and explicit is favored when it improves readability and maintainability.
+- **Package Management**: Use `uv` as the exclusive package manager. All dependency management should be handled with `uv` commands (e.g., `uv add`, `uv sync`).
+- **Commenting**: Use in-line comments only when the code's purpose is not immediately obvious. Avoid redundant or unnecessary comments.
+- **Linting and Formatting**: Use `ruff` to lint and format the codebase.
+- **Lean Codebase**: Strive to avoid code bloat. Every function, class, and line of code should have a clear and necessary purpose.
+- **Logging**: Practice judicious logging. Prefer logging at the entry point of a repository, and only log in deeper levels if necessary. Focus on logging critical errors and essential information, avoiding verbose or redundant logging of routine operations.
+- **Error Handling**: Prefer brevity over catching every edge case. Avoid excessive `try-catch` blocks. Favor straightforward error handling and allow exceptions to surface where they can be handled decisively. Don't add defensive code for every possible edge case—keep code concise and handle errors at the appropriate level.
+
+**Guidelines:**
+- When accessing attributes of Pydantic models, use direct attribute access (e.g., `segment.chat_full`) instead of `getattr(segment, "chat_full", [])`. Trust Pydantic's type safety.
+- **Docstrings**: Always use the following format for docstrings. Keep docstrings concise.
+```python
+def fetch_user_data(user_id, include_history=False):
+    """
+    Fetches user profile information from the database.
+
+    Args:
+        user_id (int): The unique identifier of the user.
+        include_history (bool, optional): Whether to include login history.
+            Defaults to False.
+
+    Returns:
+        dict: A dictionary containing the user's profile data.
+
+    Raises:
+        ValueError: If the user_id is negative.
+        ConnectionError: If the database is unreachable.
+    """
+    pass
+```
+**Correct usage:**
+```python
+segment.chat_full  # Preferred for Pydantic models
+```
+**Avoid:**
+```python
+getattr(segment, "chat_full", [])
+```
+- **Validation**: Perform input validation at entry points (public functions), not redundantly in downstream functions. Trust that validated inputs will be passed correctly.
+```python
+def func1(x):
+  if not x:
+    raise ValueError("Input x cannot be empty")
+  # ... further processing of x
+
+def func2(data):
+  # No need to check if data is empty here.
+  # func1 will handle the check.
+  func1(data)
+  # ...
+```
