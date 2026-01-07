@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -26,6 +26,25 @@ class CliArgs(BaseModel):
             for k, v in self.model_dump().items()
             if k in prompt_fields and v is not None
         }
+
+
+class EvidenceVerification(BaseModel):
+    """Evidence verification status and metadata."""
+
+    verified: bool
+    verification_method: str
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    nct_id_valid: bool | None = None
+
+
+class RunMetadata(BaseModel):
+    """Extended metadata for research output runs."""
+
+    generated_at: datetime
+    model: str
+    run_id: str
+    agent_timestamps: dict[str, datetime] = Field(default_factory=dict)
+    validation_attempts: int = Field(default=0)
 
 
 class Metadata(BaseModel):
@@ -125,3 +144,23 @@ class DeepResearchOutput(BaseModel):
     mechanistic_rationales: list[MechanisticRationale] = Field(default_factory=list)
     competitive_landscape: list[CompetitiveLandscape] = Field(default_factory=list)
     il2_specific_trials: list[IL2SpecificTrial] = Field(default_factory=list)
+    provenance: dict[str, Any] = Field(default_factory=dict)
+
+    def to_evidence_table(self) -> list[dict[str, Any]]:
+        """
+        Generate evidence table specification.
+
+        Returns:
+            list[dict]: List of evidence entries formatted for table display.
+        """
+        return [
+            {
+                "id": ev.id,
+                "type": ev.type,
+                "title": ev.title,
+                "url": ev.url,
+                "year": ev.year,
+                "quote": ev.quote,
+            }
+            for ev in self.evidence
+        ]
