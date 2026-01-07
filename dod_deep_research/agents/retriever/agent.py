@@ -1,7 +1,6 @@
 """Retriever/Synthesizer agent for evidence retrieval."""
 
 from google.adk import Agent
-from google.genai import types
 
 from dod_deep_research.agents.retriever.prompt import RETRIEVER_AGENT_PROMPT
 from dod_deep_research.agents.retriever.structured_response import EvidenceListResponse
@@ -13,7 +12,5 @@ root_agent = Agent(
     tools=[],
     model=GeminiModels.GEMINI_20_FLASH_LITE.value.replace("models/", ""),
     output_key="evidence_list",
-    generate_content_config=types.GenerateContentConfig(
-        response_schema=EvidenceListResponse
-    ),
+    output_schema=EvidenceListResponse,
 )

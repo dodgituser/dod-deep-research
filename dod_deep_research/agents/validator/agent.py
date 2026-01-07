@@ -1,7 +1,6 @@
 """Validator agent for output validation against schema."""
 
 from google.adk import Agent
-from google.genai import types
 
 from dod_deep_research.agents.validator.prompt import VALIDATOR_AGENT_PROMPT
 from dod_deep_research.agents.validator.structured_response import ValidationReport
@@ -13,7 +12,5 @@ root_agent = Agent(
     tools=[],
     model=GeminiModels.GEMINI_20_FLASH_LITE.value.replace("models/", ""),
     output_key="validation_report",
-    generate_content_config=types.GenerateContentConfig(
-        response_schema=ValidationReport
-    ),
+    output_schema=ValidationReport,
 )

@@ -7,7 +7,7 @@ from dod_deep_research.agents.retriever.agent import root_agent as retriever_age
 from dod_deep_research.agents.validator.agent import root_agent as validator_agent
 from dod_deep_research.agents.writer.agent import root_agent as writer_agent
 
-sequential_agent = SequentialAgent(
+root_agent = SequentialAgent(
     name="research_pipeline",
     sub_agents=[
         planner_agent,
