@@ -10,7 +10,7 @@ root_agent = Agent(
     name="planner_agent",
     instruction=PLANNER_AGENT_PROMPT,
     tools=[],
-    model=GeminiModels.GEMINI_20_FLASH_LITE.value.replace("models/", ""),
+    model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
     output_key="research_plan",
     output_schema=ResearchPlan,
 )

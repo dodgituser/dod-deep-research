@@ -114,7 +114,7 @@ async def run_pipeline_async(
 
     shared_state = SharedState(
         research_plan=state.get("research_plan"),
-        evidence_list=state.get("evidence_list"),
+        evidence_store=state.get("evidence_store"),
         validation_report=state.get("validation_report"),
         deep_research_output=state.get("deep_research_output"),
     )
@@ -181,8 +181,12 @@ def main(
     """
     Run the deep research pipeline for a given disease indication.
 
-    The pipeline executes sequential agents (planner, retriever, validator, writer)
-    to generate comprehensive research output.
+    The pipeline executes a map-reduce architecture:
+    1. Meta-planner creates structured research outline
+    2. Parallel evidence collectors retrieve evidence for each section
+    3. Aggregator merges and deduplicates evidence
+    4. Validator validates and identifies gaps
+    5. Writer generates final structured output
     """
     logger.info(
         f"Starting deep research pipeline for indication: {indication}, drug: {drug_name}"

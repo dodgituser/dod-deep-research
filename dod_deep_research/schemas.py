@@ -82,15 +82,40 @@ class Metadata(BaseModel):
         return value.isoformat()
 
 
-class Evidence(BaseModel):
-    """Evidence citation."""
+class EvidenceItem(BaseModel):
+    """Evidence citation item."""
 
     id: str = Field(..., description="Evidence ID (e.g., 'E1', 'E2')")
-    type: Literal["pubmed", "clinicaltrials", "guideline", "press_release", "other"]
-    title: str
-    url: str | None = None
-    year: int | None = None
-    quote: str | None = None
+    source: Literal[
+        "pubmed", "clinicaltrials", "guideline", "press_release", "other"
+    ] = Field(..., description="Source type of the evidence")
+    title: str = Field(..., description="Title of the evidence source")
+    url: str | None = Field(None, description="Source URL")
+    quote: str | None = Field(None, description="Relevant quote or excerpt")
+    year: int | None = Field(None, description="Publication year")
+    tags: list[str] = Field(default_factory=list, description="Tags for categorization")
+    section: str = Field(..., description="Section/topic this evidence belongs to")
+
+
+class EvidenceStore(BaseModel):
+    """Centralized evidence store with indexing and deduplication."""
+
+    items: list[EvidenceItem] = Field(
+        default_factory=list, description="All evidence items"
+    )
+    by_section: dict[str, list[str]] = Field(
+        default_factory=dict, description="Section name → list of evidence IDs"
+    )
+    by_source: dict[str, list[str]] = Field(
+        default_factory=dict, description="Source URL → list of evidence IDs"
+    )
+    hash_index: dict[str, str] = Field(
+        default_factory=dict,
+        description="Content hash → evidence ID (for deduplication)",
+    )
+    gaps: list[str] = Field(
+        default_factory=list, description="Validator feedback on evidence gaps"
+    )
 
 
 class Biomarker(BaseModel):
@@ -168,7 +193,7 @@ class DeepResearchOutput(BaseModel):
 
     metadata: Metadata
     indication_profile: IndicationProfile
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidence: list[EvidenceItem] = Field(default_factory=list)
     mechanistic_rationales: list[MechanisticRationale] = Field(default_factory=list)
     competitive_landscape: list[CompetitiveLandscape] = Field(default_factory=list)
     il2_specific_trials: list[IL2SpecificTrial] = Field(default_factory=list)
@@ -186,11 +211,13 @@ class DeepResearchOutput(BaseModel):
         return [
             {
                 "id": ev.id,
-                "type": ev.type,
+                "source": ev.source,
                 "title": ev.title,
                 "url": ev.url,
                 "year": ev.year,
                 "quote": ev.quote,
+                "tags": ev.tags,
+                "section": ev.section,
             }
             for ev in self.evidence
         ]
