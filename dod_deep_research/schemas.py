@@ -4,7 +4,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
+
+
+class KeyValuePair(BaseModel):
+    """Key-value pair for dictionary-like structures."""
+
+    key: str = Field(..., description="The key name")
+    value: Any = Field(
+        ..., description="The value (can be string, number, boolean, etc.)"
+    )
 
 
 class CliArgs(BaseModel):
@@ -46,12 +55,31 @@ class RunMetadata(BaseModel):
     agent_timestamps: dict[str, datetime] = Field(default_factory=dict)
     validation_attempts: int = Field(default=0)
 
+    @field_serializer("generated_at")
+    def serialize_datetime(self, value: datetime, _info) -> str:
+        """Serialize datetime to ISO format string."""
+        return value.isoformat()
+
+    @field_serializer("agent_timestamps")
+    def serialize_agent_timestamps(
+        self, value: dict[str, datetime], _info
+    ) -> dict[str, str]:
+        """Serialize datetime values in dict to ISO format strings."""
+        return {
+            k: v.isoformat() if isinstance(v, datetime) else v for k, v in value.items()
+        }
+
 
 class Metadata(BaseModel):
     """Metadata for the research output."""
 
     generated_at: datetime
     model: str
+
+    @field_serializer("generated_at")
+    def serialize_datetime(self, value: datetime, _info) -> str:
+        """Serialize datetime to ISO format string."""
+        return value.isoformat()
 
 
 class Evidence(BaseModel):
@@ -144,7 +172,9 @@ class DeepResearchOutput(BaseModel):
     mechanistic_rationales: list[MechanisticRationale] = Field(default_factory=list)
     competitive_landscape: list[CompetitiveLandscape] = Field(default_factory=list)
     il2_specific_trials: list[IL2SpecificTrial] = Field(default_factory=list)
-    provenance: dict[str, Any] = Field(default_factory=dict)
+    provenance: list[KeyValuePair] = Field(
+        default_factory=list, description="Audit trail information as key-value pairs"
+    )
 
     def to_evidence_table(self) -> list[dict[str, Any]]:
         """
