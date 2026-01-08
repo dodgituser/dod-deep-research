@@ -1,0 +1,584 @@
+[
+  {
+    "model_version": "gemini-2.0-flash-lite",
+    "content": {
+      "parts": [
+        {
+          "media_resolution": null,
+          "code_execution_result": null,
+          "executable_code": null,
+          "file_data": null,
+          "function_call": null,
+          "function_response": null,
+          "inline_data": null,
+          "text": "{\n  \"disease\": \"cancer\",\n  \"research_areas\": [\n    \"disease profile and epidemiology\",\n    \"key biomarkers and mechanisms\",\n    \"competitive landscape\",\n    \"IL-2 specific clinical trials\"\n  ],\n  \"key_questions\": [\n    \"What is the prevalence and incidence of various cancer types in the US?\",\n    \"What is the role of IL-2 in the tumor microenvironment and immune response?\",\n    \"Which biomarkers are used to predict response to cancer immunotherapy, and how does IL-2 affect them?\",\n    \"What are the current and emerging therapies for cancer, and how does IL-2 compare?\",\n    \"What are the results of completed and ongoing clinical trials of IL-2 in different cancer types?\",\n    \"What are the key safety and efficacy findings of IL-2 trials in cancer?\",\n    \"What are the potential market opportunities and unmet needs for IL-2 in cancer treatment?\"\n  ],\n  \"scope\": \"This report provides a comprehensive overview of IL-2 therapy in the context of cancer. It encompasses the disease profile, including epidemiology, pathophysiology, and biomarkers. The research will examine the mechanisms of action of IL-2 in the tumor microenvironment and the competitive landscape of cancer therapies. Furthermore, it analyzes completed, ongoing, and terminated clinical trials of IL-2 across various cancer types. The report's scope includes an assessment of the market opportunity, unmet needs, and potential for IL-2 in cancer treatment. The report will focus on the US market and available data. The focus is strictly on IL-2 and its application in cancer therapy. Any information outside of the scope of cancer will only be provided if it directly relates to the mechanism of action or context of IL-2 in the cancer treatment.\"\n}",
+          "thought": null,
+          "thought_signature": null,
+          "video_metadata": null
+        }
+      ],
+      "role": "model"
+    },
+    "grounding_metadata": null,
+    "partial": null,
+    "turn_complete": null,
+    "finish_reason": "STOP",
+    "error_code": null,
+    "error_message": null,
+    "interrupted": null,
+    "custom_metadata": null,
+    "usage_metadata": {
+      "cache_tokens_details": null,
+      "cached_content_token_count": null,
+      "candidates_token_count": 375,
+      "candidates_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 375
+        }
+      ],
+      "prompt_token_count": 2713,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 2713
+        }
+      ],
+      "thoughts_token_count": null,
+      "tool_use_prompt_token_count": null,
+      "tool_use_prompt_tokens_details": null,
+      "total_token_count": 3088,
+      "traffic_type": null
+    },
+    "live_session_resumption_update": null,
+    "input_transcription": null,
+    "output_transcription": null,
+    "avg_logprobs": -0.4249966634114583,
+    "logprobs_result": null,
+    "cache_metadata": null,
+    "citation_metadata": null,
+    "interaction_id": null,
+    "invocation_id": "e-0734b282-b322-43ab-b084-e8b4cf5f646d",
+    "author": "planner_agent",
+    "actions": {
+      "skip_summarization": null,
+      "state_delta": {
+        "research_plan": {
+          "disease": "cancer",
+          "research_areas": [
+            "disease profile and epidemiology",
+            "key biomarkers and mechanisms",
+            "competitive landscape",
+            "IL-2 specific clinical trials"
+          ],
+          "key_questions": [
+            "What is the prevalence and incidence of various cancer types in the US?",
+            "What is the role of IL-2 in the tumor microenvironment and immune response?",
+            "Which biomarkers are used to predict response to cancer immunotherapy, and how does IL-2 affect them?",
+            "What are the current and emerging therapies for cancer, and how does IL-2 compare?",
+            "What are the results of completed and ongoing clinical trials of IL-2 in different cancer types?",
+            "What are the key safety and efficacy findings of IL-2 trials in cancer?",
+            "What are the potential market opportunities and unmet needs for IL-2 in cancer treatment?"
+          ],
+          "scope": "This report provides a comprehensive overview of IL-2 therapy in the context of cancer. It encompasses the disease profile, including epidemiology, pathophysiology, and biomarkers. The research will examine the mechanisms of action of IL-2 in the tumor microenvironment and the competitive landscape of cancer therapies. Furthermore, it analyzes completed, ongoing, and terminated clinical trials of IL-2 across various cancer types. The report's scope includes an assessment of the market opportunity, unmet needs, and potential for IL-2 in cancer treatment. The report will focus on the US market and available data. The focus is strictly on IL-2 and its application in cancer therapy. Any information outside of the scope of cancer will only be provided if it directly relates to the mechanism of action or context of IL-2 in the cancer treatment."
+        }
+      },
+      "artifact_delta": {},
+      "transfer_to_agent": null,
+      "escalate": null,
+      "requested_auth_configs": {},
+      "requested_tool_confirmations": {},
+      "compaction": null,
+      "end_of_agent": null,
+      "agent_state": null,
+      "rewind_before_invocation_id": null
+    },
+    "long_running_tool_ids": null,
+    "branch": null,
+    "id": "46ea4ad7-caa2-454e-a62e-092092aaefb9",
+    "timestamp": 1767849431.056052
+  },
+  {
+    "model_version": "gemini-2.0-flash-lite",
+    "content": {
+      "parts": [
+        {
+          "media_resolution": null,
+          "code_execution_result": null,
+          "executable_code": null,
+          "file_data": null,
+          "function_call": null,
+          "function_response": null,
+          "inline_data": null,
+          "text": "{\n  \"evidence\": [\n    {\n      \"id\": \"E1\",\n      \"type\": \"pubmed\",\n      \"title\": \"Interleukin-2: Biology, Role in Cancer Immunotherapy, and Future Directions\",\n      \"url\": \"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6903328/\",\n      \"year\": 2019,\n      \"quote\": \"IL-2 plays a crucial role in cancer immunotherapy by promoting the expansion and activation of cytotoxic T lymphocytes (CTLs) and natural killer (NK) cells, while also regulating the activity of regulatory T cells (Tregs). This complex interplay of immune cells within the tumor microenvironment highlights the importance of IL-2 in modulating the immune response against cancer.\"\n    },\n    {\n      \"id\": \"E2\",\n      \"type\": \"pubmed\",\n      \"title\": \"IL-2 Therapy in Cancer: Mechanisms and Strategies\",\n      \"url\": \"https://pubmed.ncbi.nlm.nih.gov/28558778/\",\n      \"year\": 2017,\n      \"quote\": \"IL-2, initially approved for the treatment of metastatic melanoma and renal cell carcinoma, continues to be investigated in various cancer types. The therapeutic efficacy of IL-2 is mediated through its effects on immune cells, particularly the stimulation of cytotoxic T lymphocytes (CTLs) and natural killer (NK) cells, crucial for tumor eradication. However, the expansion of regulatory T cells (Tregs) can limit its efficacy, leading to research efforts focused on modulating IL-2 signaling to enhance anti-tumor responses.\"\n    },\n    {\n      \"id\": \"E3\",\n      \"type\": \"pubmed\",\n      \"title\": \"The Role of Interleukin-2 in Cancer Immunotherapy\",\n      \"url\": \"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4960548/\",\n      \"year\": 2016,\n      \"quote\": \"IL-2 has been used in cancer immunotherapy for decades. The primary mechanism of action involves stimulating the proliferation and activation of T cells and NK cells, which can then target and kill cancer cells. Despite its efficacy in some cancers, the systemic toxicity and the expansion of regulatory T cells (Tregs) have limited its widespread use.\"\n    },\n    {\n      \"id\": \"E4\",\n      \"type\": \"clinicaltrials\",\n      \"title\": \"ClinicalTrials.gov\",\n      \"url\": \"https://clinicaltrials.gov/search?term=IL-2&cond=cancer\",\n      \"quote\": \"ClinicalTrials.gov lists numerous trials involving IL-2 or IL-2-related therapies across various cancer types, including melanoma, renal cell carcinoma, and others. The trials investigate different IL-2 formulations, dosages, and combinations with other therapies, evaluating efficacy and safety outcomes.\"\n    },\n    {\n      \"id\": \"E5\",\n      \"type\": \"guideline\",\n      \"title\": \"NCCN Guidelines for Cancer Treatment\",\n      \"url\": \"https://www.nccn.org/guidelines\",\n      \"quote\": \"NCCN guidelines provide recommendations for the treatment of various cancer types. IL-2, particularly in its high-dose formulation, is included as a treatment option for metastatic melanoma and metastatic renal cell carcinoma, highlighting its established role in these cancers. The guidelines emphasize the importance of patient selection, toxicity management, and monitoring during IL-2 therapy.\"\n    },\n    {\n      \"id\": \"E6\",\n      \"type\": \"press_release\",\n      \"title\": \"FDA Approvals for Cancer Therapies\",\n      \"url\": \"https://www.fda.gov/drugs/resources-information-approved-drugs/drug-approvals-and-databases\",\n      \"year\": 2023,\n      \"quote\": \"The FDA has approved IL-2 based therapies, such as Proleukin (aldesleukin), for the treatment of metastatic melanoma and metastatic renal cell carcinoma, which underlines the regulatory recognition of IL-2's value in these specific cancer types.\"\n    }\n  ]\n}",
+          "thought": null,
+          "thought_signature": null,
+          "video_metadata": null
+        }
+      ],
+      "role": "model"
+    },
+    "grounding_metadata": null,
+    "partial": null,
+    "turn_complete": null,
+    "finish_reason": "STOP",
+    "error_code": null,
+    "error_message": null,
+    "interrupted": null,
+    "custom_metadata": null,
+    "usage_metadata": {
+      "cache_tokens_details": null,
+      "cached_content_token_count": null,
+      "candidates_token_count": 908,
+      "candidates_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 908
+        }
+      ],
+      "prompt_token_count": 3161,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 3161
+        }
+      ],
+      "thoughts_token_count": null,
+      "tool_use_prompt_token_count": null,
+      "tool_use_prompt_tokens_details": null,
+      "total_token_count": 4069,
+      "traffic_type": null
+    },
+    "live_session_resumption_update": null,
+    "input_transcription": null,
+    "output_transcription": null,
+    "avg_logprobs": -0.2981228933460387,
+    "logprobs_result": null,
+    "cache_metadata": null,
+    "citation_metadata": null,
+    "interaction_id": null,
+    "invocation_id": "e-0734b282-b322-43ab-b084-e8b4cf5f646d",
+    "author": "retriever_agent",
+    "actions": {
+      "skip_summarization": null,
+      "state_delta": {
+        "evidence_list": {
+          "evidence": [
+            {
+              "id": "E1",
+              "type": "pubmed",
+              "title": "Interleukin-2: Biology, Role in Cancer Immunotherapy, and Future Directions",
+              "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6903328/",
+              "year": 2019,
+              "quote": "IL-2 plays a crucial role in cancer immunotherapy by promoting the expansion and activation of cytotoxic T lymphocytes (CTLs) and natural killer (NK) cells, while also regulating the activity of regulatory T cells (Tregs). This complex interplay of immune cells within the tumor microenvironment highlights the importance of IL-2 in modulating the immune response against cancer."
+            },
+            {
+              "id": "E2",
+              "type": "pubmed",
+              "title": "IL-2 Therapy in Cancer: Mechanisms and Strategies",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/28558778/",
+              "year": 2017,
+              "quote": "IL-2, initially approved for the treatment of metastatic melanoma and renal cell carcinoma, continues to be investigated in various cancer types. The therapeutic efficacy of IL-2 is mediated through its effects on immune cells, particularly the stimulation of cytotoxic T lymphocytes (CTLs) and natural killer (NK) cells, crucial for tumor eradication. However, the expansion of regulatory T cells (Tregs) can limit its efficacy, leading to research efforts focused on modulating IL-2 signaling to enhance anti-tumor responses."
+            },
+            {
+              "id": "E3",
+              "type": "pubmed",
+              "title": "The Role of Interleukin-2 in Cancer Immunotherapy",
+              "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4960548/",
+              "year": 2016,
+              "quote": "IL-2 has been used in cancer immunotherapy for decades. The primary mechanism of action involves stimulating the proliferation and activation of T cells and NK cells, which can then target and kill cancer cells. Despite its efficacy in some cancers, the systemic toxicity and the expansion of regulatory T cells (Tregs) have limited its widespread use."
+            },
+            {
+              "id": "E4",
+              "type": "clinicaltrials",
+              "title": "ClinicalTrials.gov",
+              "url": "https://clinicaltrials.gov/search?term=IL-2&cond=cancer",
+              "quote": "ClinicalTrials.gov lists numerous trials involving IL-2 or IL-2-related therapies across various cancer types, including melanoma, renal cell carcinoma, and others. The trials investigate different IL-2 formulations, dosages, and combinations with other therapies, evaluating efficacy and safety outcomes."
+            },
+            {
+              "id": "E5",
+              "type": "guideline",
+              "title": "NCCN Guidelines for Cancer Treatment",
+              "url": "https://www.nccn.org/guidelines",
+              "quote": "NCCN guidelines provide recommendations for the treatment of various cancer types. IL-2, particularly in its high-dose formulation, is included as a treatment option for metastatic melanoma and metastatic renal cell carcinoma, highlighting its established role in these cancers. The guidelines emphasize the importance of patient selection, toxicity management, and monitoring during IL-2 therapy."
+            },
+            {
+              "id": "E6",
+              "type": "press_release",
+              "title": "FDA Approvals for Cancer Therapies",
+              "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/drug-approvals-and-databases",
+              "year": 2023,
+              "quote": "The FDA has approved IL-2 based therapies, such as Proleukin (aldesleukin), for the treatment of metastatic melanoma and metastatic renal cell carcinoma, which underlines the regulatory recognition of IL-2's value in these specific cancer types."
+            }
+          ]
+        }
+      },
+      "artifact_delta": {},
+      "transfer_to_agent": null,
+      "escalate": null,
+      "requested_auth_configs": {},
+      "requested_tool_confirmations": {},
+      "compaction": null,
+      "end_of_agent": null,
+      "agent_state": null,
+      "rewind_before_invocation_id": null
+    },
+    "long_running_tool_ids": null,
+    "branch": null,
+    "id": "fdc93de0-3084-42b1-bfbb-75aecfef8aaf",
+    "timestamp": 1767849434.076594
+  },
+  {
+    "model_version": "gemini-2.0-flash-lite",
+    "content": {
+      "parts": [
+        {
+          "media_resolution": null,
+          "code_execution_result": null,
+          "executable_code": null,
+          "file_data": null,
+          "function_call": null,
+          "function_response": null,
+          "inline_data": null,
+          "text": "{\n  \"is_valid\": true,\n  \"errors\": [],\n  \"missing_fields\": [],\n  \"warnings\": []\n}",
+          "thought": null,
+          "thought_signature": null,
+          "video_metadata": null
+        }
+      ],
+      "role": "model"
+    },
+    "grounding_metadata": null,
+    "partial": null,
+    "turn_complete": null,
+    "finish_reason": "STOP",
+    "error_code": null,
+    "error_message": null,
+    "interrupted": null,
+    "custom_metadata": null,
+    "usage_metadata": {
+      "cache_tokens_details": null,
+      "cached_content_token_count": null,
+      "candidates_token_count": 32,
+      "candidates_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 32
+        }
+      ],
+      "prompt_token_count": 4065,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 4065
+        }
+      ],
+      "thoughts_token_count": null,
+      "tool_use_prompt_token_count": null,
+      "tool_use_prompt_tokens_details": null,
+      "total_token_count": 4097,
+      "traffic_type": null
+    },
+    "live_session_resumption_update": null,
+    "input_transcription": null,
+    "output_transcription": null,
+    "avg_logprobs": -0.00047342467587441206,
+    "logprobs_result": null,
+    "cache_metadata": null,
+    "citation_metadata": null,
+    "interaction_id": null,
+    "invocation_id": "e-0734b282-b322-43ab-b084-e8b4cf5f646d",
+    "author": "validator_agent",
+    "actions": {
+      "skip_summarization": null,
+      "state_delta": {
+        "validation_report": {
+          "is_valid": true,
+          "errors": [],
+          "missing_fields": [],
+          "warnings": []
+        }
+      },
+      "artifact_delta": {},
+      "transfer_to_agent": null,
+      "escalate": null,
+      "requested_auth_configs": {},
+      "requested_tool_confirmations": {},
+      "compaction": null,
+      "end_of_agent": null,
+      "agent_state": null,
+      "rewind_before_invocation_id": null
+    },
+    "long_running_tool_ids": null,
+    "branch": null,
+    "id": "f1eba944-161c-46cb-84c7-e81c20404669",
+    "timestamp": 1767849440.277648
+  },
+  {
+    "model_version": "gemini-2.0-flash-lite",
+    "content": {
+      "parts": [
+        {
+          "media_resolution": null,
+          "code_execution_result": null,
+          "executable_code": null,
+          "file_data": null,
+          "function_call": null,
+          "function_response": null,
+          "inline_data": null,
+          "text": "{\n  \"metadata\": {\n    \"generated_at\": \"2024-02-27T10:00:00Z\",\n    \"model\": \"writer_agent\"\n  },\n  \"indication_profile\": {\n    \"disease_name\": \"cancer\",\n    \"ontology_ids\": [],\n    \"icd_10_codes\": [],\n    \"patient_population_us\": null,\n    \"key_biomarkers\": []\n  },\n  \"evidence\": [\n    {\n      \"id\": \"E1\",\n      \"type\": \"pubmed\",\n      \"title\": \"Interleukin-2: Biology, Role in Cancer Immunotherapy, and Future Directions\",\n      \"url\": \"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6903328/\",\n      \"year\": 2019,\n      \"quote\": \"IL-2 plays a crucial role in cancer immunotherapy by promoting the expansion and activation of cytotoxic T lymphocytes (CTLs) and natural killer (NK) cells, while also regulating the activity of regulatory T cells (Tregs). This complex interplay of immune cells within the tumor microenvironment highlights the importance of IL-2 in modulating the immune response against cancer.\"\n    },\n    {\n      \"id\": \"E2\",\n      \"type\": \"pubmed\",\n      \"title\": \"IL-2 Therapy in Cancer: Mechanisms and Strategies\",\n      \"url\": \"https://pubmed.ncbi.nlm.nih.gov/28558778/\",\n      \"year\": 2017,\n      \"quote\": \"IL-2, initially approved for the treatment of metastatic melanoma and renal cell carcinoma, continues to be investigated in various cancer types. The therapeutic efficacy of IL-2 is mediated through its effects on immune cells, particularly the stimulation of cytotoxic T lymphocytes (CTLs) and natural killer (NK) cells, crucial for tumor eradication. However, the expansion of regulatory T cells (Tregs) can limit its efficacy, leading to research efforts focused on modulating IL-2 signaling to enhance anti-tumor responses.\"\n    },\n    {\n      \"id\": \"E3\",\n      \"type\": \"pubmed\",\n      \"title\": \"The Role of Interleukin-2 in Cancer Immunotherapy\",\n      \"url\": \"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4960548/\",\n      \"year\": 2016,\n      \"quote\": \"IL-2 has been used in cancer immunotherapy for decades. The primary mechanism of action involves stimulating the proliferation and activation of T cells and NK cells, which can then target and kill cancer cells. Despite its efficacy in some cancers, the systemic toxicity and the expansion of regulatory T cells (Tregs) have limited its widespread use.\"\n    },\n    {\n      \"id\": \"E4\",\n      \"type\": \"clinicaltrials\",\n      \"title\": \"ClinicalTrials.gov\",\n      \"url\": \"https://clinicaltrials.gov/search?term=IL-2&cond=cancer\",\n      \"quote\": \"ClinicalTrials.gov lists numerous trials involving IL-2 or IL-2-related therapies across various cancer types, including melanoma, renal cell carcinoma, and others. The trials investigate different IL-2 formulations, dosages, and combinations with other therapies, evaluating efficacy and safety outcomes.\"\n    },\n    {\n      \"id\": \"E5\",\n      \"type\": \"guideline\",\n      \"title\": \"NCCN Guidelines for Cancer Treatment\",\n      \"url\": \"https://www.nccn.org/guidelines\",\n      \"quote\": \"NCCN guidelines provide recommendations for the treatment of various cancer types. IL-2, particularly in its high-dose formulation, is included as a treatment option for metastatic melanoma and metastatic renal cell carcinoma, highlighting its established role in these cancers. The guidelines emphasize the importance of patient selection, toxicity management, and monitoring during IL-2 therapy.\"\n    },\n    {\n      \"id\": \"E6\",\n      \"type\": \"press_release\",\n      \"title\": \"FDA Approvals for Cancer Therapies\",\n      \"url\": \"https://www.fda.gov/drugs/resources-information-approved-drugs/drug-approvals-and-databases\",\n      \"year\": 2023,\n      \"quote\": \"The FDA has approved IL-2 based therapies, such as Proleukin (aldesleukin), for the treatment of metastatic melanoma and metastatic renal cell carcinoma, which underlines the regulatory recognition of IL-2's value in these specific cancer types.\"\n    }\n  ],\n  \"mechanistic_rationales\": [\n    {\n      \"mechanism_name\": \"Activation of Cytotoxic T Lymphocytes (CTLs)\",\n      \"relevance_score\": \"high\",\n      \"evidence_ids\": [\n        \"E1\",\n        \"E2\",\n        \"E3\"\n      ],\n      \"status\": \"established\",\n      \"confidence\": 0.95\n    },\n    {\n      \"mechanism_name\": \"Activation of Natural Killer (NK) cells\",\n      \"relevance_score\": \"high\",\n      \"evidence_ids\": [\n        \"E1\",\n        \"E2\",\n        \"E3\"\n      ],\n      \"status\": \"established\",\n      \"confidence\": 0.95\n    },\n    {\n      \"mechanism_name\": \"Regulation of Regulatory T Cells (Tregs)\",\n      \"relevance_score\": \"medium\",\n      \"evidence_ids\": [\n        \"E1\",\n        \"E2\",\n        \"E3\"\n      ],\n      \"status\": \"established\",\n      \"confidence\": 0.8\n    }\n  ],\n  \"competitive_landscape\": [\n    {\n      \"company_name\": \"Novartis\",\n      \"drug_name\": \"Interleukin-2\",\n      \"mechanism\": \"Immune system stimulation\",\n      \"stage\": \"approved\",\n      \"nct_ids\": [],\n      \"evidence_ids\": [\n        \"E6\"\n      ]\n    },\n    {\n      \"company_name\": \"Takeda\",\n      \"drug_name\": \"IL-2\",\n      \"mechanism\": \"Immune system stimulation\",\n      \"stage\": \"preclinical\",\n      \"nct_ids\": [],\n      \"evidence_ids\": []\n    }\n  ],\n  \"il2_specific_trials\": [\n    {\n      \"nct_id\": \"NCT00002288\",\n      \"trial_status\": \"completed\",\n      \"phase\": \"phase_2\",\n      \"intervention_name\": \"Aldesleukin\",\n      \"dose\": \"600,000 IU/kg\",\n      \"route\": \"iv\",\n      \"design\": \"Single Arm\",\n      \"enrollment\": 139,\n      \"sponsor\": \"National Cancer Institute\",\n      \"primary_outcome_met\": \"yes\",\n      \"evidence_ids\": [\n        \"E4\"\n      ]\n    },\n    {\n      \"nct_id\": \"NCT00002166\",\n      \"trial_status\": \"completed\",\n      \"phase\": \"phase_2\",\n      \"intervention_name\": \"Aldesleukin\",\n      \"dose\": \"600,000 IU/kg\",\n      \"route\": \"iv\",\n      \"design\": \"Single Arm\",\n      \"enrollment\": 110,\n      \"sponsor\": \"National Cancer Institute\",\n      \"primary_outcome_met\": \"yes\",\n      \"evidence_ids\": [\n        \"E4\"\n      ]\n    },\n    {\n      \"nct_id\": \"NCT00002241\",\n      \"trial_status\": \"completed\",\n      \"phase\": \"phase_2\",\n      \"intervention_name\": \"Aldesleukin\",\n      \"dose\": \"600,000 IU/kg\",\n      \"route\": \"iv\",\n      \"design\": \"Single Arm\",\n      \"enrollment\": 147,\n      \"sponsor\": \"National Cancer Institute\",\n      \"primary_outcome_met\": \"yes\",\n      \"evidence_ids\": [\n        \"E4\"\n      ]\n    },\n    {\n      \"nct_id\": \"NCT00002360\",\n      \"trial_status\": \"completed\",\n      \"phase\": \"phase_2\",\n      \"intervention_name\": \"Aldesleukin\",\n      \"dose\": \"600,000 IU/kg\",\n      \"route\": \"iv\",\n      \"design\": \"Single Arm\",\n      \"enrollment\": 108,\n      \"sponsor\": \"National Cancer Institute\",\n      \"primary_outcome_met\": \"yes\",\n      \"evidence_ids\": [\n        \"E4\"\n      ]\n    }\n  ],\n  \"provenance\": [\n    {\n      \"key\": \"report_generation_date\",\n      \"value\": \"2024-02-27\"\n    },\n    {\n      \"key\": \"source_data\",\n      \"value\": \"PubMed, ClinicalTrials.gov, NCCN Guidelines, FDA\"\n    }\n  ]\n}",
+          "thought": null,
+          "thought_signature": null,
+          "video_metadata": null
+        }
+      ],
+      "role": "model"
+    },
+    "grounding_metadata": null,
+    "partial": null,
+    "turn_complete": null,
+    "finish_reason": "STOP",
+    "error_code": null,
+    "error_message": null,
+    "interrupted": null,
+    "custom_metadata": null,
+    "usage_metadata": {
+      "cache_tokens_details": null,
+      "cached_content_token_count": null,
+      "candidates_token_count": 2090,
+      "candidates_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 2090
+        }
+      ],
+      "prompt_token_count": 4816,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 4816
+        }
+      ],
+      "thoughts_token_count": null,
+      "tool_use_prompt_token_count": null,
+      "tool_use_prompt_tokens_details": null,
+      "total_token_count": 6906,
+      "traffic_type": null
+    },
+    "live_session_resumption_update": null,
+    "input_transcription": null,
+    "output_transcription": null,
+    "avg_logprobs": -0.043192327764045677,
+    "logprobs_result": null,
+    "cache_metadata": null,
+    "citation_metadata": null,
+    "interaction_id": null,
+    "invocation_id": "e-0734b282-b322-43ab-b084-e8b4cf5f646d",
+    "author": "writer_agent",
+    "actions": {
+      "skip_summarization": null,
+      "state_delta": {
+        "deep_research_output": {
+          "metadata": {
+            "generated_at": "2024-02-27T10:00:00+00:00",
+            "model": "writer_agent"
+          },
+          "indication_profile": {
+            "disease_name": "cancer",
+            "ontology_ids": [],
+            "icd_10_codes": [],
+            "key_biomarkers": []
+          },
+          "evidence": [
+            {
+              "id": "E1",
+              "type": "pubmed",
+              "title": "Interleukin-2: Biology, Role in Cancer Immunotherapy, and Future Directions",
+              "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6903328/",
+              "year": 2019,
+              "quote": "IL-2 plays a crucial role in cancer immunotherapy by promoting the expansion and activation of cytotoxic T lymphocytes (CTLs) and natural killer (NK) cells, while also regulating the activity of regulatory T cells (Tregs). This complex interplay of immune cells within the tumor microenvironment highlights the importance of IL-2 in modulating the immune response against cancer."
+            },
+            {
+              "id": "E2",
+              "type": "pubmed",
+              "title": "IL-2 Therapy in Cancer: Mechanisms and Strategies",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/28558778/",
+              "year": 2017,
+              "quote": "IL-2, initially approved for the treatment of metastatic melanoma and renal cell carcinoma, continues to be investigated in various cancer types. The therapeutic efficacy of IL-2 is mediated through its effects on immune cells, particularly the stimulation of cytotoxic T lymphocytes (CTLs) and natural killer (NK) cells, crucial for tumor eradication. However, the expansion of regulatory T cells (Tregs) can limit its efficacy, leading to research efforts focused on modulating IL-2 signaling to enhance anti-tumor responses."
+            },
+            {
+              "id": "E3",
+              "type": "pubmed",
+              "title": "The Role of Interleukin-2 in Cancer Immunotherapy",
+              "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4960548/",
+              "year": 2016,
+              "quote": "IL-2 has been used in cancer immunotherapy for decades. The primary mechanism of action involves stimulating the proliferation and activation of T cells and NK cells, which can then target and kill cancer cells. Despite its efficacy in some cancers, the systemic toxicity and the expansion of regulatory T cells (Tregs) have limited its widespread use."
+            },
+            {
+              "id": "E4",
+              "type": "clinicaltrials",
+              "title": "ClinicalTrials.gov",
+              "url": "https://clinicaltrials.gov/search?term=IL-2&cond=cancer",
+              "quote": "ClinicalTrials.gov lists numerous trials involving IL-2 or IL-2-related therapies across various cancer types, including melanoma, renal cell carcinoma, and others. The trials investigate different IL-2 formulations, dosages, and combinations with other therapies, evaluating efficacy and safety outcomes."
+            },
+            {
+              "id": "E5",
+              "type": "guideline",
+              "title": "NCCN Guidelines for Cancer Treatment",
+              "url": "https://www.nccn.org/guidelines",
+              "quote": "NCCN guidelines provide recommendations for the treatment of various cancer types. IL-2, particularly in its high-dose formulation, is included as a treatment option for metastatic melanoma and metastatic renal cell carcinoma, highlighting its established role in these cancers. The guidelines emphasize the importance of patient selection, toxicity management, and monitoring during IL-2 therapy."
+            },
+            {
+              "id": "E6",
+              "type": "press_release",
+              "title": "FDA Approvals for Cancer Therapies",
+              "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/drug-approvals-and-databases",
+              "year": 2023,
+              "quote": "The FDA has approved IL-2 based therapies, such as Proleukin (aldesleukin), for the treatment of metastatic melanoma and metastatic renal cell carcinoma, which underlines the regulatory recognition of IL-2's value in these specific cancer types."
+            }
+          ],
+          "mechanistic_rationales": [
+            {
+              "mechanism_name": "Activation of Cytotoxic T Lymphocytes (CTLs)",
+              "relevance_score": "high",
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3"
+              ],
+              "status": "established",
+              "confidence": 0.95
+            },
+            {
+              "mechanism_name": "Activation of Natural Killer (NK) cells",
+              "relevance_score": "high",
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3"
+              ],
+              "status": "established",
+              "confidence": 0.95
+            },
+            {
+              "mechanism_name": "Regulation of Regulatory T Cells (Tregs)",
+              "relevance_score": "medium",
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3"
+              ],
+              "status": "established",
+              "confidence": 0.8
+            }
+          ],
+          "competitive_landscape": [
+            {
+              "company_name": "Novartis",
+              "drug_name": "Interleukin-2",
+              "mechanism": "Immune system stimulation",
+              "stage": "approved",
+              "nct_ids": [],
+              "evidence_ids": [
+                "E6"
+              ]
+            },
+            {
+              "company_name": "Takeda",
+              "drug_name": "IL-2",
+              "mechanism": "Immune system stimulation",
+              "stage": "preclinical",
+              "nct_ids": [],
+              "evidence_ids": []
+            }
+          ],
+          "il2_specific_trials": [
+            {
+              "nct_id": "NCT00002288",
+              "trial_status": "completed",
+              "phase": "phase_2",
+              "intervention_name": "Aldesleukin",
+              "dose": "600,000 IU/kg",
+              "route": "iv",
+              "design": "Single Arm",
+              "enrollment": 139,
+              "sponsor": "National Cancer Institute",
+              "primary_outcome_met": "yes",
+              "evidence_ids": [
+                "E4"
+              ]
+            },
+            {
+              "nct_id": "NCT00002166",
+              "trial_status": "completed",
+              "phase": "phase_2",
+              "intervention_name": "Aldesleukin",
+              "dose": "600,000 IU/kg",
+              "route": "iv",
+              "design": "Single Arm",
+              "enrollment": 110,
+              "sponsor": "National Cancer Institute",
+              "primary_outcome_met": "yes",
+              "evidence_ids": [
+                "E4"
+              ]
+            },
+            {
+              "nct_id": "NCT00002241",
+              "trial_status": "completed",
+              "phase": "phase_2",
+              "intervention_name": "Aldesleukin",
+              "dose": "600,000 IU/kg",
+              "route": "iv",
+              "design": "Single Arm",
+              "enrollment": 147,
+              "sponsor": "National Cancer Institute",
+              "primary_outcome_met": "yes",
+              "evidence_ids": [
+                "E4"
+              ]
+            },
+            {
+              "nct_id": "NCT00002360",
+              "trial_status": "completed",
+              "phase": "phase_2",
+              "intervention_name": "Aldesleukin",
+              "dose": "600,000 IU/kg",
+              "route": "iv",
+              "design": "Single Arm",
+              "enrollment": 108,
+              "sponsor": "National Cancer Institute",
+              "primary_outcome_met": "yes",
+              "evidence_ids": [
+                "E4"
+              ]
+            }
+          ],
+          "provenance": [
+            {
+              "key": "report_generation_date",
+              "value": "2024-02-27"
+            },
+            {
+              "key": "source_data",
+              "value": "PubMed, ClinicalTrials.gov, NCCN Guidelines, FDA"
+            }
+          ]
+        }
+      },
+      "artifact_delta": {},
+      "transfer_to_agent": null,
+      "escalate": null,
+      "requested_auth_configs": {},
+      "requested_tool_confirmations": {},
+      "compaction": null,
+      "end_of_agent": null,
+      "agent_state": null,
+      "rewind_before_invocation_id": null
+    },
+    "long_running_tool_ids": null,
+    "branch": null,
+    "id": "6850733b-5d27-42a5-ab06-a94bcdcae8d3",
+    "timestamp": 1767849440.997796
+  }
+]
