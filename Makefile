@@ -1,4 +1,4 @@
-.PHONY: check-quality fix-quality commit clean
+.PHONY: check-quality fix-quality commit clean compose-up compose-down
 
 check-quality:
 	@echo "Checking formatting and linting with ruff..."
@@ -23,3 +23,10 @@ clean:
 	find . -type d -name ".ruff_cache" -exec rm -r {} + 2>/dev/null || true
 	@echo "Clean complete."
 
+compose-up:
+	@echo "Starting docker compose services..."
+	docker compose -f docker-compose.yml up -d --build
+
+compose-down:
+	@echo "Stopping docker compose services..."
+	docker compose -f docker-compose.yml down

@@ -189,12 +189,7 @@ async def run_pipeline_async(
 
     # Extract section stores and run deterministic aggregation
     logger.info("Running deterministic evidence aggregation")
-    updated_session = await runner_pre.session_service.get_session(
-        app_name=app_name,
-        user_id=user_id,
-        session_id=session.id,
-    )
-    state = updated_session.state if updated_session else session.state
+    state = session.state
 
     # Extract all evidence_store_section_* keys
     section_stores: dict[str, CollectorResponse] = {}
@@ -221,18 +216,16 @@ async def run_pipeline_async(
             f"Aggregation complete: {len(evidence_store.items)} unique evidence items"
         )
 
-    # Write aggregated evidence store back to session state
-    state["evidence_store"] = evidence_store.model_dump() if evidence_store else None
+    # Update session state directly with aggregated evidence
+    session.state["evidence_store"] = (
+        evidence_store.model_dump() if evidence_store else None
+    )
+    logger.info(f"Updated session {session.id} state with aggregated evidence")
 
     # Phase 2: Run post-aggregation agents (validator + writer)
     logger.info("Starting post-aggregation phase (validator + writer)")
     runner_post = build_runner(agent=post_aggregation_agent, app_name=app_name)
-    session_post = await runner_post.session_service.create_session(
-        app_name=app_name,
-        user_id=user_id,
-        session_id=session_id,
-        state=state,
-    )
+    logger.info(f"Reusing session: {session.id}")
 
     # Create a continuation message (empty user message to continue pipeline)
     continuation_message = types.Content(
@@ -241,7 +234,7 @@ async def run_pipeline_async(
     )
 
     post_json_responses = await run_agent(
-        runner_post, session_post.user_id, session_post.id, continuation_message
+        runner_post, session.user_id, session.id, continuation_message
     )
     json_responses.extend(post_json_responses)
 
@@ -254,9 +247,9 @@ async def run_pipeline_async(
     final_session = await runner_post.session_service.get_session(
         app_name=app_name,
         user_id=user_id,
-        session_id=session_post.id,
+        session_id=session.id,
     )
-    state = final_session.state if final_session else session_post.state
+    state = final_session.state if final_session else session.state
 
     # Inject evidence deterministically from evidence_store into writer output
     writer_output_dict = state.get("deep_research_output")
