@@ -14,4 +14,4 @@ dependencies = [
 ]
 
 [project.scripts]
-dod-deep-research = "dod_deep_research.cli:app"
+dod-deep-research = "dod_deep_research.deep_research:app"

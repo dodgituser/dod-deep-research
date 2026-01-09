@@ -12,14 +12,12 @@ Read the evidence store from shared state key "evidence_store". The store contai
 - by_section: Dictionary mapping section names to evidence IDs
 - by_source: Dictionary mapping source URLs to evidence IDs
 - hash_index: Dictionary mapping content hashes to evidence IDs
-- gaps: List of evidence gaps (initially empty)
 
 **Task:**
 1. Validate that the evidence can be used to construct a complete DeepResearchOutput schema
 2. Check for duplicates and ensure deduplication is correct
 3. Normalize evidence items (ensure consistent formatting, validate required fields)
-4. Identify evidence gaps (missing evidence types, incomplete sections, etc.)
-5. Check that evidence IDs are properly referenced
+4. Check that evidence IDs are properly referenced (note: IDs are prefixed with section names, e.g., "disease_overview_E1")
 
 **Expected Output Format:**
 Generate a validation report as a JSON object with:
@@ -28,4 +26,4 @@ Generate a validation report as a JSON object with:
 - missing_fields: List of required fields that are missing
 - warnings: List of warnings about potential issues (e.g., missing references, incomplete evidence)
 
-Store your output in the shared state under the key "validation_report". Also update the evidence_store.gaps field with any identified evidence gaps (e.g., "Missing clinical trial evidence for biomarkers section")."""
+Store your output in the shared state under the key "validation_report"."""

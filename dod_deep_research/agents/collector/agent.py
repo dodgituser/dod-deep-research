@@ -2,12 +2,8 @@
 
 from google.adk import Agent
 
-from dod_deep_research.agents.collector.collector_prompt import (
-    COLLECTOR_AGENT_PROMPT_TEMPLATE,
-)
-from dod_deep_research.agents.collector.collector_structured_response import (
-    CollectorResponse,
-)
+from dod_deep_research.agents.collector.prompt import COLLECTOR_AGENT_PROMPT_TEMPLATE
+from dod_deep_research.agents.collector.schemas import CollectorResponse
 from dod_deep_research.models import GeminiModels
 
 
@@ -27,7 +23,7 @@ def create_collector_agent(section_name: str) -> Agent:
         name=f"collector_{section_name}",
         instruction=prompt,
         tools=[],
-        model=GeminiModels.GEMINI_20_FLASH_LITE.value.replace("models/", ""),
+        model=GeminiModels.GEMINI_25_FLASH_LITE.value.replace("models/", ""),
         output_key=f"evidence_store_section_{section_name}",
         output_schema=CollectorResponse,
     )

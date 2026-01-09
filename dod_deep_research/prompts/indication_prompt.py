@@ -22,15 +22,16 @@ def generate_indication_prompt(
     drug_form = drug_form or drug_name
     drug_generic_name = drug_generic_name or drug_name
 
-    prompt = f"""My specific disease indication for this report is: {disease}. 
+    prompt = f"""
+My specific disease indication for this report is: {disease}. 
 
 Please generate a comprehensive report on {drug_form} for {disease} ONLY. 
 
-Adhere strictly to the following "Comprehensive Instructions and Template Guidance for Drug Indication Reports" that I am pasting below. 
+Adhere strictly to the following "Comprehensive Instructions and Template Guidance for IL-2 Indication Reports" that I am pasting below. 
 
 Ensure all information and analysis provided is specific to {disease} and {drug_name}'s role within that context.
 
-## Comprehensive Instructions and Template Guidance for Drug Indication Reports
+## Comprehensive Instructions and Template Guidance for IL-2 Indication Reports
 
 ### 1. Project Objective & Audience
 **Audience:** This project is for a US biotechnology company.
@@ -65,18 +66,18 @@ Ensure all information and analysis provided is specific to {disease} and {drug_
 - Use numbers in square brackets for citations (e.g., [1], [2]); every citation must map to an entry in the "References" section.
 - Keep sentences readable (aim for <30 words). Split complex ideas.
 
-### 3. Report Structure & Section-Specific Guidance (Based on "Drug Indication Project Template v2.docx")
+### 3. Report Structure & Section-Specific Guidance (Based on "IL-2 Project Template v2.docx")
 
 #### A. Rationale/Executive Summary
-- **Focus:** Summarize the core findings and recommendation for the specified [disease] only.
-- **Asset:** Name (e.g., {drug_form} / {drug_generic_name}) and its basic therapeutic mechanisms relevant to dampening inflammation or supporting immunotherapy for [disease].
-- **Objective:** Assess whether {drug_name} should be further developed for the treatment of the specified [disease].
-- **Unmet Need:** Summarize treatment gaps specifically in the [disease] setting and how {drug_name} (or its relevant form) offers differentiation.
-- **Supportive Evidence (Pre-clinical/Clinical):** Briefly summarize pre-clinical evidence supporting {drug_name}'s therapeutic target in [disease] and describe any clinical trial evidence supporting {drug_name} use for this specific [disease].
-- **Relevant Regulatory History:** Note drug approval milestones or FDA/EMA designations (e.g., Orphan Drug, Fast Track) specifically for {drug_name} in the context of [disease].
+**Focus:** Summarize the core findings and recommendation for the specified [disease] only.
+**Asset:** Name (e.g., {drug_form} / {drug_generic_name}) and its basic therapeutic mechanisms relevant to dampening inflammation or supporting immunotherapy for [disease].
+**Objective:** Assess whether {drug_name} should be further developed for the treatment of the specified [disease].
+**Unmet Need:** Summarize treatment gaps specifically in the [disease] setting and how {drug_name} (or its relevant form) offers differentiation.
+**Supportive Evidence (Pre-clinical/Clinical):** Briefly summarize pre-clinical evidence supporting {drug_name}'s therapeutic target in [disease] and describe any clinical trial evidence supporting {drug_name} use for this specific [disease].
+**Relevant Regulatory History:** Note drug approval milestones or FDA/EMA designations (e.g., Orphan Drug, Fast Track) specifically for {drug_name} in the context of [disease].
 
 #### B. Disease Overview: [disease]
-- **Focus:** All content must be specific to the [disease] indicated for the report.
+**Focus:** All content must be specific to the [disease] indicated for the report.
 - **High-level description:** 1-2 paragraphs on [disease] characteristics: presenting symptoms, sequelae, biologic changes, mortality/morbidity.
 - **Epidemiology:** Incidence and prevalence of [disease] in the US market, including any significant demographic variations.
 - **Diagnosis:** How [disease] is diagnosed, including screening procedures/testing, and any relevant diagnostic delays or undiagnosed populations for [disease].
@@ -87,7 +88,7 @@ Ensure all information and analysis provided is specific to {disease} and {drug_
 **Sources for this section:** Peer-reviewed literature (PubMed/Google Scholar). Search on [disease] name + biomarkers, current reviews, or consensus treatment articles. Also search for therapeutic targets in [disease] and preclinical data relevant to {drug_name} for [disease]. Identify pivotal papers (e.g., most cited).
 
 #### C. Therapeutic Landscape for [disease]
-- **Focus:** Overview of treatments specifically for [disease].
+**Focus:** Overview of treatments specifically for [disease].
 
 **Approved Treatments** 
 - **Approved Therapies (for [disease])** 
@@ -104,27 +105,25 @@ Ensure all information and analysis provided is specific to {disease} and {drug_
 - Describe how {drug_name} (relevant form) could potentially be added to or integrated into these guidelines for [disease].
 
 #### E. Competitor Analysis for [disease]
-- **Focus:** Direct competitors to a {drug_name} therapy for the specified [disease].
+**Focus:** Direct competitors to an {drug_name} therapy for the specified [disease].
 - Summarize information on direct competitors in development for [disease] and their potential market impact in this disease area.
 - Include any relevant market trends for [disease] treatment.
 
 #### F. Clinical Trials Analysis for {drug_name} in [disease]
-- **Focus:** Clinical trials of {drug_name} (relevant form, e.g., {drug_form}) specifically for [disease].
-- **Source:** PubMed, ClinicalTrials.gov
+**Focus:** Clinical trials of {drug_name} (relevant form, e.g., {drug_form}) specifically for [disease].
+**Source:** PubMed, ClinicalTrials.gov
 
-**Completed {drug_name} Trials in [disease]** 
-- Table format: NCTID link, Sponsor, Enrollment, Design (Phase, # & dosage of treatment arms, +/- placebo), Endpoints (Progression measures, list all biomarkers used for [disease]), Results (Efficacy, toxicity), Publication (Link to article/poster/presentation)
-
-**Recruiting/Active, Not Recruiting {drug_name} Trials in [disease]** 
-- Table format: NCTID Link, Sponsor, Enrollment Goal, Design (Phase, key parameters), Endpoints
-
-**Terminated/Unknown Status {drug_name} Trials in [disease]** 
-- Table format: NCTID Link, Sponsor, Enrollment Goal, Design, Endpoints
+- **Completed {drug_name} Trials in [disease]** 
+  - Table format: NCTID link, Sponsor, Enrollment, Design (Phase, # & dosage of treatment arms, +/- placebo), Endpoints (Progression measures, list all biomarkers used for [disease]), Results (Efficacy, toxicity), Publication (Link to article/poster/presentation)
+- **Recruiting/Active, Not Recruiting {drug_name} Trials in [disease]** 
+  - Table format: NCTID Link, Sponsor, Enrollment Goal, Design (Phase, key parameters), Endpoints
+- **Terminated/Unknown Status {drug_name} Trials in [disease]** 
+  - Table format: NCTID Link, Sponsor, Enrollment Goal, Design, Endpoints
 
 **Guidance:** For each completed trial, search for a related publication. Also search for publications from trials without an NCTID (e.g., single-site retrospective analyses from last 5 years, cited by other papers) if they are pivotal for {drug_name} in [disease].
 
 #### G. Market & Opportunity Analysis for {drug_name} in [disease]
-- **Focus:** Market and opportunity specifically for a {drug_name} therapy in [disease].
+**Focus:** Market and opportunity specifically for an {drug_name} therapy in [disease].
 - **Market Overview for [disease]:** Assess the potential market size for [disease] treatments.
 - **Patents:** Discuss patents relevant to {drug_name} therapies (specific formulations, use in [disease]) and key competing therapies in the [disease] space.
 - **Relevant Designations for {drug_name} in [disease]:** Are any {drug_name} derivatives/formulations for [disease] on an FDA fast-track, orphan drug, or other special designation?
