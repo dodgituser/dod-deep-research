@@ -1,6 +1,6 @@
 """Schemas for aggregator agent."""
 
-from typing import Any
+from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -47,7 +47,7 @@ class EvidenceStore(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_unique_ids(self) -> "EvidenceStore":
+    def validate_unique_ids(self) -> Self:
         """Validate that all evidence IDs are unique across the store."""
         ids = [item.id for item in self.items]
         duplicates = [id for id in ids if ids.count(id) > 1]

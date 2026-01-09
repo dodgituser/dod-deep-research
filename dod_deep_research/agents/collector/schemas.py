@@ -17,7 +17,12 @@ class EvidenceItem(BaseModel):
         ),
     )
     source: Literal[
-        "pubmed", "clinicaltrials", "guideline", "press_release", "other"
+        "google",
+        "pubmed",
+        "clinicaltrials",
+        "guideline",
+        "press_release",
+        "other",
     ] = Field(..., description="Source type of the evidence.")
     title: str = Field(..., description="Exact title of the source.")
     url: str | None = Field(
@@ -51,12 +56,7 @@ class EvidenceItem(BaseModel):
 
     @model_validator(mode="after")
     def validate_and_prefix_id(self) -> Self:
-        """Validate URL for source types and prefix ID with section name."""
-        # Validate URL is required for pubmed and clinicaltrials sources
-        if self.source in ("pubmed", "clinicaltrials") and not self.url:
-            raise ValueError(f"URL is required for {self.source} sources")
-
-        # Prefix ID with section name if not already prefixed
+        """Normalize evidence IDs by prefixing with the section name."""
         if not self.id.startswith(f"{self.section}_"):
             self.id = f"{self.section}_{self.id}"
         return self
@@ -76,10 +76,14 @@ class CollectorResponse(BaseModel):
 
     @model_validator(mode="after")
     def validate_non_empty_evidence(self) -> Self:
-        """Validate that evidence list is non-empty for required sections."""
+        """Ensure required sections meet minimum evidence count."""
         common_sections = [s.value for s in get_common_sections()]
         if self.section in common_sections and not self.evidence:
             raise ValueError(
                 f"Evidence list cannot be empty for required section '{self.section}'"
+            )
+        if self.section in common_sections and len(self.evidence) < 3:
+            raise ValueError(
+                f"Evidence list must include at least 3 items for required section '{self.section}'"
             )
         return self

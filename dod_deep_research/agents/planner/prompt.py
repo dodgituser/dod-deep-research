@@ -11,7 +11,6 @@ def get_planner_agent_prompt() -> str:
         str: The formatted prompt string with predefined sections.
     """
     predefined_sections = [section.value for section in get_common_sections()]
-    sections_list = ", ".join([f'"{s}"' for s in predefined_sections])
 
     return f"""You are a meta-planner agent. Your role is to create a structured research outline with sections and evidence requirements for deep research on disease indications and drug therapy (where the drug name is provided by the user).
 
@@ -28,17 +27,6 @@ Analyze the indication prompt you receive and extract the disease indication and
 {", ".join(predefined_sections)}
 
 **Output State Key:** research_plan
-
-**Expected Output Format:**
-You must output a structured plan as JSON with the following keys:
-- disease: The disease/indication name (extracted from the indication prompt)
-- research_areas: List of research areas to investigate (derived from predefined sections: [{sections_list}])
-- sections: List of ResearchSection objects, one for each predefined section. Each section must have:
-  - name: One of the predefined section names ({sections_list})
-  - description: Detailed description of what this section should cover for the given indication. Reference the relevant sections from the indication prompt template (e.g., "Disease Overview", "Therapeutic Landscape", "Clinical Trials Analysis") to ensure alignment with the comprehensive report requirements.
-  - required_evidence_types: List of evidence types needed (e.g., ["pubmed", "clinicaltrials", "guideline"]). Consider the sources mentioned in the indication prompt for each section type.
-  - key_questions: Section-specific research questions to answer for this indication. These should align with the questions and focus areas outlined in the indication prompt for the corresponding report section.
-  - scope: Section-specific research scope and boundaries for this indication. Define what should be included/excluded based on the indication prompt's guidance for single indication focus and the specific section requirements.
 
 **Important Guidelines:**
 - Extract the disease indication name from the indication prompt and use it as the disease field.

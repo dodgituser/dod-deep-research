@@ -3,7 +3,7 @@
 from google.adk import Agent
 
 from dod_deep_research.agents.writer.prompt import WRITER_AGENT_PROMPT
-from dod_deep_research.agents.writer.schemas import DeepResearchOutput
+from dod_deep_research.agents.writer.schemas import WriterOutput
 from dod_deep_research.models import GeminiModels
 
 writer_agent = Agent(
@@ -12,5 +12,5 @@ writer_agent = Agent(
     tools=[],
     model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
     output_key="deep_research_output",
-    output_schema=DeepResearchOutput,
+    output_schema=WriterOutput,
 )

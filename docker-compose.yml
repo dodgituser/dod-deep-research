@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  pubmed-mcp:
+    build:
+      context: ../pubmed-mcp-server
+      dockerfile: Dockerfile
+    image: pubmed-mcp:local
+    container_name: pubmed-mcp-server
+    ports:
+      - "3017:3017"
+    environment:
+      - PORT=3017
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+  clinical-trials-mcp:
+    build:
+      context: ../clinicaltrialsgov-mcp-server
+      dockerfile: Dockerfile
+    image: clinicaltrialsgov-mcp:local
+    container_name: clinicaltrialsgov-mcp-server
+    ports:
+      - "3018:3018"
+    environment:
+      - PORT=3018
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+networks:
+  mcp-network:
+    driver: bridge

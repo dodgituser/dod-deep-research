@@ -1,12 +1,11 @@
 """Schemas for writer agent."""
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_serializer
 
 from dod_deep_research.agents.aggregator.schemas import KeyValuePair
-from dod_deep_research.agents.collector.schemas import EvidenceItem
 
 
 class Metadata(BaseModel):
@@ -66,7 +65,7 @@ class IndicationProfile(BaseModel):
 
 
 class MechanisticRationale(BaseModel):
-    """Mechanistic rationale for IL-2 therapy."""
+    """Mechanistic rationale for the drug therapy."""
 
     mechanism_name: str = Field(
         ...,
@@ -74,7 +73,7 @@ class MechanisticRationale(BaseModel):
     )
     relevance_score: Literal["high", "medium", "low"] = Field(
         ...,
-        description="How relevant the mechanism is to IL-2 in this indication.",
+        description="How relevant the mechanism is to the drug in this indication.",
     )
     evidence_ids: list[str] = Field(
         default_factory=list,
@@ -116,8 +115,8 @@ class CompetitiveLandscape(BaseModel):
     )
 
 
-class IL2SpecificTrial(BaseModel):
-    """IL-2 specific clinical trial."""
+class DrugSpecificTrial(BaseModel):
+    """Drug-specific clinical trial."""
 
     nct_id: str = Field(..., description="ClinicalTrials.gov identifier.")
     trial_status: Literal[
@@ -137,7 +136,7 @@ class IL2SpecificTrial(BaseModel):
     )
     intervention_name: str = Field(
         ...,
-        description="Primary IL-2 intervention name.",
+        description="Primary drug intervention name.",
     )
     dose: str | None = Field(
         None,
@@ -169,8 +168,8 @@ class IL2SpecificTrial(BaseModel):
     )
 
 
-class DeepResearchOutput(BaseModel):
-    """Root model for deep research structured output."""
+class WriterOutput(BaseModel):
+    """Writer agent output schema (without evidence field)."""
 
     metadata: Metadata = Field(
         ...,
@@ -180,44 +179,19 @@ class DeepResearchOutput(BaseModel):
         ...,
         description="High-level disease overview and biomarkers.",
     )
-    evidence: list[EvidenceItem] = Field(
-        default_factory=list,
-        description="All evidence items referenced in the output.",
-    )
     mechanistic_rationales: list[MechanisticRationale] = Field(
         default_factory=list,
         description="Mechanistic rationales grounded in evidence.",
     )
     competitive_landscape: list[CompetitiveLandscape] = Field(
         default_factory=list,
-        description="Competitor entries relevant to IL-2 in this indication.",
+        description="Competitor entries relevant to the drug in this indication.",
     )
-    il2_specific_trials: list[IL2SpecificTrial] = Field(
+    drug_specific_trials: list[DrugSpecificTrial] = Field(
         default_factory=list,
-        description="IL-2 specific trials relevant to this indication.",
+        description="Drug-specific trials relevant to this indication.",
     )
     provenance: list[KeyValuePair] = Field(
         default_factory=list,
         description="Audit trail or provenance notes as key-value pairs.",
     )
-
-    def to_evidence_table(self) -> list[dict[str, Any]]:
-        """
-        Generate evidence table specification.
-
-        Returns:
-            list[dict]: List of evidence entries formatted for table display.
-        """
-        return [
-            {
-                "id": ev.id,
-                "source": ev.source,
-                "title": ev.title,
-                "url": ev.url,
-                "year": ev.year,
-                "quote": ev.quote,
-                "tags": ev.tags,
-                "section": ev.section,
-            }
-            for ev in self.evidence
-        ]

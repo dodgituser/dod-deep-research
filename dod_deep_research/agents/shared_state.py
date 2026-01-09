@@ -1,14 +1,18 @@
 """Shared state contract for map-reduce agent pipeline."""
 
 import hashlib
-
+import logging
 from pydantic import BaseModel, Field
 
+from typing import Any
+
 from dod_deep_research.agents.aggregator.schemas import EvidenceStore, KeyValuePair
-from dod_deep_research.agents.collector.schemas import CollectorResponse
+from dod_deep_research.agents.collector.schemas import CollectorResponse, EvidenceItem
 from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.agents.validator.schemas import ValidationReport
-from dod_deep_research.agents.writer.schemas import DeepResearchOutput
+from dod_deep_research.agents.writer.schemas import WriterOutput
+
+logger = logging.getLogger(__name__)
 
 
 def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> EvidenceStore:
@@ -16,9 +20,10 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
     Deterministically merge evidence from parallel collectors into a single evidence store.
 
     This function performs the following operations:
-    1. Merges all evidence items from all section stores into a single list
-    2. Deduplicates evidence using content hashing (title + url + quote)
-    3. Builds indexes for efficient lookup:
+    1. Filters out low-quality evidence (missing required URLs or quotes)
+    2. Merges all evidence items from all section stores into a single list
+    3. Deduplicates evidence using content hashing (title + url + quote)
+    4. Builds indexes for efficient lookup:
        - by_section: Groups evidence IDs by section name
        - by_source: Groups evidence IDs by source URL
        - hash_index: Maps content hash to evidence ID for deduplication
@@ -36,13 +41,34 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
         (preserving order from collectors). Evidence IDs are preserved as-is since
         they're already prefixed with section names.
     """
+    if not section_stores:
+        logger.warning("No section stores provided for aggregation")
+        return EvidenceStore(items=[], by_section=[], by_source=[], hash_index=[])
+
+    logger.info(f"Aggregating evidence from {len(section_stores)} sections")
+
     all_items = []
     seen_hashes: dict[str, str] = {}  # hash -> evidence_id
     item_hashes: dict[str, str] = {}  # evidence_id -> hash
+    filtered_count = 0
+    duplicate_count = 0
+    total_items = 0
+
+    def is_valid_evidence(item: EvidenceItem) -> bool:
+        """Check if an evidence item meets minimum quality requirements."""
+        if not item.url or not item.url.strip():
+            return False
+        if not item.quote or not item.quote.strip():
+            return False
+        return True
 
     # Merge all evidence items and deduplicate
     for section_name, collector_response in section_stores.items():
         for item in collector_response.evidence:
+            total_items += 1
+            if not is_valid_evidence(item):
+                filtered_count += 1
+                continue
             # Compute content hash for deduplication
             content_str = f"{item.title}|{item.url or ''}|{item.quote}"
             content_hash = hashlib.sha256(content_str.encode()).hexdigest()
@@ -52,6 +78,8 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
                 seen_hashes[content_hash] = item.id
                 item_hashes[item.id] = content_hash
                 all_items.append(item)
+            else:
+                duplicate_count += 1
 
     # Build indexes
     by_section: dict[str, list[str]] = {}
@@ -77,6 +105,11 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
     by_source_kvp = [KeyValuePair(key=k or "", value=v) for k, v in by_source.items()]
     hash_index_kvp = [KeyValuePair(key=k, value=v) for k, v in hash_index.items()]
 
+    logger.info(
+        f"Evidence aggregation complete: {len(all_items)} items retained "
+        f"(filtered {filtered_count}, duplicates removed {duplicate_count} out of {total_items} total)"
+    )
+
     return EvidenceStore(
         items=all_items,
         by_section=by_section_kvp,
@@ -85,11 +118,43 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
     )
 
 
+class DeepResearchOutput(WriterOutput):
+    """Root model for deep research structured output with evidence."""
+
+    evidence: list[EvidenceItem] = Field(
+        default_factory=list,
+        description="All evidence items referenced in the output. This field is automatically populated from evidence_store.items after generation.",
+    )
+
+    def to_evidence_table(self) -> list[dict[str, Any]]:
+        """
+        Generate evidence table specification.
+
+        Returns:
+            list[dict]: List of evidence entries formatted for table display.
+        """
+        return [
+            {
+                "id": ev.id,
+                "source": ev.source,
+                "title": ev.title,
+                "url": ev.url,
+                "year": ev.year,
+                "quote": ev.quote,
+                "tags": ev.tags,
+                "section": ev.section,
+            }
+            for ev in self.evidence
+        ]
+
+
 class SharedState(BaseModel):
     """
     Shared state contract for map-reduce agent pipeline.
 
     Documents the state keys used for passing data between agents:
+    - drug_name (str): Drug name being researched (available to all agents)
+    - disease_name (str): Disease/indication name being researched (available to all agents)
     - research_plan (ResearchPlan): Meta-planner → Collectors
     - evidence_store_section_* (CollectorResponse): Collectors → Deterministic aggregation function
     - evidence_store (EvidenceStore): Aggregation function → Validator → Writer
@@ -97,6 +162,14 @@ class SharedState(BaseModel):
     - deep_research_output (DeepResearchOutput): Writer → Final
     """
 
+    drug_name: str | None = Field(
+        default=None,
+        description="Drug name being researched (e.g., 'IL-2', 'Aspirin'). Available to all agents.",
+    )
+    disease_name: str | None = Field(
+        default=None,
+        description="Disease/indication name being researched (e.g., 'ALS', 'SLE', 'cancer'). Available to all agents.",
+    )
     research_plan: ResearchPlan | None = Field(
         default=None,
         description="ResearchPlan model: Structured plan with disease, research_areas and sections (each section has name, description, required_evidence_types, key_questions, scope) (Meta-planner output)",

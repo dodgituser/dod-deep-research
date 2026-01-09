@@ -27,11 +27,11 @@ My specific disease indication for this report is: {disease}.
 
 Please generate a comprehensive report on {drug_form} for {disease} ONLY. 
 
-Adhere strictly to the following "Comprehensive Instructions and Template Guidance for IL-2 Indication Reports" that I am pasting below. 
+Adhere strictly to the following "Comprehensive Instructions and Template Guidance for {drug_name} Indication Reports" that I am pasting below. 
 
 Ensure all information and analysis provided is specific to {disease} and {drug_name}'s role within that context.
 
-## Comprehensive Instructions and Template Guidance for IL-2 Indication Reports
+## Comprehensive Instructions and Template Guidance for {drug_name} Indication Reports
 
 ### 1. Project Objective & Audience
 **Audience:** This project is for a US biotechnology company.
@@ -66,7 +66,7 @@ Ensure all information and analysis provided is specific to {disease} and {drug_
 - Use numbers in square brackets for citations (e.g., [1], [2]); every citation must map to an entry in the "References" section.
 - Keep sentences readable (aim for <30 words). Split complex ideas.
 
-### 3. Report Structure & Section-Specific Guidance (Based on "IL-2 Project Template v2.docx")
+### 3. Report Structure & Section-Specific Guidance 
 
 #### A. Rationale/Executive Summary
 **Focus:** Summarize the core findings and recommendation for the specified [disease] only.

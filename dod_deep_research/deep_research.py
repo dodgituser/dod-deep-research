@@ -12,12 +12,18 @@ from google.genai import types
 
 from google.adk import runners
 
+from dod_deep_research.agents.aggregator.schemas import EvidenceStore
 from dod_deep_research.agents.collector.schemas import CollectorResponse
 from dod_deep_research.agents.sequence_agents import (
     post_aggregation_agent,
     pre_aggregation_agent,
 )
-from dod_deep_research.agents.shared_state import SharedState, aggregate_evidence
+from dod_deep_research.agents.shared_state import (
+    DeepResearchOutput,
+    SharedState,
+    aggregate_evidence,
+)
+from dod_deep_research.agents.writer.schemas import WriterOutput
 from dod_deep_research.prompts.indication_prompt import generate_indication_prompt
 
 logging.basicConfig(
@@ -25,8 +31,8 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 # Suppress verbose logs from Google GenAI and httpx
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("google_adk.google.adk.models.google_llm").setLevel(logging.WARNING)
+# logging.getLogger("httpx").setLevel(logging.WARNING)
+# logging.getLogger("google_adk.google.adk.models.google_llm").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 RESEARCH_DIR = Path(__file__).parent / "research"
@@ -67,6 +73,7 @@ async def run_agent(
                     try:
                         parsed_json = json.loads(part.text)
                         logger.info(f"Parsed JSON response from agent '{event.author}'")
+                        logger.debug(f"Parsed JSON: {parsed_json}")
                         json_responses.append(parsed_json)
                     except json.JSONDecodeError as e:
                         logger.warning(
@@ -216,8 +223,28 @@ async def run_pipeline_async(
     )
     state = final_session.state if final_session else session_post.state
 
+    # Inject evidence deterministically from evidence_store into writer output
+    writer_output_dict = state.get("deep_research_output")
+    evidence_store_dict = state.get("evidence_store")
+
+    if writer_output_dict and evidence_store_dict:
+        writer_output = WriterOutput(**writer_output_dict)
+        evidence_store = EvidenceStore(**evidence_store_dict)
+
+        deep_research_output = DeepResearchOutput(
+            **writer_output.model_dump(),
+            evidence=evidence_store.items,
+        )
+
+        state["deep_research_output"] = deep_research_output.model_dump()
+        logger.info(
+            f"Injected {len(evidence_store.items)} evidence items into DeepResearchOutput"
+        )
+
     logger.debug("Constructing SharedState from session state")
     shared_state = SharedState(
+        drug_name=state.get("drug_name"),
+        disease_name=state.get("indication"),
         research_plan=state.get("research_plan"),
         evidence_store=state.get("evidence_store"),
         validation_report=state.get("validation_report"),
@@ -283,12 +310,6 @@ def main(
         "--drug-generic-name",
         help="Generic name of the drug (e.g., 'Aldesleukin')",
     ),
-    output: Path | None = typer.Option(
-        None,
-        "--output",
-        "-o",
-        help="Output file path to save the research results (JSON format)",
-    ),
 ):
     """
     Run the deep research pipeline for a given disease indication.
@@ -316,14 +337,7 @@ def main(
             drug_generic_name=drug_generic_name,
         )
 
-        if output:
-            logger.info(f"Writing results to output file: {output}")
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(shared_state.model_dump_json(indent=2))
-            logger.info(f"Results saved to: {output}")
-        else:
-            logger.debug("No output file specified, printing to stdout")
-            typer.echo(shared_state.model_dump_json(indent=2))
+        typer.echo(shared_state.model_dump_json(indent=2))
 
         logger.info("Pipeline completed successfully")
     except Exception as e:

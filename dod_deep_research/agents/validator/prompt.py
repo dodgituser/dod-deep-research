@@ -19,11 +19,4 @@ Read the evidence store from shared state key "evidence_store". The store contai
 3. Normalize evidence items (ensure consistent formatting, validate required fields)
 4. Check that evidence IDs are properly referenced (note: IDs are prefixed with section names, e.g., "disease_overview_E1")
 
-**Expected Output Format:**
-Generate a validation report as a JSON object with:
-- is_valid: Boolean indicating if schema validation passes
-- errors: List of error messages for schema violations
-- missing_fields: List of required fields that are missing
-- warnings: List of warnings about potential issues (e.g., missing references, incomplete evidence)
-
 Store your output in the shared state under the key "validation_report"."""
