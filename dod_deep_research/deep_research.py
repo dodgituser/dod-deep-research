@@ -1,6 +1,7 @@
 """Deep research pipeline entry point."""
 
 import asyncio
+import inspect
 import json
 import logging
 import uuid
@@ -11,6 +12,8 @@ import typer
 from google.genai import types
 
 from google.adk import runners
+from google.adk.apps.app import App
+from google.adk.plugins import ReflectAndRetryToolPlugin
 
 from dod_deep_research.agents.aggregator.schemas import EvidenceStore
 from dod_deep_research.agents.collector.schemas import CollectorResponse
@@ -37,6 +40,40 @@ logger = logging.getLogger(__name__)
 
 RESEARCH_DIR = Path(__file__).parent / "research"
 app = typer.Typer()
+
+
+def build_runner(
+    agent: object,
+    app_name: str,
+) -> runners.InMemoryRunner:
+    """
+    Build an in-memory runner with the Reflect-and-Retry plugin when supported.
+
+    Args:
+        agent: Root agent for the runner.
+        app_name: Application name for the runner context.
+
+    Returns:
+        InMemoryRunner: Configured runner instance.
+    """
+    retry_plugin = ReflectAndRetryToolPlugin(max_retries=3)
+    app_instance = App(
+        name=app_name,
+        root_agent=agent,
+        plugins=[retry_plugin],
+    )
+    runner_params = inspect.signature(runners.InMemoryRunner).parameters
+    if "app" in runner_params:
+        if "app_name" in runner_params:
+            return runners.InMemoryRunner(app=app_instance, app_name=app_name)
+        return runners.InMemoryRunner(app=app_instance)
+    if "plugins" in runner_params:
+        return runners.InMemoryRunner(
+            agent=agent,
+            app_name=app_name,
+            plugins=[retry_plugin],
+        )
+    return runners.InMemoryRunner(agent=agent, app_name=app_name)
 
 
 async def run_agent(
@@ -135,7 +172,7 @@ async def run_pipeline_async(
 
     # Phase 1: Run pre-aggregation agents (planner + collectors)
     logger.info("Starting pre-aggregation phase (planner + collectors)")
-    runner_pre = runners.InMemoryRunner(agent=pre_aggregation_agent, app_name=app_name)
+    runner_pre = build_runner(agent=pre_aggregation_agent, app_name=app_name)
     session = await runner_pre.session_service.create_session(
         app_name=app_name,
         user_id=user_id,
@@ -189,9 +226,7 @@ async def run_pipeline_async(
 
     # Phase 2: Run post-aggregation agents (validator + writer)
     logger.info("Starting post-aggregation phase (validator + writer)")
-    runner_post = runners.InMemoryRunner(
-        agent=post_aggregation_agent, app_name=app_name
-    )
+    runner_post = build_runner(agent=post_aggregation_agent, app_name=app_name)
     session_post = await runner_post.session_service.create_session(
         app_name=app_name,
         user_id=user_id,
