@@ -12,7 +12,6 @@ from google.adk.events import Event, EventActions
 
 from dod_deep_research.core import build_runner, run_agent, get_output_file
 
-from dod_deep_research.agents.aggregator.schemas import EvidenceStore
 from dod_deep_research.agents.collector.agent import create_targeted_collectors_agent
 from dod_deep_research.agents.research_head.agent import (
     aggregate_evidence_after_collectors,
@@ -21,8 +20,8 @@ from dod_deep_research.agents.research_head.agent import (
 from dod_deep_research.agents.planner.schemas import get_common_sections
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 from dod_deep_research.agents.sequence_agents import (
-    post_aggregation_agent,
     pre_aggregation_agent,
+    post_aggregation_agent,
 )
 from dod_deep_research.agents.shared_state import (
     DeepResearchOutput,
@@ -33,6 +32,7 @@ from dod_deep_research.agents.shared_state import (
 from dod_deep_research.agents.writer.schemas import WriterOutput
 from dod_deep_research.prompts.indication_prompt import generate_indication_prompt
 from dod_deep_research.loggy import setup_logging
+from dod_deep_research.agents.shared_state import EvidenceStore
 import logging
 
 setup_logging(level=logging.DEBUG)

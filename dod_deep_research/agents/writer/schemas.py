@@ -4,8 +4,7 @@ from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_serializer
-
-from dod_deep_research.agents.aggregator.schemas import KeyValuePair
+from dod_deep_research.agents.schemas import KeyValuePair
 
 
 class Metadata(BaseModel):

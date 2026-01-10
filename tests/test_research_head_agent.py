@@ -5,11 +5,11 @@ import uuid
 import pytest
 from google.genai import types
 
-from dod_deep_research.agents.aggregator.schemas import EvidenceStore
 from dod_deep_research.agents.collector.schemas import EvidenceItem
 from dod_deep_research.agents.research_head.agent import research_head_agent
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 from dod_deep_research.deep_research import build_runner, run_agent
+from dod_deep_research.agents.shared_state import EvidenceStore
 
 
 @pytest.mark.asyncio

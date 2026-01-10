@@ -1,6 +1,8 @@
 """Shared schema enums for agent outputs."""
 
 from enum import StrEnum
+from pydantic import BaseModel, Field
+from typing import Any
 
 
 class EvidenceSource(StrEnum):
@@ -28,3 +30,16 @@ class TaskPriority(StrEnum):
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
+
+
+class KeyValuePair(BaseModel):
+    """Key-value pair for dictionary-like structures."""
+
+    key: str = Field(
+        ...,
+        description="Lookup key (e.g., section name, source URL, or hash string).",
+    )
+    value: Any = Field(
+        ...,
+        description=("Lookup value (usually a list of evidence IDs for that key)."),
+    )
