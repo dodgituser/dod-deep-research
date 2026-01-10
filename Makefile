@@ -25,7 +25,8 @@ clean:
 
 compose-up:
 	@echo "Starting docker compose services..."
-	docker compose -f docker-compose.yml up -d --build
+	docker compose -f docker-compose.yml build --no-cache
+	docker compose -f docker-compose.yml up -d
 
 compose-down:
 	@echo "Stopping docker compose services..."
@@ -48,7 +49,8 @@ run:
 		exit 1; \
 	fi
 	@mkdir -p research
-	@cmd="docker compose -f docker-compose.yml --profile pipeline run --build --rm -v \"$(PWD)/research:/app/dod_deep_research/research\" pipeline --indication \"$(INDICATION)\" --drug-name \"$(DRUG_NAME)\""; \
+	@docker compose -f docker-compose.yml --profile pipeline build --no-cache; \
+	cmd="docker compose -f docker-compose.yml --profile pipeline run --rm -v \"$(PWD)/research:/app/dod_deep_research/research\" pipeline --indication \"$(INDICATION)\" --drug-name \"$(DRUG_NAME)\""; \
 	if [ -n "$(DRUG_FORM)" ]; then cmd="$$cmd --drug-form \"$(DRUG_FORM)\""; fi; \
 	if [ -n "$(DRUG_GENERIC_NAME)" ]; then cmd="$$cmd --drug-generic-name \"$(DRUG_GENERIC_NAME)\""; fi; \
 	echo "$$cmd"; \
