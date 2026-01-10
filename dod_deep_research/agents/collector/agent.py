@@ -84,11 +84,14 @@ def create_collector_agent(
     )
 
 
-def create_collector_agents(sections: list[str]) -> list[Agent]:
+def create_collector_agents(sections: list[str]) -> ParallelAgent:
     """
     Create a list of collector agents for the given sections.
     """
-    return [create_collector_agent(section) for section in sections]
+    return ParallelAgent(
+        name="evidence_collectors",
+        sub_agents=[create_collector_agent(section) for section in sections],
+    )
 
 
 def create_targeted_collector_agent(task: RetrievalTask) -> Agent:

@@ -5,7 +5,6 @@ from typing import Optional
 
 from google.adk import Agent
 from google.adk.agents.callback_context import CallbackContext
-from google.adk.tools import FunctionTool
 from google.genai import types
 
 from dod_deep_research.agents.research_head.prompt import RESEARCH_HEAD_AGENT_PROMPT
@@ -15,14 +14,12 @@ from dod_deep_research.agents.shared_state import (
     extract_section_stores,
 )
 from dod_deep_research.models import GeminiModels
-from dod_deep_research.tools import exit_loop
 
 logger = logging.getLogger(__name__)
 
 research_head_agent = Agent(
     name="research_head_agent",
     instruction=RESEARCH_HEAD_AGENT_PROMPT,
-    tools=[FunctionTool(exit_loop)],
     model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
     output_key="research_head_plan",
     output_schema=ResearchHeadPlan,

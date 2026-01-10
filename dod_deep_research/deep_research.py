@@ -35,7 +35,7 @@ from dod_deep_research.prompts.indication_prompt import generate_indication_prom
 from dod_deep_research.loggy import setup_logging
 import logging
 
-setup_logging()
+setup_logging(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 app = typer.Typer()
 
@@ -97,6 +97,14 @@ async def run_pre_aggregation(
     logger.info(f"Session state keys: {list(state.keys())}")
 
     section_stores = extract_section_stores(state)
+    if section_stores:
+        logger.info(
+            f"Collector outputs found for sections: {sorted(section_stores.keys())}"
+        )
+    else:
+        logger.warning(
+            "No collector outputs found in state (evidence_store_section_* keys missing)."
+        )
     logger.info(f"Aggregating evidence from {len(section_stores)} sections")
     evidence_store = aggregate_evidence(section_stores)
     logger.info(
@@ -104,9 +112,10 @@ async def run_pre_aggregation(
     )
 
     evidence_event = Event(
+        author="system",
         actions=EventActions(
             state_delta={"evidence_store": evidence_store.model_dump()}
-        )
+        ),
     )
     await runner_pre.session_service.append_event(updated_session, evidence_event)
 
@@ -146,69 +155,6 @@ async def run_iterative_research_loop(
         loop_iteration += 1
         logger.info(f"Gap-driven loop iteration {loop_iteration}")
 
-        research_head_plan_dict = session_loop.state.get("research_head_plan")
-        if research_head_plan_dict:
-            try:
-                research_head_plan = ResearchHeadPlan(**research_head_plan_dict)
-                if research_head_plan.tasks and research_head_plan.continue_research:
-                    logger.info(
-                        f"Running {len(research_head_plan.tasks)} targeted collectors"
-                    )
-                    targeted_collectors = create_targeted_collectors_agent(
-                        research_head_plan.tasks,
-                        after_agent_callback=aggregate_evidence_after_collectors,
-                    )
-                    runner_targeted = build_runner(
-                        agent=targeted_collectors, app_name=app_name
-                    )
-
-                    targeted_session = (
-                        await runner_targeted.session_service.create_session(
-                            app_name=app_name,
-                            user_id=session_loop.user_id,
-                            session_id=f"{session_loop.id}_targeted_{loop_iteration}",
-                            state=session_loop.state.copy(),
-                        )
-                    )
-
-                    await run_agent(
-                        runner_targeted,
-                        targeted_session.user_id,
-                        targeted_session.id,
-                        types.Content(
-                            parts=[
-                                types.Part.from_text(text="Collect evidence for tasks.")
-                            ],
-                            role="user",
-                        ),
-                    )
-
-                    updated_targeted_session = (
-                        await runner_targeted.session_service.get_session(
-                            app_name=app_name,
-                            user_id=targeted_session.user_id,
-                            session_id=targeted_session.id,
-                        )
-                    )
-
-                    merge_event = Event(
-                        actions=EventActions(state_delta=updated_targeted_session.state)
-                    )
-                    await runner_loop.session_service.append_event(
-                        session_loop, merge_event
-                    )
-
-                    # Refresh session_loop
-                    session_loop = await runner_loop.session_service.get_session(
-                        app_name=app_name,
-                        user_id=session_loop.user_id,
-                        session_id=session_loop.id,
-                    )
-            except Exception as e:
-                logger.warning(
-                    f"Failed to process research_head_plan or run collectors: {e}"
-                )
-
         loop_message = types.Content(
             parts=[types.Part.from_text(text="Continue gap analysis.")],
             role="user",
@@ -227,11 +173,84 @@ async def run_iterative_research_loop(
         session_loop.state = updated_loop_session.state
 
         research_head_plan_dict = session_loop.state.get("research_head_plan")
-        if research_head_plan_dict:
+        if not research_head_plan_dict:
+            logger.info("No research_head_plan found after analysis")
+            continue
+
+        try:
             research_head_plan = ResearchHeadPlan(**research_head_plan_dict)
-            if not research_head_plan.continue_research:
-                logger.info("ResearchHead determined gaps are resolved, exiting loop")
-                break
+        except Exception as e:
+            logger.warning(f"Failed to parse research_head_plan: {e}")
+            continue
+        logger.info(
+            "ResearchHead plan summary: "
+            f"continue_research={research_head_plan.continue_research}, "
+            f"tasks={len(research_head_plan.tasks)}, gaps={len(research_head_plan.gaps)}"
+        )
+
+        if not research_head_plan.continue_research or not research_head_plan.tasks:
+            logger.info(
+                "ResearchHead determined gaps are resolved, exiting loop or no tasks"
+            )
+            break
+
+        logger.info(f"Running {len(research_head_plan.tasks)} targeted collectors")
+        targeted_collectors = create_targeted_collectors_agent(
+            research_head_plan.tasks,
+            after_agent_callback=aggregate_evidence_after_collectors,
+        )
+        runner_targeted = build_runner(agent=targeted_collectors, app_name=app_name)
+
+        targeted_session = await runner_targeted.session_service.create_session(
+            app_name=app_name,
+            user_id=session_loop.user_id,
+            session_id=f"{session_loop.id}_targeted_{loop_iteration}",
+            state=session_loop.state.copy(),
+        )
+
+        await run_agent(
+            runner_targeted,
+            targeted_session.user_id,
+            targeted_session.id,
+            types.Content(
+                parts=[types.Part.from_text(text="Collect evidence for tasks.")],
+                role="user",
+            ),
+        )
+
+        updated_targeted_session = await runner_targeted.session_service.get_session(
+            app_name=app_name,
+            user_id=targeted_session.user_id,
+            session_id=targeted_session.id,
+        )
+
+        merge_event = Event(
+            author="system",
+            actions=EventActions(state_delta=updated_targeted_session.state),
+        )
+        await runner_loop.session_service.append_event(session_loop, merge_event)
+
+        session_loop = await runner_loop.session_service.get_session(
+            app_name=app_name,
+            user_id=session_loop.user_id,
+            session_id=session_loop.id,
+        )
+    # If max iterations is reached, run final gap analysis else we have already run the final gap analysis
+    if loop_iteration >= max_iterations:
+        logger.info("Max iterations reached, running final gap analysis")
+        loop_message = types.Content(
+            parts=[types.Part.from_text(text="Continue gap analysis.")],
+            role="user",
+        )
+        loop_responses = await run_agent(
+            runner_loop, session_loop.user_id, session_loop.id, loop_message
+        )
+        json_responses.extend(loop_responses)
+        session_loop = await runner_loop.session_service.get_session(
+            app_name=app_name,
+            user_id=session_loop.user_id,
+            session_id=session_loop.id,
+        )
 
     logger.info("Gap-driven loop phase completed")
     return session_loop, json_responses
@@ -358,9 +377,10 @@ async def run_pipeline_async(
         )
 
         output_event = Event(
+            author="system",
             actions=EventActions(
                 state_delta={"deep_research_output": deep_research_output.model_dump()}
-            )
+            ),
         )
         await runner_post.session_service.append_event(final_session, output_event)
 

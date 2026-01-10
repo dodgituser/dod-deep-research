@@ -9,6 +9,9 @@ services:
       - "3017:3017"
     environment:
       - PORT=3017
+      - MCP_LOG_LEVEL=warning
+      - MCP_TRANSPORT_TYPE=http
+      - MCP_HTTP_PORT=3017
     networks:
       - mcp-network
     restart: unless-stopped
@@ -23,6 +26,7 @@ services:
       - "3018:3018"
     environment:
       - MCP_HTTP_PORT=3018
+      - LOG_LEVEL=warn
     networks:
       - mcp-network
     restart: unless-stopped

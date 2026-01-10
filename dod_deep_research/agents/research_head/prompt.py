@@ -36,8 +36,8 @@ RESEARCH_HEAD_AGENT_PROMPT = """You are a Research Head agent responsible for an
      - Re-check gaps after targeted collection
      - Compare new evidence_store against original research_plan requirements
      - If no significant gaps remain OR gaps are minor/acceptable:
-       - Call the `exit_loop` tool to terminate the loop
-       - Do NOT output a new ResearchHeadPlan
+       - Set continue_research=False
+       - Output a ResearchHeadPlan with gaps/tasks updated as needed
      - If significant gaps still remain:
        - Update the gaps list
        - Generate new/updated retrieval tasks
@@ -59,16 +59,15 @@ RESEARCH_HEAD_AGENT_PROMPT = """You are a Research Head agent responsible for an
    - Write clear, focused queries that target specific gaps
 
 6. **Exit Criteria:**
-   - Call `exit_loop` when:
+   - Set continue_research=False when:
      - All required sections have adequate evidence coverage
      - Required evidence types are represented
      - Key questions are answered
      - Remaining gaps are minor or acceptable
-   - Do NOT exit if critical gaps remain or if required evidence types are missing
+   - Do NOT set continue_research=False if critical gaps remain or if required evidence types are missing
 
 **Important:** 
 - Be thorough in gap analysis but practical in exit decisions
-- Only call exit_loop when you're confident gaps are resolved
-- Always output ResearchHeadPlan unless you're calling exit_loop
+- Always output ResearchHeadPlan with a valid continue_research flag
 - Store your output in shared state under key "research_head_plan" as a ResearchHeadPlan object
 """

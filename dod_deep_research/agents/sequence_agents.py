@@ -13,7 +13,7 @@ pre_aggregation_agent = SequentialAgent(
     name="pre_aggregation_pipeline",
     sub_agents=[
         planner_agent,
-        create_collector_agents(get_common_sections()),
+        create_collector_agents([section.value for section in get_common_sections()]),
     ],
 )
 

@@ -5,7 +5,7 @@ COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are an evidence collector agent. Your r
 **Assigned Section:** {section_name}
 
 **Input State Key:** research_plan
-**State Context:** {state.research_plan}
+**State Context:** {{state.research_plan?}}
 
 **Output State Key:** evidence_store_section_{section_name}
 
@@ -57,8 +57,8 @@ TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collec
 
 **Input State Key:** research_plan, research_head_plan
 **State Context:**
-- research_plan: {state.research_plan}
-- research_head_plan (optional): {state.research_head_plan?}
+- research_plan: {{state.research_plan?}}
+- research_head_plan (optional): {{state.research_head_plan?}}
 
 **Output State Key:** evidence_store_section_{section_name}
 

@@ -4,7 +4,7 @@ from typing import Self
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from dod_deep_research.agents.planner.schemas import CommonSection, get_common_sections
+from dod_deep_research.agents.planner.schemas import get_common_sections
 from dod_deep_research.agents.schemas import EvidenceSource
 
 
@@ -37,7 +37,7 @@ class EvidenceItem(BaseModel):
         default_factory=list,
         description="Short topical tags to help retrieval and grouping.",
     )
-    section: CommonSection = Field(
+    section: str = Field(
         ...,
         description="Section name this evidence supports (must match plan sections).",
     )
@@ -62,17 +62,13 @@ class EvidenceItem(BaseModel):
 class CollectorResponse(BaseModel):
     """Response containing evidence items for a specific section."""
 
-    section: CommonSection = Field(
+    section: str = Field(
         ...,
         description="Section name that this collector was assigned.",
     )
     evidence: list[dict[str, str | int | list[str] | None]] = Field(
         ...,
-        description=(
-            "Evidence items collected for the assigned section. Each item is a dict with keys: "
-            "id (str), source (str: 'google'|'pubmed'|'clinicaltrials'|'guideline'|'press_release'|'other'), "
-            "title (str), url (str|None), quote (str), year (int|None), tags (list[str]), section (str)."
-        ),
+        description="Evidence items collected for the assigned section.",
     )
 
     @model_validator(mode="after")
@@ -83,8 +79,10 @@ class CollectorResponse(BaseModel):
         # Convert dicts to EvidenceItem objects for validation
         evidence_items = []
         for ev_dict in self.evidence:
-            item = EvidenceItem(**ev_dict)
-            evidence_items.append(item)
+            if isinstance(ev_dict, EvidenceItem):
+                evidence_items.append(ev_dict)
+            else:
+                evidence_items.append(EvidenceItem(**ev_dict))
 
         # Validate non-empty evidence
         if self.section in common_sections and not evidence_items:

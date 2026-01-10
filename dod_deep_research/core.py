@@ -55,6 +55,7 @@ async def run_agent(
         List of parsed JSON objects from final responses.
     """
     json_responses = []
+    final_response_count: dict[str, int] = {}
     async for event in runner.run_async(
         user_id=user_id,
         session_id=session_id,
@@ -65,6 +66,9 @@ async def run_agent(
             continue
 
         if event.content and event.content.parts:
+            final_response_count[event.author] = (
+                final_response_count.get(event.author, 0) + 1
+            )
             for part in event.content.parts:
                 if part.text:
                     try:
@@ -77,6 +81,13 @@ async def run_agent(
                             f"Failed to parse JSON from agent '{event.author}': {e}. "
                             f"Text preview: {part.text[:100]}..."
                         )
+        else:
+            logger.warning(
+                f"Final response from agent '{event.author}' had no text content."
+            )
+
+    if final_response_count:
+        logger.info(f"Final responses by agent: {final_response_count}")
 
     return json_responses
 
