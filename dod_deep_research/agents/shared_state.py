@@ -9,6 +9,7 @@ from typing import Any
 from dod_deep_research.agents.aggregator.schemas import EvidenceStore, KeyValuePair
 from dod_deep_research.agents.collector.schemas import CollectorResponse, EvidenceItem
 from dod_deep_research.agents.planner.schemas import ResearchPlan
+from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 from dod_deep_research.agents.writer.schemas import WriterOutput
 
 logger = logging.getLogger(__name__)
@@ -156,7 +157,8 @@ class SharedState(BaseModel):
     - disease_name (str): Disease/indication name being researched (available to all agents)
     - research_plan (ResearchPlan): Meta-planner → Collectors
     - evidence_store_section_* (CollectorResponse): Collectors → Deterministic aggregation function
-    - evidence_store (EvidenceStore): Aggregation function → Writer
+    - evidence_store (EvidenceStore): Aggregation function → ResearchHead/Writer
+    - research_head_plan (ResearchHeadPlan): ResearchHead → Targeted Collectors
     - deep_research_output (DeepResearchOutput): Writer → Final
     """
 
@@ -175,6 +177,10 @@ class SharedState(BaseModel):
     evidence_store: EvidenceStore | None = Field(
         default=None,
         description="EvidenceStore model: Centralized evidence store with indexing and deduplication (Aggregation function output)",
+    )
+    research_head_plan: ResearchHeadPlan | None = Field(
+        default=None,
+        description="ResearchHeadPlan model: Gap analysis and targeted retrieval tasks (ResearchHead output)",
     )
     deep_research_output: DeepResearchOutput | None = Field(
         default=None,

@@ -16,7 +16,13 @@ from google.adk.apps.app import App
 from google.adk.plugins import ReflectAndRetryToolPlugin
 
 from dod_deep_research.agents.aggregator.schemas import EvidenceStore
+from dod_deep_research.agents.collector.agent import create_targeted_collectors_agent
 from dod_deep_research.agents.collector.schemas import CollectorResponse
+from dod_deep_research.agents.research_head.agent import (
+    aggregate_evidence_after_collectors,
+    gap_driven_loop,
+)
+from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 from dod_deep_research.agents.sequence_agents import (
     post_aggregation_agent,
     pre_aggregation_agent,
@@ -242,16 +248,124 @@ async def run_pipeline_async(
     session.state["evidence_store"] = evidence_store.model_dump()
     logger.info(f"Updated session {session.id} state with aggregated evidence")
 
-    # Phase 2: Run post-aggregation agents (writer)
+    # Phase 2: Run gap-driven loop
+    logger.info("Starting gap-driven loop phase")
+    runner_loop = build_runner(agent=gap_driven_loop, app_name=app_name)
+
+    session_loop = await runner_loop.session_service.create_session(
+        app_name=app_name,
+        user_id=session.user_id,
+        session_id=session.id,
+        state=session.state.copy(),
+    )
+    logger.info(f"Created session in gap-driven loop runner: {session_loop.id}")
+
+    # Run loop iterations manually to handle dynamic targeted collectors
+    loop_iteration = 0
+    max_iterations = 5
+
+    while loop_iteration < max_iterations:
+        loop_iteration += 1
+        logger.info(f"Gap-driven loop iteration {loop_iteration}")
+
+        # Check if we have tasks from previous iteration and run targeted collectors
+        research_head_plan_dict = session_loop.state.get("research_head_plan")
+        if research_head_plan_dict:
+            try:
+                research_head_plan = ResearchHeadPlan(**research_head_plan_dict)
+                if research_head_plan.tasks and research_head_plan.continue_research:
+                    logger.info(
+                        f"Running {len(research_head_plan.tasks)} targeted collectors"
+                    )
+                    # Create and run targeted collectors with aggregation callback
+                    targeted_collectors = create_targeted_collectors_agent(
+                        research_head_plan.tasks,
+                        after_agent_callback=aggregate_evidence_after_collectors,
+                    )
+                    runner_targeted = build_runner(
+                        agent=targeted_collectors, app_name=app_name
+                    )
+
+                    targeted_session = (
+                        await runner_targeted.session_service.create_session(
+                            app_name=app_name,
+                            user_id=session_loop.user_id,
+                            session_id=f"{session_loop.id}_targeted_{loop_iteration}",
+                            state=session_loop.state.copy(),
+                        )
+                    )
+
+                    await run_agent(
+                        runner_targeted,
+                        targeted_session.user_id,
+                        targeted_session.id,
+                        types.Content(
+                            parts=[
+                                types.Part.from_text(text="Collect evidence for tasks.")
+                            ],
+                            role="user",
+                        ),
+                    )
+
+                    # Get updated state with new evidence (callback already aggregated)
+                    updated_targeted_session = (
+                        await runner_targeted.session_service.get_session(
+                            app_name=app_name,
+                            user_id=targeted_session.user_id,
+                            session_id=targeted_session.id,
+                        )
+                    )
+                    # Merge all state including aggregated evidence_store
+                    session_loop.state.update(updated_targeted_session.state)
+            except Exception as e:
+                logger.warning(
+                    f"Failed to process research_head_plan or run collectors: {e}"
+                )
+
+        # Run loop iteration (research head - aggregation already done by callback)
+        loop_message = types.Content(
+            parts=[types.Part.from_text(text="Continue gap analysis.")],
+            role="user",
+        )
+
+        loop_responses = await run_agent(
+            runner_loop, session_loop.user_id, session_loop.id, loop_message
+        )
+        json_responses.extend(loop_responses)
+
+        # Refresh session to check if loop should exit
+        updated_loop_session = await runner_loop.session_service.get_session(
+            app_name=app_name,
+            user_id=session_loop.user_id,
+            session_id=session_loop.id,
+        )
+        session_loop.state = updated_loop_session.state
+
+        # Check if ResearchHead called exit_loop or set continue_research=False
+        research_head_plan_dict = session_loop.state.get("research_head_plan")
+        if research_head_plan_dict:
+            try:
+                research_head_plan = ResearchHeadPlan(**research_head_plan_dict)
+                if not research_head_plan.continue_research:
+                    logger.info(
+                        "ResearchHead determined gaps are resolved, exiting loop"
+                    )
+                    break
+            except Exception:
+                pass
+
+    logger.info("Gap-driven loop phase completed")
+
+    # Phase 3: Run post-aggregation agents (writer)
     logger.info("Starting post-aggregation phase (writer)")
     runner_post = build_runner(agent=post_aggregation_agent, app_name=app_name)
 
     # Create a new session in runner_post's session service with updated state
     session_post = await runner_post.session_service.create_session(
         app_name=app_name,
-        user_id=session.user_id,
-        session_id=session.id,
-        state=session.state.copy(),
+        user_id=session_loop.user_id,
+        session_id=session_loop.id,
+        state=session_loop.state.copy(),
     )
     logger.info(f"Created session in post-aggregation runner: {session_post.id}")
 
@@ -303,6 +417,7 @@ async def run_pipeline_async(
         disease_name=state.get("indication"),
         research_plan=state.get("research_plan"),
         evidence_store=state.get("evidence_store"),
+        research_head_plan=state.get("research_head_plan"),
         deep_research_output=state.get("deep_research_output"),
     )
     logger.info(

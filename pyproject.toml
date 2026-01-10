@@ -9,6 +9,8 @@ dependencies = [
     "google-genai>=1.56.0",
     "openai>=2.14.0",
     "pydantic>=2.12.5",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
     "ruff>=0.14.10",
     "typer>=0.21.0",
 ]
