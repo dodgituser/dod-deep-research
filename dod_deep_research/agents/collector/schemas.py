@@ -1,10 +1,11 @@
 """Schemas for collector agent."""
 
-from typing import Literal, Self
+from typing import Self
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from dod_deep_research.agents.planner.schemas import get_common_sections
+from dod_deep_research.agents.planner.schemas import CommonSection, get_common_sections
+from dod_deep_research.agents.schemas import EvidenceSource
 
 
 class EvidenceItem(BaseModel):
@@ -16,14 +17,10 @@ class EvidenceItem(BaseModel):
             "Short evidence ID (e.g., 'E1'); will be prefixed with the section name."
         ),
     )
-    source: Literal[
-        "google",
-        "pubmed",
-        "clinicaltrials",
-        "guideline",
-        "press_release",
-        "other",
-    ] = Field(..., description="Source type of the evidence.")
+    source: EvidenceSource = Field(
+        ...,
+        description="Source type of the evidence.",
+    )
     title: str = Field(..., description="Exact title of the source.")
     url: str | None = Field(
         None,
@@ -40,7 +37,7 @@ class EvidenceItem(BaseModel):
         default_factory=list,
         description="Short topical tags to help retrieval and grouping.",
     )
-    section: str = Field(
+    section: CommonSection = Field(
         ...,
         description="Section name this evidence supports (must match plan sections).",
     )
@@ -65,7 +62,7 @@ class EvidenceItem(BaseModel):
 class CollectorResponse(BaseModel):
     """Response containing evidence items for a specific section."""
 
-    section: str = Field(
+    section: CommonSection = Field(
         ...,
         description="Section name that this collector was assigned.",
     )

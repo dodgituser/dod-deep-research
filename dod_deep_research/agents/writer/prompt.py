@@ -9,6 +9,12 @@ Generate structured research output following the WriterOutput schema.
 - validation_report: Validation errors/warnings to address
 - drug_name: Drug name to use throughout (read from shared state)
 
+**State Context:**
+- research_plan: {state.research_plan}
+- evidence_store: {state.evidence_store}
+- validation_report (optional): {state.validation_report?}
+- drug_name (optional): {state.drug_name?}
+
 **Output:** Store WriterOutput under key "deep_research_output"
 
 **Key Points:**

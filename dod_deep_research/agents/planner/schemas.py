@@ -4,6 +4,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
+from dod_deep_research.agents.schemas import EvidenceSource
+
 
 class CommonSection(StrEnum):
     """Common research sections for evidence collection."""
@@ -25,7 +27,7 @@ def get_common_sections() -> list[CommonSection]:
 class ResearchSection(BaseModel):
     """Research section definition."""
 
-    name: str = Field(
+    name: CommonSection = Field(
         ...,
         description=("Exact section name from the predefined section list."),
     )
@@ -33,7 +35,7 @@ class ResearchSection(BaseModel):
         ...,
         description="What this section should cover for the specific indication.",
     )
-    required_evidence_types: list[str] = Field(
+    required_evidence_types: list[EvidenceSource] = Field(
         ...,
         description="List of required evidence types (e.g., ['pubmed', 'clinicaltrials'])",
     )
@@ -54,7 +56,7 @@ class ResearchPlan(BaseModel):
         ...,
         description="Disease/indication name extracted from the input prompt.",
     )
-    research_areas: list[str] = Field(
+    research_areas: list[CommonSection] = Field(
         ...,
         description="List of research areas to investigate (e.g., ['rationale_executive_summary', 'disease_overview', 'therapeutic_landscape', 'clinical_trials_analysis'])",
     )

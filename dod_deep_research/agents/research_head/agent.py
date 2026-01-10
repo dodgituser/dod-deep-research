@@ -4,15 +4,16 @@ import logging
 from typing import Optional
 
 from google.adk import Agent
-from google.adk.agents import LoopAgent, SequentialAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.tools import FunctionTool
 from google.genai import types
 
-from dod_deep_research.agents.collector.schemas import CollectorResponse
 from dod_deep_research.agents.research_head.prompt import RESEARCH_HEAD_AGENT_PROMPT
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
-from dod_deep_research.agents.shared_state import aggregate_evidence
+from dod_deep_research.agents.shared_state import (
+    aggregate_evidence,
+    extract_section_stores,
+)
 from dod_deep_research.models import GeminiModels
 from dod_deep_research.tools import exit_loop
 
@@ -51,20 +52,7 @@ def aggregate_evidence_after_collectors(
     logger.info(f"[Callback] Aggregating evidence after agent: {agent_name}")
 
     # Extract all evidence_store_section_* keys
-    section_stores: dict[str, CollectorResponse] = {}
-    for key, value in state.items():
-        if key.startswith("evidence_store_section_"):
-            section_name = key.replace("evidence_store_section_", "")
-            try:
-                if isinstance(value, dict):
-                    section_stores[section_name] = CollectorResponse(**value)
-                else:
-                    section_stores[section_name] = value
-            except Exception as e:
-                logger.warning(
-                    f"Failed to parse CollectorResponse for section '{section_name}': {e}"
-                )
-                continue
+    section_stores = extract_section_stores(state)
 
     if not section_stores:
         logger.info("[Callback] No section stores found to aggregate")
@@ -81,17 +69,3 @@ def aggregate_evidence_after_collectors(
         f"[Callback] Evidence aggregation complete: {len(evidence_store.items)} unique items"
     )
     return None
-
-
-gap_driven_loop = LoopAgent(
-    name="gap_driven_loop",
-    sub_agents=[
-        SequentialAgent(
-            name="gap_loop_iteration",
-            sub_agents=[
-                research_head_agent,
-            ],
-        ),
-    ],
-    max_iterations=5,
-)

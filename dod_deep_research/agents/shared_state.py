@@ -15,6 +15,32 @@ from dod_deep_research.agents.writer.schemas import WriterOutput
 logger = logging.getLogger(__name__)
 
 
+def extract_section_stores(state: dict[str, Any]) -> dict[str, CollectorResponse]:
+    """
+    Extract all evidence_store_section_* keys from state and convert to CollectorResponse.
+
+    Args:
+        state: Dictionary containing state keys.
+
+    Returns:
+        dict[str, CollectorResponse]: Mapping of section names to CollectorResponse objects.
+    """
+    section_stores: dict[str, CollectorResponse] = {}
+    for key, value in state.items():
+        if key.startswith("evidence_store_section_"):
+            section_name = key.replace("evidence_store_section_", "")
+            try:
+                if isinstance(value, dict):
+                    section_stores[section_name] = CollectorResponse(**value)
+                else:
+                    section_stores[section_name] = value
+            except Exception as e:
+                logger.warning(
+                    f"Failed to parse CollectorResponse for section '{section_name}': {e}"
+                )
+    return section_stores
+
+
 def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> EvidenceStore:
     """
     Deterministically merge evidence from parallel collectors into a single evidence store.

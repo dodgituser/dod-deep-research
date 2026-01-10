@@ -6,6 +6,11 @@ RESEARCH_HEAD_AGENT_PROMPT = """You are a Research Head agent responsible for an
 - research_plan: The structured research plan with sections, required_evidence_types, and key_questions
 - evidence_store: The current evidence store with collected evidence items
 
+**State Context:**
+- research_plan: {state.research_plan}
+- evidence_store: {state.evidence_store}
+- research_head_plan (optional): {state.research_head_plan?}
+
 **Output State Key:** research_head_plan
 
 **Your Task:**
@@ -47,7 +52,9 @@ RESEARCH_HEAD_AGENT_PROMPT = """You are a Research Head agent responsible for an
 
 5. **Task Generation Guidelines:**
    - Create specific, actionable retrieval tasks
-   - Prioritize tasks: high for critical gaps, medium for important gaps, low for nice-to-have
+   - Prioritize tasks using: high, medium, low
+   - Evidence types must be one of: google, pubmed, clinicaltrials, guideline, press_release, other
+   - Tools must be one of: pubmed_search_articles, clinicaltrials_search_studies, google_search
    - Match preferred_tool to evidence_type (pubmed_search_articles for pubmed, clinicaltrials_search_studies for clinicaltrials, google_search for google)
    - Write clear, focused queries that target specific gaps
 

@@ -5,6 +5,7 @@ COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are an evidence collector agent. Your r
 **Assigned Section:** {section_name}
 
 **Input State Key:** research_plan
+**State Context:** {state.research_plan}
 
 **Output State Key:** evidence_store_section_{section_name}
 
@@ -30,7 +31,8 @@ like "XXXX", "TBD", or fabricated identifiers.
 Use tool snippets (abstracts/summaries) as the basis for quotes; do not invent quotes.
 Use pubmed_search_articles to find PMIDs and pubmed_fetch_contents to retrieve abstracts/metadata when possible.
 Use clinicaltrials_search_studies to find NCT IDs and clinicaltrials_get_study to retrieve study details when possible.
-When assigning EvidenceItem.source, use "google" for Google results, "pubmed" for PubMed, "clinicaltrials" for ClinicalTrials.gov, and "other" for general web sources.
+Allowed EvidenceItem.source values: google, pubmed, clinicaltrials, guideline, press_release, other.
+When assigning EvidenceItem.source, use "google" for Google results, "pubmed" for PubMed, "clinicaltrials" for ClinicalTrials.gov, "guideline" for clinical practice guidelines, "press_release" for press releases, and "other" for general web sources.
 
 **Iterative Research Loop (Required):**
 1) Run 1-2 broad searches to scope the section.
@@ -54,6 +56,9 @@ TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collec
 **Priority:** {priority}
 
 **Input State Key:** research_plan, research_head_plan
+**State Context:**
+- research_plan: {state.research_plan}
+- research_head_plan (optional): {state.research_head_plan?}
 
 **Output State Key:** evidence_store_section_{section_name}
 
@@ -78,6 +83,7 @@ You are executing a targeted retrieval task identified by the Research Head agen
 - Start with the preferred tool ({preferred_tool}) and query "{query}"
 - Focus on this specific query - do not broaden the search unnecessarily
 - Collect evidence that directly addresses the gap
+- Evidence types must be one of: google, pubmed, clinicaltrials, guideline, press_release, other
 - Ensure evidence type matches {evidence_type}
 - Return at least 3 evidence items with valid URLs and quotes
 - Use reflect_step to summarize findings after searches

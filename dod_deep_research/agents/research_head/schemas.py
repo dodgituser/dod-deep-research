@@ -2,15 +2,18 @@
 
 from pydantic import BaseModel, Field
 
+from dod_deep_research.agents.planner.schemas import CommonSection
+from dod_deep_research.agents.schemas import EvidenceSource, PreferredTool, TaskPriority
+
 
 class ResearchGap(BaseModel):
     """Identified gap in evidence coverage for a section."""
 
-    section: str = Field(
+    section: CommonSection = Field(
         ...,
         description="Section name with identified gaps.",
     )
-    missing_evidence_types: list[str] = Field(
+    missing_evidence_types: list[EvidenceSource] = Field(
         default_factory=list,
         description="Required evidence types not yet collected (e.g., ['pubmed', 'clinicaltrials']).",
     )
@@ -27,11 +30,11 @@ class ResearchGap(BaseModel):
 class RetrievalTask(BaseModel):
     """Targeted retrieval task to fill evidence gaps."""
 
-    section: str = Field(
+    section: CommonSection = Field(
         ...,
         description="Target section for this retrieval task.",
     )
-    evidence_type: str = Field(
+    evidence_type: EvidenceSource = Field(
         ...,
         description="Preferred evidence type (pubmed, clinicaltrials, google, guideline, press_release, other).",
     )
@@ -39,11 +42,11 @@ class RetrievalTask(BaseModel):
         ...,
         description="Search query string for this task.",
     )
-    preferred_tool: str = Field(
+    preferred_tool: PreferredTool = Field(
         ...,
         description="Tool to use (pubmed_search_articles, clinicaltrials_search_studies, google_search).",
     )
-    priority: str = Field(
+    priority: TaskPriority = Field(
         ...,
         description="Priority level: high, medium, or low.",
     )

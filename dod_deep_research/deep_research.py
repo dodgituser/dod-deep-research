@@ -2,26 +2,23 @@
 
 import asyncio
 import json
-import logging
 import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Any
 
 import typer
 from google.genai import types
 
 from google.adk import runners
-from google.adk.apps.app import App
-from google.adk.plugins import ReflectAndRetryToolPlugin
+from google.adk.events import Event, EventActions
+
+from dod_deep_research.core import build_runner, run_agent, get_output_file
 
 from dod_deep_research.agents.aggregator.schemas import EvidenceStore
 from dod_deep_research.agents.collector.agent import create_targeted_collectors_agent
-from dod_deep_research.agents.collector.schemas import CollectorResponse
 from dod_deep_research.agents.research_head.agent import (
     aggregate_evidence_after_collectors,
-    gap_driven_loop,
+    research_head_agent,
 )
+from dod_deep_research.agents.planner.schemas import get_common_sections
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 from dod_deep_research.agents.sequence_agents import (
     post_aggregation_agent,
@@ -31,148 +28,30 @@ from dod_deep_research.agents.shared_state import (
     DeepResearchOutput,
     SharedState,
     aggregate_evidence,
+    extract_section_stores,
 )
 from dod_deep_research.agents.writer.schemas import WriterOutput
 from dod_deep_research.prompts.indication_prompt import generate_indication_prompt
+from dod_deep_research.loggy import setup_logging
+import logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-# Suppress verbose logs from Google GenAI and httpx
-# logging.getLogger("httpx").setLevel(logging.WARNING)
-# logging.getLogger("google_adk.google.adk.models.google_llm").setLevel(logging.WARNING)
+setup_logging()
 logger = logging.getLogger(__name__)
-
-
-def _suppress_mcp_cleanup_errors(
-    loop: asyncio.AbstractEventLoop, context: dict[str, Any]
-) -> None:
-    """Suppress non-critical MCP cleanup errors."""
-    exception = context.get("exception")
-    if exception:
-        error_msg = str(exception)
-        # Suppress errors related to MCP connection cleanup
-        if (
-            "multiple Transfer-Encoding headers" in error_msg
-            or "asynchronous generator" in error_msg
-            or "cancel scope" in error_msg
-            or "athrow" in error_msg
-            or "aclose" in error_msg
-        ):
-            return  # Suppress this error
-    # Log other errors normally using default handler
-    loop.default_exception_handler(context)
-
-
-RESEARCH_DIR = Path(__file__).parent / "research"
 app = typer.Typer()
 
 
-def build_runner(
-    agent: object,
+async def run_pre_aggregation(
     app_name: str,
-) -> runners.InMemoryRunner:
-    """
-    Build an in-memory runner with the Reflect-and-Retry plugin.
-
-    Args:
-        agent: Root agent for the runner.
-        app_name: Application name for the runner context.
-
-    Returns:
-        InMemoryRunner: Configured runner instance.
-    """
-    retry_plugin = ReflectAndRetryToolPlugin(max_retries=3)
-    app_instance = App(
-        name=app_name,
-        root_agent=agent,
-        plugins=[retry_plugin],
-    )
-    return runners.InMemoryRunner(app=app_instance)
-
-
-async def run_agent(
-    runner: runners.InMemoryRunner,
+    runner_pre: runners.Runner,
     user_id: str,
     session_id: str,
-    new_message: types.Content,
-) -> list[dict]:
-    """
-    Run an agent and collect JSON responses from events.
-
-    Args:
-        runner: The InMemoryRunner instance to use.
-        user_id: User ID for the session.
-        session_id: Session ID to run the agent in.
-        new_message: The message to send to the agent.
-
-    Returns:
-        List of parsed JSON objects from final responses.
-    """
-    json_responses = []
-    async for event in runner.run_async(
-        user_id=user_id,
-        session_id=session_id,
-        new_message=new_message,
-    ):
-        if not event.is_final_response():
-            logger.debug(f"Received intermediate event from {event.author}")
-            continue
-
-        if event.content and event.content.parts:
-            for part in event.content.parts:
-                if part.text:
-                    try:
-                        parsed_json = json.loads(part.text)
-                        logger.info(f"Parsed JSON response from agent '{event.author}'")
-                        logger.debug(f"Parsed JSON: {parsed_json}")
-                        json_responses.append(parsed_json)
-                    except json.JSONDecodeError as e:
-                        logger.warning(
-                            f"Failed to parse JSON from agent '{event.author}': {e}. "
-                            f"Text preview: {part.text[:100]}..."
-                        )
-
-    return json_responses
-
-
-async def run_pipeline_async(
     indication: str,
     drug_name: str,
-    drug_form: str | None = None,
-    drug_generic_name: str | None = None,
+    drug_form: str | None,
+    drug_generic_name: str | None,
     **kwargs,
-) -> SharedState:
-    """
-    Run the sequential agent pipeline asynchronously and return populated shared state.
-
-    Args:
-        indication: The disease indication to research.
-        drug_name: The drug name (e.g., "IL-2", "Aspirin").
-        drug_form: The specific form of the drug (e.g., "low-dose IL-2").
-        drug_generic_name: The generic name of the drug (e.g., "Aldesleukin").
-        **kwargs: Additional keyword arguments to pass to the pipeline.
-
-    Returns:
-        SharedState: Populated shared state with all agent outputs.
-    """
-    logger.info(
-        f"Initializing pipeline: indication={indication}, drug_name={drug_name}, "
-        f"drug_form={drug_form}, drug_generic_name={drug_generic_name}"
-    )
-
-    # Set exception handler to suppress MCP cleanup errors
-    try:
-        loop = asyncio.get_running_loop()
-        loop.set_exception_handler(_suppress_mcp_cleanup_errors)
-    except RuntimeError:
-        pass
-
-    app_name = "deep_research"
-    user_id = "user"
-    session_id = str(uuid.uuid4())
-
+) -> tuple[runners.Session, list[dict]]:
+    """Run the pre-aggregation phase (planner + collectors)."""
     prompt_text = generate_indication_prompt(
         disease=indication,
         drug_name=drug_name,
@@ -181,26 +60,23 @@ async def run_pipeline_async(
     )
     logger.debug(f"Generated prompt: {prompt_text}")
 
-    RESEARCH_DIR.mkdir(exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    events_dir = RESEARCH_DIR / f"{indication}-{timestamp}"
-    events_dir.mkdir(exist_ok=True)
-    events_file = events_dir / f"pipeline_events_{timestamp}.json"
-    logger.info(f"Events will be saved to: {events_file}")
-
     new_message = types.Content(
         parts=[types.Part.from_text(text=prompt_text)],
         role="user",
     )
 
-    # Phase 1: Run pre-aggregation agents (planner + collectors)
     logger.info("Starting pre-aggregation phase (planner + collectors)")
-    runner_pre = build_runner(agent=pre_aggregation_agent, app_name=app_name)
+    common_sections = [section.value for section in get_common_sections()]
     session = await runner_pre.session_service.create_session(
         app_name=app_name,
         user_id=user_id,
         session_id=session_id,
-        state={"indication": indication, "drug_name": drug_name, **kwargs},
+        state={
+            "indication": indication,
+            "drug_name": drug_name,
+            "common_sections": common_sections,
+            **kwargs,
+        },
     )
     logger.info(f"Created session: {session.id}")
 
@@ -210,47 +86,49 @@ async def run_pipeline_async(
 
     logger.info("Pre-aggregation phase completed")
 
-    # Refresh session to get updated state after agents have run
     updated_session = await runner_pre.session_service.get_session(
         app_name=app_name,
         user_id=user_id,
         session_id=session.id,
     )
-    # Extract section stores and run deterministic aggregation
+
     logger.info("Running deterministic evidence aggregation")
     state = updated_session.state
-
-    # Debug: log all state keys
     logger.info(f"Session state keys: {list(state.keys())}")
 
-    # Extract all evidence_store_section_* keys
-    section_stores: dict[str, CollectorResponse] = {}
-    for key, value in state.items():
-        if key.startswith("evidence_store_section_"):
-            section_name = key.replace("evidence_store_section_", "")
-            try:
-                if isinstance(value, dict):
-                    section_stores[section_name] = CollectorResponse(**value)
-                else:
-                    section_stores[section_name] = value
-            except Exception as e:
-                logger.warning(
-                    f"Failed to parse CollectorResponse for section '{section_name}': {e}"
-                )
-
+    section_stores = extract_section_stores(state)
     logger.info(f"Aggregating evidence from {len(section_stores)} sections")
     evidence_store = aggregate_evidence(section_stores)
     logger.info(
         f"Aggregation complete: {len(evidence_store.items)} unique evidence items"
     )
 
-    # Update session state directly with aggregated evidence
-    session.state["evidence_store"] = evidence_store.model_dump()
-    logger.info(f"Updated session {session.id} state with aggregated evidence")
+    evidence_event = Event(
+        actions=EventActions(
+            state_delta={"evidence_store": evidence_store.model_dump()}
+        )
+    )
+    await runner_pre.session_service.append_event(updated_session, evidence_event)
 
-    # Phase 2: Run gap-driven loop
+    # Refresh session to get the latest state
+    updated_session = await runner_pre.session_service.get_session(
+        app_name=app_name,
+        user_id=user_id,
+        session_id=session.id,
+    )
+
+    logger.info(f"Updated session {updated_session.id} state with aggregated evidence")
+
+    return updated_session, json_responses
+
+
+async def run_iterative_research_loop(
+    app_name: str,
+    runner_loop: runners.Runner,
+    session: runners.Session,
+) -> tuple[runners.Session, list[dict]]:
+    """Run the gap-driven research loop."""
     logger.info("Starting gap-driven loop phase")
-    runner_loop = build_runner(agent=gap_driven_loop, app_name=app_name)
 
     session_loop = await runner_loop.session_service.create_session(
         app_name=app_name,
@@ -260,7 +138,7 @@ async def run_pipeline_async(
     )
     logger.info(f"Created session in gap-driven loop runner: {session_loop.id}")
 
-    # Run loop iterations manually to handle dynamic targeted collectors
+    json_responses = []
     loop_iteration = 0
     max_iterations = 5
 
@@ -268,7 +146,6 @@ async def run_pipeline_async(
         loop_iteration += 1
         logger.info(f"Gap-driven loop iteration {loop_iteration}")
 
-        # Check if we have tasks from previous iteration and run targeted collectors
         research_head_plan_dict = session_loop.state.get("research_head_plan")
         if research_head_plan_dict:
             try:
@@ -277,7 +154,6 @@ async def run_pipeline_async(
                     logger.info(
                         f"Running {len(research_head_plan.tasks)} targeted collectors"
                     )
-                    # Create and run targeted collectors with aggregation callback
                     targeted_collectors = create_targeted_collectors_agent(
                         research_head_plan.tasks,
                         after_agent_callback=aggregate_evidence_after_collectors,
@@ -307,7 +183,6 @@ async def run_pipeline_async(
                         ),
                     )
 
-                    # Get updated state with new evidence (callback already aggregated)
                     updated_targeted_session = (
                         await runner_targeted.session_service.get_session(
                             app_name=app_name,
@@ -315,14 +190,25 @@ async def run_pipeline_async(
                             session_id=targeted_session.id,
                         )
                     )
-                    # Merge all state including aggregated evidence_store
-                    session_loop.state.update(updated_targeted_session.state)
+
+                    merge_event = Event(
+                        actions=EventActions(state_delta=updated_targeted_session.state)
+                    )
+                    await runner_loop.session_service.append_event(
+                        session_loop, merge_event
+                    )
+
+                    # Refresh session_loop
+                    session_loop = await runner_loop.session_service.get_session(
+                        app_name=app_name,
+                        user_id=session_loop.user_id,
+                        session_id=session_loop.id,
+                    )
             except Exception as e:
                 logger.warning(
                     f"Failed to process research_head_plan or run collectors: {e}"
                 )
 
-        # Run loop iteration (research head - aggregation already done by callback)
         loop_message = types.Content(
             parts=[types.Part.from_text(text="Continue gap analysis.")],
             role="user",
@@ -333,7 +219,6 @@ async def run_pipeline_async(
         )
         json_responses.extend(loop_responses)
 
-        # Refresh session to check if loop should exit
         updated_loop_session = await runner_loop.session_service.get_session(
             app_name=app_name,
             user_id=session_loop.user_id,
@@ -341,26 +226,26 @@ async def run_pipeline_async(
         )
         session_loop.state = updated_loop_session.state
 
-        # Check if ResearchHead called exit_loop or set continue_research=False
         research_head_plan_dict = session_loop.state.get("research_head_plan")
         if research_head_plan_dict:
-            try:
-                research_head_plan = ResearchHeadPlan(**research_head_plan_dict)
-                if not research_head_plan.continue_research:
-                    logger.info(
-                        "ResearchHead determined gaps are resolved, exiting loop"
-                    )
-                    break
-            except Exception:
-                pass
+            research_head_plan = ResearchHeadPlan(**research_head_plan_dict)
+            if not research_head_plan.continue_research:
+                logger.info("ResearchHead determined gaps are resolved, exiting loop")
+                break
 
     logger.info("Gap-driven loop phase completed")
+    return session_loop, json_responses
 
-    # Phase 3: Run post-aggregation agents (writer)
+
+async def run_post_aggregation(
+    app_name: str,
+    runner_post: runners.Runner,
+    user_id: str,
+    session_loop: runners.Session,
+) -> tuple[runners.Session, list[dict]]:
+    """Run the post-aggregation phase (writer)."""
     logger.info("Starting post-aggregation phase (writer)")
-    runner_post = build_runner(agent=post_aggregation_agent, app_name=app_name)
 
-    # Create a new session in runner_post's session service with updated state
     session_post = await runner_post.session_service.create_session(
         app_name=app_name,
         user_id=session_loop.user_id,
@@ -369,29 +254,95 @@ async def run_pipeline_async(
     )
     logger.info(f"Created session in post-aggregation runner: {session_post.id}")
 
-    # Create a continuation message (empty user message to continue pipeline)
     continuation_message = types.Content(
         parts=[types.Part.from_text(text="Continue with writing.")],
         role="user",
     )
 
-    post_json_responses = await run_agent(
+    json_responses = await run_agent(
         runner_post, session_post.user_id, session_post.id, continuation_message
     )
-    json_responses.extend(post_json_responses)
 
-    logger.info("Pipeline execution completed")
-    events_file.write_text(json.dumps(json_responses, indent=2))
-    logger.info(f"Pipeline events saved to: {events_file}")
-
-    # Retrieve final session state
-    logger.debug("Retrieving final session state")
     final_session = await runner_post.session_service.get_session(
         app_name=app_name,
         user_id=user_id,
         session_id=session_post.id,
     )
-    state = final_session.state if final_session else session_post.state
+    # Fallback to session_post if get_session returns None (though unlikely with InMemoryRunner)
+    final_session = final_session or session_post
+
+    return final_session, json_responses
+
+
+async def run_pipeline_async(
+    indication: str,
+    drug_name: str,
+    drug_form: str | None = None,
+    drug_generic_name: str | None = None,
+    **kwargs,
+) -> SharedState:
+    """
+    Run the sequential agent pipeline asynchronously and return populated shared state.
+
+    Args:
+        indication: The disease indication to research.
+        drug_name: The drug name (e.g., "IL-2", "Aspirin").
+        drug_form: The specific form of the drug (e.g., "low-dose IL-2").
+        drug_generic_name: The generic name of the drug (e.g., "Aldesleukin").
+        **kwargs: Additional keyword arguments to pass to the pipeline.
+
+    Returns:
+        SharedState: Populated shared state with all agent outputs.
+    """
+    logger.info(
+        f"Initializing pipeline: indication={indication}, drug_name={drug_name}, "
+        f"drug_form={drug_form}, drug_generic_name={drug_generic_name}"
+    )
+
+    app_name = "deep_research"
+    user_id = "user"
+    session_id = str(uuid.uuid4())
+    runner_pre = build_runner(agent=pre_aggregation_agent, app_name=app_name)
+    runner_loop = build_runner(agent=research_head_agent, app_name=app_name)
+    runner_post = build_runner(agent=post_aggregation_agent, app_name=app_name)
+
+    events_file = get_output_file(indication)
+    logger.info(f"Events will be saved to: {events_file}")
+
+    # Phase 1: Pre-aggregation
+    session, pre_responses = await run_pre_aggregation(
+        app_name=app_name,
+        runner_pre=runner_pre,
+        user_id=user_id,
+        session_id=session_id,
+        indication=indication,
+        drug_name=drug_name,
+        drug_form=drug_form,
+        drug_generic_name=drug_generic_name,
+        **kwargs,
+    )
+
+    # Phase 2: Iterative Research Loop
+    session_loop, loop_responses = await run_iterative_research_loop(
+        app_name=app_name,
+        runner_loop=runner_loop,
+        session=session,
+    )
+
+    # Phase 3: Post-aggregation
+    final_session, post_responses = await run_post_aggregation(
+        app_name=app_name,
+        runner_post=runner_post,
+        user_id=user_id,
+        session_loop=session_loop,
+    )
+
+    logger.info("Pipeline execution completed")
+    all_responses = pre_responses + loop_responses + post_responses
+    events_file.write_text(json.dumps(all_responses, indent=2))
+    logger.info(f"Pipeline events saved to: {events_file}")
+
+    state = final_session.state
 
     # Inject evidence deterministically from evidence_store into writer output
     writer_output_dict = state.get("deep_research_output")
@@ -406,7 +357,21 @@ async def run_pipeline_async(
             evidence=evidence_store.items,
         )
 
-        state["deep_research_output"] = deep_research_output.model_dump()
+        output_event = Event(
+            actions=EventActions(
+                state_delta={"deep_research_output": deep_research_output.model_dump()}
+            )
+        )
+        await runner_post.session_service.append_event(final_session, output_event)
+
+        # Refresh final_session
+        final_session = await runner_post.session_service.get_session(
+            app_name=app_name,
+            user_id=user_id,
+            session_id=final_session.id,
+        )
+        state = final_session.state  # Update local reference
+
         logger.info(
             f"Injected {len(evidence_store.items)} evidence items into DeepResearchOutput"
         )

@@ -84,6 +84,13 @@ def create_collector_agent(
     )
 
 
+def create_collector_agents(sections: list[str]) -> list[Agent]:
+    """
+    Create a list of collector agents for the given sections.
+    """
+    return [create_collector_agent(section) for section in sections]
+
+
 def create_targeted_collector_agent(task: RetrievalTask) -> Agent:
     """
     Create a targeted collector agent for a specific retrieval task.
