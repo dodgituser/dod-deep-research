@@ -1,12 +1,12 @@
 """Deep research pipeline entry point."""
 
 import asyncio
-import inspect
 import json
 import logging
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import typer
 from google.genai import types
@@ -38,6 +38,27 @@ logging.basicConfig(
 # logging.getLogger("google_adk.google.adk.models.google_llm").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
+
+def _suppress_mcp_cleanup_errors(
+    loop: asyncio.AbstractEventLoop, context: dict[str, Any]
+) -> None:
+    """Suppress non-critical MCP cleanup errors."""
+    exception = context.get("exception")
+    if exception:
+        error_msg = str(exception)
+        # Suppress errors related to MCP connection cleanup
+        if (
+            "multiple Transfer-Encoding headers" in error_msg
+            or "asynchronous generator" in error_msg
+            or "cancel scope" in error_msg
+            or "athrow" in error_msg
+            or "aclose" in error_msg
+        ):
+            return  # Suppress this error
+    # Log other errors normally using default handler
+    loop.default_exception_handler(context)
+
+
 RESEARCH_DIR = Path(__file__).parent / "research"
 app = typer.Typer()
 
@@ -47,7 +68,7 @@ def build_runner(
     app_name: str,
 ) -> runners.InMemoryRunner:
     """
-    Build an in-memory runner with the Reflect-and-Retry plugin when supported.
+    Build an in-memory runner with the Reflect-and-Retry plugin.
 
     Args:
         agent: Root agent for the runner.
@@ -62,18 +83,7 @@ def build_runner(
         root_agent=agent,
         plugins=[retry_plugin],
     )
-    runner_params = inspect.signature(runners.InMemoryRunner).parameters
-    if "app" in runner_params:
-        if "app_name" in runner_params:
-            return runners.InMemoryRunner(app=app_instance, app_name=app_name)
-        return runners.InMemoryRunner(app=app_instance)
-    if "plugins" in runner_params:
-        return runners.InMemoryRunner(
-            agent=agent,
-            app_name=app_name,
-            plugins=[retry_plugin],
-        )
-    return runners.InMemoryRunner(agent=agent, app_name=app_name)
+    return runners.InMemoryRunner(app=app_instance)
 
 
 async def run_agent(
@@ -146,6 +156,13 @@ async def run_pipeline_async(
         f"drug_form={drug_form}, drug_generic_name={drug_generic_name}"
     )
 
+    # Set exception handler to suppress MCP cleanup errors
+    try:
+        loop = asyncio.get_running_loop()
+        loop.set_exception_handler(_suppress_mcp_cleanup_errors)
+    except RuntimeError:
+        pass
+
     app_name = "deep_research"
     user_id = "user"
     session_id = str(uuid.uuid4())
@@ -187,9 +204,18 @@ async def run_pipeline_async(
 
     logger.info("Pre-aggregation phase completed")
 
+    # Refresh session to get updated state after agents have run
+    updated_session = await runner_pre.session_service.get_session(
+        app_name=app_name,
+        user_id=user_id,
+        session_id=session.id,
+    )
     # Extract section stores and run deterministic aggregation
     logger.info("Running deterministic evidence aggregation")
-    state = session.state
+    state = updated_session.state
+
+    # Debug: log all state keys
+    logger.info(f"Session state keys: {list(state.keys())}")
 
     # Extract all evidence_store_section_* keys
     section_stores: dict[str, CollectorResponse] = {}
@@ -206,35 +232,37 @@ async def run_pipeline_async(
                     f"Failed to parse CollectorResponse for section '{section_name}': {e}"
                 )
 
-    if not section_stores:
-        logger.warning("No section stores found for aggregation")
-        evidence_store = None
-    else:
-        logger.info(f"Aggregating evidence from {len(section_stores)} sections")
-        evidence_store = aggregate_evidence(section_stores)
-        logger.info(
-            f"Aggregation complete: {len(evidence_store.items)} unique evidence items"
-        )
+    logger.info(f"Aggregating evidence from {len(section_stores)} sections")
+    evidence_store = aggregate_evidence(section_stores)
+    logger.info(
+        f"Aggregation complete: {len(evidence_store.items)} unique evidence items"
+    )
 
     # Update session state directly with aggregated evidence
-    session.state["evidence_store"] = (
-        evidence_store.model_dump() if evidence_store else None
-    )
+    session.state["evidence_store"] = evidence_store.model_dump()
     logger.info(f"Updated session {session.id} state with aggregated evidence")
 
-    # Phase 2: Run post-aggregation agents (validator + writer)
-    logger.info("Starting post-aggregation phase (validator + writer)")
+    # Phase 2: Run post-aggregation agents (writer)
+    logger.info("Starting post-aggregation phase (writer)")
     runner_post = build_runner(agent=post_aggregation_agent, app_name=app_name)
-    logger.info(f"Reusing session: {session.id}")
+
+    # Create a new session in runner_post's session service with updated state
+    session_post = await runner_post.session_service.create_session(
+        app_name=app_name,
+        user_id=session.user_id,
+        session_id=session.id,
+        state=session.state.copy(),
+    )
+    logger.info(f"Created session in post-aggregation runner: {session_post.id}")
 
     # Create a continuation message (empty user message to continue pipeline)
     continuation_message = types.Content(
-        parts=[types.Part.from_text(text="Continue with validation and writing.")],
+        parts=[types.Part.from_text(text="Continue with writing.")],
         role="user",
     )
 
     post_json_responses = await run_agent(
-        runner_post, session.user_id, session.id, continuation_message
+        runner_post, session_post.user_id, session_post.id, continuation_message
     )
     json_responses.extend(post_json_responses)
 
@@ -247,9 +275,9 @@ async def run_pipeline_async(
     final_session = await runner_post.session_service.get_session(
         app_name=app_name,
         user_id=user_id,
-        session_id=session.id,
+        session_id=session_post.id,
     )
-    state = final_session.state if final_session else session.state
+    state = final_session.state if final_session else session_post.state
 
     # Inject evidence deterministically from evidence_store into writer output
     writer_output_dict = state.get("deep_research_output")
@@ -275,13 +303,11 @@ async def run_pipeline_async(
         disease_name=state.get("indication"),
         research_plan=state.get("research_plan"),
         evidence_store=state.get("evidence_store"),
-        validation_report=state.get("validation_report"),
         deep_research_output=state.get("deep_research_output"),
     )
     logger.info(
         f"SharedState populated: research_plan={'present' if shared_state.research_plan else 'missing'}, "
         f"evidence_store={'present' if shared_state.evidence_store else 'missing'}, "
-        f"validation_report={'present' if shared_state.validation_report else 'missing'}, "
         f"deep_research_output={'present' if shared_state.deep_research_output else 'missing'}"
     )
 
@@ -346,8 +372,7 @@ def main(
     1. Meta-planner creates structured research outline
     2. Parallel evidence collectors retrieve evidence for each section
     3. Deterministic aggregation function merges and deduplicates evidence
-    4. Validator validates evidence
-    5. Writer generates final structured output
+    4. Writer generates final structured output
     """
     logger.info(
         f"Starting deep research pipeline for indication: {indication}, drug: {drug_name}"

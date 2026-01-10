@@ -9,7 +9,6 @@ from typing import Any
 from dod_deep_research.agents.aggregator.schemas import EvidenceStore, KeyValuePair
 from dod_deep_research.agents.collector.schemas import CollectorResponse, EvidenceItem
 from dod_deep_research.agents.planner.schemas import ResearchPlan
-from dod_deep_research.agents.validator.schemas import ValidationReport
 from dod_deep_research.agents.writer.schemas import WriterOutput
 
 logger = logging.getLogger(__name__)
@@ -47,7 +46,7 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
 
     logger.info(f"Aggregating evidence from {len(section_stores)} sections")
 
-    all_items = []
+    all_items: list[EvidenceItem] = []
     seen_hashes: dict[str, str] = {}  # hash -> evidence_id
     item_hashes: dict[str, str] = {}  # evidence_id -> hash
     filtered_count = 0
@@ -63,8 +62,8 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
         return True
 
     # Merge all evidence items and deduplicate
-    for section_name, collector_response in section_stores.items():
-        for item in collector_response.evidence:
+    for _, collector_response in section_stores.items():
+        for item in collector_response.evidence_items:
             total_items += 1
             if not is_valid_evidence(item):
                 filtered_count += 1
@@ -157,8 +156,7 @@ class SharedState(BaseModel):
     - disease_name (str): Disease/indication name being researched (available to all agents)
     - research_plan (ResearchPlan): Meta-planner → Collectors
     - evidence_store_section_* (CollectorResponse): Collectors → Deterministic aggregation function
-    - evidence_store (EvidenceStore): Aggregation function → Validator → Writer
-    - validation_report (ValidationReport): Validator → Writer
+    - evidence_store (EvidenceStore): Aggregation function → Writer
     - deep_research_output (DeepResearchOutput): Writer → Final
     """
 
@@ -177,10 +175,6 @@ class SharedState(BaseModel):
     evidence_store: EvidenceStore | None = Field(
         default=None,
         description="EvidenceStore model: Centralized evidence store with indexing and deduplication (Aggregation function output)",
-    )
-    validation_report: ValidationReport | None = Field(
-        default=None,
-        description="ValidationReport model: Schema validation results, missing fields, errors (Validator output)",
     )
     deep_research_output: DeepResearchOutput | None = Field(
         default=None,

@@ -5,7 +5,7 @@ import os
 from google.adk import Agent
 from google.adk.tools import FunctionTool, google_search
 from google.adk.tools.mcp_tool import McpToolset
-from google.adk.tools.mcp_tool.mcp_session_manager import SseConnectionParams
+from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 
 from dod_deep_research.agents.collector.prompt import COLLECTOR_AGENT_PROMPT_TEMPLATE
 from dod_deep_research.agents.collector.schemas import CollectorResponse
@@ -25,14 +25,18 @@ def create_collector_agent(section_name: str) -> Agent:
     """
     prompt = COLLECTOR_AGENT_PROMPT_TEMPLATE.format(section_name=section_name)
     pubmed_toolset = McpToolset(
-        connection_params=SseConnectionParams(
-            url=os.getenv("PUBMED_MCP_URL", "http://127.0.0.1:3017/mcp")
+        connection_params=StreamableHTTPConnectionParams(
+            url=os.getenv("PUBMED_MCP_URL", "http://127.0.0.1:3017/mcp"),
+            headers={"Accept": "application/json, text/event-stream"},
+            terminate_on_close=False,
         ),
         tool_filter=["pubmed_search_articles", "pubmed_fetch_contents"],
     )
     clinical_trials_toolset = McpToolset(
-        connection_params=SseConnectionParams(
-            url=os.getenv("CLINICAL_TRIALS_MCP_URL", "http://127.0.0.1:3018/mcp")
+        connection_params=StreamableHTTPConnectionParams(
+            url=os.getenv("CLINICAL_TRIALS_MCP_URL", "http://127.0.0.1:3018/mcp"),
+            headers={"Accept": "application/json, text/event-stream"},
+            terminate_on_close=False,
         ),
         tool_filter=["clinicaltrials_search_studies", "clinicaltrials_get_study"],
     )

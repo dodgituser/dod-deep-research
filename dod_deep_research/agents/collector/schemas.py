@@ -69,21 +69,39 @@ class CollectorResponse(BaseModel):
         ...,
         description="Section name that this collector was assigned.",
     )
-    evidence: list[EvidenceItem] = Field(
+    evidence: list[dict[str, str | int | list[str] | None]] = Field(
         ...,
-        description="Evidence items collected for the assigned section.",
+        description=(
+            "Evidence items collected for the assigned section. Each item is a dict with keys: "
+            "id (str), source (str: 'google'|'pubmed'|'clinicaltrials'|'guideline'|'press_release'|'other'), "
+            "title (str), url (str|None), quote (str), year (int|None), tags (list[str]), section (str)."
+        ),
     )
 
     @model_validator(mode="after")
-    def validate_non_empty_evidence(self) -> Self:
-        """Ensure required sections meet minimum evidence count."""
+    def validate_and_convert_evidence(self) -> Self:
+        """Convert evidence dicts to EvidenceItem objects for validation."""
         common_sections = [s.value for s in get_common_sections()]
-        if self.section in common_sections and not self.evidence:
+
+        # Convert dicts to EvidenceItem objects for validation
+        evidence_items = []
+        for ev_dict in self.evidence:
+            item = EvidenceItem(**ev_dict)
+            evidence_items.append(item)
+
+        # Validate non-empty evidence
+        if self.section in common_sections and not evidence_items:
             raise ValueError(
                 f"Evidence list cannot be empty for required section '{self.section}'"
             )
-        if self.section in common_sections and len(self.evidence) < 3:
+        if self.section in common_sections and len(evidence_items) < 3:
             raise ValueError(
                 f"Evidence list must include at least 3 items for required section '{self.section}'"
             )
+
         return self
+
+    @property
+    def evidence_items(self) -> list[EvidenceItem]:
+        """Get evidence as EvidenceItem objects."""
+        return [EvidenceItem(**item) for item in self.evidence]

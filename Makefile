@@ -1,4 +1,4 @@
-.PHONY: check-quality fix-quality commit clean compose-up compose-down
+.PHONY: check-quality fix-quality commit clean compose-up compose-down run-pipeline run
 
 check-quality:
 	@echo "Checking formatting and linting with ruff..."
@@ -30,3 +30,25 @@ compose-up:
 compose-down:
 	@echo "Stopping docker compose services..."
 	docker compose -f docker-compose.yml down
+
+run-pipeline:
+	@if [ -z "$(INDICATION)" ] || [ -z "$(DRUG_NAME)" ]; then \
+		echo "Usage: make run-pipeline INDICATION='...' DRUG_NAME='...' [DRUG_FORM='...'] [DRUG_GENERIC_NAME='...']"; \
+		exit 1; \
+	fi
+	@cmd="uv run dod-deep-research --indication \"$(INDICATION)\" --drug-name \"$(DRUG_NAME)\""; \
+	if [ -n "$(DRUG_FORM)" ]; then cmd="$$cmd --drug-form \"$(DRUG_FORM)\""; fi; \
+	if [ -n "$(DRUG_GENERIC_NAME)" ]; then cmd="$$cmd --drug-generic-name \"$(DRUG_GENERIC_NAME)\""; fi; \
+	echo "$$cmd"; \
+	eval $$cmd
+
+run:
+	@if [ -z "$(INDICATION)" ] || [ -z "$(DRUG_NAME)" ]; then \
+		echo "Usage: make run INDICATION='...' DRUG_NAME='...' [DRUG_FORM='...'] [DRUG_GENERIC_NAME='...']"; \
+		exit 1; \
+	fi
+	@cmd="docker compose -f docker-compose.yml --profile pipeline run --build --rm pipeline --indication \"$(INDICATION)\" --drug-name \"$(DRUG_NAME)\""; \
+	if [ -n "$(DRUG_FORM)" ]; then cmd="$$cmd --drug-form \"$(DRUG_FORM)\""; fi; \
+	if [ -n "$(DRUG_GENERIC_NAME)" ]; then cmd="$$cmd --drug-generic-name \"$(DRUG_GENERIC_NAME)\""; fi; \
+	echo "$$cmd"; \
+	eval $$cmd

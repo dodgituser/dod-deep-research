@@ -1,0 +1,20 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV UV_SYSTEM_PYTHON=1
+ENV PATH="/root/.local/bin:${PATH}"
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+COPY pyproject.toml uv.lock README.md /app/
+RUN uv sync --frozen --no-install-project
+
+COPY dod_deep_research /app/dod_deep_research
+RUN uv sync --frozen
+
+ENTRYPOINT ["uv", "run", "python", "-m", "dod_deep_research.deep_research"]

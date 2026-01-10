@@ -4,7 +4,6 @@ from google.adk.agents import SequentialAgent
 
 from dod_deep_research.agents.parellelize_agents import parallel_collectors
 from dod_deep_research.agents.planner.agent import planner_agent
-from dod_deep_research.agents.validator.agent import validator_agent
 from dod_deep_research.agents.writer.agent import writer_agent
 
 pre_aggregation_agent = SequentialAgent(
@@ -18,7 +17,6 @@ pre_aggregation_agent = SequentialAgent(
 post_aggregation_agent = SequentialAgent(
     name="post_aggregation_pipeline",
     sub_agents=[
-        validator_agent,
         writer_agent,
     ],
 )

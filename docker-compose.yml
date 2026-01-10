@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   pubmed-mcp:
     build:
@@ -24,10 +22,30 @@ services:
     ports:
       - "3018:3018"
     environment:
-      - PORT=3018
+      - MCP_HTTP_PORT=3018
     networks:
       - mcp-network
     restart: unless-stopped
+
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile.pipeline
+    image: dod-deep-research:local
+    entrypoint: ["uv", "run", "python", "-m", "dod_deep_research.deep_research"]
+    env_file:
+      - .env
+    environment:
+      - PUBMED_MCP_URL=http://pubmed-mcp:3017/mcp
+      - CLINICAL_TRIALS_MCP_URL=http://clinical-trials-mcp:3018/mcp
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+    depends_on:
+      - pubmed-mcp
+      - clinical-trials-mcp
+    networks:
+      - mcp-network
+    profiles:
+      - pipeline
 
 networks:
   mcp-network:

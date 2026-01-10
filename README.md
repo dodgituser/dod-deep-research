@@ -9,10 +9,10 @@ The pipeline uses a two-stage map-reduce architecture with a shared evidence sto
 ### Pipeline Flow
 
 ```
-Meta-Planner → Parallel Evidence Collectors → Aggregator → Validator → Writer
-     ↓                    ↓                      ↓           ↓          ↓
-Research Plan    Section-specific        Merged Store   Validated   Final
-              Evidence (parallel)                      Evidence    Output
+Meta-Planner → Parallel Evidence Collectors → Aggregator → Writer
+     ↓                    ↓                      ↓          ↓
+Research Plan    Section-specific        Merged Store   Final
+              Evidence (parallel)                      Output
 ```
 
 ### Key Components
@@ -20,8 +20,7 @@ Research Plan    Section-specific        Merged Store   Validated   Final
 1. **Meta-Planner**: Creates a structured research outline with sections and required evidence types
 2. **Parallel Evidence Collectors**: Multiple retriever agents run in parallel, each collecting evidence for a specific section
 3. **Aggregator**: Merges parallel collector outputs into a single evidence store with deduplication
-4. **Validator**: Validates, normalizes, and identifies gaps in the evidence
-5. **Writer**: Generates the final structured research output using validated evidence
+4. **Writer**: Generates the final structured research output using aggregated evidence
 
 ## Data Models
 
@@ -44,7 +43,6 @@ Centralized evidence store with indexing and deduplication:
 - `by_section`: Dictionary mapping section names to evidence IDs
 - `by_source`: Dictionary mapping source URLs to evidence IDs
 - `hash_index`: Dictionary mapping content hashes to evidence IDs (for deduplication)
-- `gaps`: List of evidence gaps identified by validator
 
 ### ResearchPlan
 
@@ -97,20 +95,10 @@ The aggregator merges all section-specific evidence stores:
 
 **Output**: Single `EvidenceStore` stored in `evidence_store` state key
 
-### Stage 4: Validation
-
-The validator performs quality control:
-- Validates evidence against `DeepResearchOutput` schema
-- Checks for duplicates and ensures deduplication correctness
-- Normalizes evidence items
-- Identifies evidence gaps and writes them to `EvidenceStore.gaps`
-
-**Output**: `ValidationReport` stored in `validation_report` state key, updates `evidence_store.gaps`
-
-### Stage 5: Writing
+### Stage 4: Writing
 
 The writer generates the final structured output:
-- Reads validated evidence store and research plan
+- Reads aggregated evidence store and research plan
 - Uses section organization for coherent narrative
 - Generates complete `DeepResearchOutput` with:
   - Indication profile
@@ -123,8 +111,7 @@ The writer generates the final structured output:
 
 ## Benefits
 
-- **Avoids Duplication**: Parallel collectors share a single evidence store, preventing duplicate retrieval/validation work
-- **Centralized Quality Control**: Single validator ensures consistent evidence quality and deduplication
+- **Avoids Duplication**: Parallel collectors share a single evidence store, preventing duplicate retrieval work
 - **Coherent Narrative**: Single writer produces unified final report using organized evidence
 - **Scalable**: Easy to add new sections by creating additional collector agents
 - **Efficient**: Parallel collection reduces overall pipeline execution time
@@ -164,7 +151,6 @@ dod_deep_research/
 │   ├── planner/          # Meta-planner agent
 │   ├── collector/        # Parallel evidence collectors
 │   ├── aggregator/       # Evidence aggregator
-│   ├── validator/        # Evidence validator
 │   ├── writer/           # Final report writer
 │   ├── evidence_store.py # Evidence store utilities
 │   └── sequential_agent.py  # Pipeline definition
@@ -178,7 +164,6 @@ The pipeline uses the following state keys for inter-agent communication:
 
 - `research_plan`: `ResearchPlan` (Meta-planner output)
 - `evidence_store_section_{section_name}`: `CollectorResponse` (Collector outputs)
-- `evidence_store`: `EvidenceStore` (Aggregator output, updated by Validator)
-- `validation_report`: `ValidationReport` (Validator output)
+- `evidence_store`: `EvidenceStore` (Aggregator output)
 - `deep_research_output`: `DeepResearchOutput` (Writer output)
 
