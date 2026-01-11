@@ -45,7 +45,7 @@ RESEARCH_HEAD_AGENT_PROMPT = """You are a Research Head agent responsible for an
        - Output updated ResearchHeadPlan
 
 4. **Gap Analysis Guidelines:**
-   - Missing evidence types: Check if required_evidence_types (e.g., ['pubmed', 'clinicaltrials']) are represented in collected evidence
+   - Missing evidence types: Check if required_evidence_types (e.g., ['pubmed', 'clinicaltrials', 'google_search']) are represented in collected evidence
    - Missing questions: Review key_questions from the plan and assess if they're answered by existing evidence quotes
    - Evidence quality: Ensure evidence has URLs and meaningful quotes
    - Section coverage: Each section should have at least 3 evidence items
@@ -53,9 +53,9 @@ RESEARCH_HEAD_AGENT_PROMPT = """You are a Research Head agent responsible for an
 5. **Task Generation Guidelines:**
    - Create specific, actionable retrieval tasks
    - Prioritize tasks using: high, medium, low
-   - Evidence types must be one of: pubmed, clinicaltrials
-   - Tools must be one of: pubmed_search_articles, clinicaltrials_search_studies
-   - Match preferred_tool to evidence_type (pubmed_search_articles for pubmed, clinicaltrials_search_studies for clinicaltrials)
+   - Evidence types must be one of: pubmed, clinicaltrials, google_search
+   - Tools must be one of: pubmed_search_articles, clinicaltrials_search_studies, google_search
+   - Match preferred_tool to evidence_type (pubmed_search_articles for pubmed, clinicaltrials_search_studies for clinicaltrials, google_search for google_search)
    - Write clear, focused queries that target specific gaps
 
 6. **Exit Criteria:**

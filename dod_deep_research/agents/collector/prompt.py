@@ -38,7 +38,7 @@ Use tool snippets (abstracts/summaries) as the basis for quotes; do not invent q
 Use pubmed_search_articles to find PMIDs and pubmed_fetch_contents to retrieve abstracts/metadata when possible.
 Use clinicaltrials_search_studies to find NCT IDs and clinicaltrials_get_study to retrieve study details when possible.
 Use google_search to find additional sources or market data when needed, and only include evidence with working URLs.
-Allowed EvidenceItem.source values: pubmed, clinicaltrials.
+Allowed EvidenceItem.source values: pubmed, clinicaltrials, google_search.
 When assigning EvidenceItem.source, use "pubmed" for PubMed and "clinicaltrials" for ClinicalTrials.gov.
 
 **Iterative Research Loop (Required):**

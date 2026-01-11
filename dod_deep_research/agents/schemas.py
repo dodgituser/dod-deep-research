@@ -10,6 +10,7 @@ class EvidenceSource(StrEnum):
 
     PUBMED = "pubmed"
     CLINICALTRIALS = "clinicaltrials"
+    GOOGLE_SEARCH = "google_search"
 
 
 class PreferredTool(StrEnum):
@@ -17,6 +18,7 @@ class PreferredTool(StrEnum):
 
     PUBMED_SEARCH_ARTICLES = "pubmed_search_articles"
     CLINICALTRIALS_SEARCH_STUDIES = "clinicaltrials_search_studies"
+    GOOGLE_SEARCH = "google_search"
 
 
 class TaskPriority(StrEnum):

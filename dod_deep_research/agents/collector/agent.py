@@ -58,6 +58,7 @@ def _get_tools():
 
 
 def get_collector_tools():
+    """Return the collector toolset including PubMed, ClinicalTrials, and Google Search."""
     return _get_tools()
 
 
