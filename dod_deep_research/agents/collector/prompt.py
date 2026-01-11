@@ -17,6 +17,7 @@ Read the research plan from shared state key "research_plan". The section "{sect
 - pubmed_fetch_contents(pmids, queryKey, webEnv, detailLevel, includeMeshTerms, includeGrantInfo): PubMed details/abstracts.
 - clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
+- google_search(query): Web search for additional context or sources when PubMed/ClinicalTrials are insufficient.
 - reflect_step(summary): Record a brief reflection between searches.
 Only call tool names exactly as listed above. Never call a tool named "run".
 
@@ -36,16 +37,21 @@ like "XXXX", "TBD", or fabricated identifiers.
 Use tool snippets (abstracts/summaries) as the basis for quotes; do not invent quotes.
 Use pubmed_search_articles to find PMIDs and pubmed_fetch_contents to retrieve abstracts/metadata when possible.
 Use clinicaltrials_search_studies to find NCT IDs and clinicaltrials_get_study to retrieve study details when possible.
+Use google_search to find additional sources or market data when needed, and only include evidence with working URLs.
 Allowed EvidenceItem.source values: pubmed, clinicaltrials.
 When assigning EvidenceItem.source, use "pubmed" for PubMed and "clinicaltrials" for ClinicalTrials.gov.
 
 **Iterative Research Loop (Required):**
 1) Perform 1-2 broad searches to scope the section.
 2) Perform 1-3 targeted follow-up searches based on gaps you notice.
-3) After each search call, invoke reflect_step with a one-paragraph summary of what you found and what is missing.
+3) After the first search and after the most important follow-up search, invoke reflect_step with a one-paragraph summary of what you found and what is missing (max 2 total).
 4) Do not call reflect_step in parallel with any other tool.
-5) Continue searching until you have at least 3 strong sources with valid URLs and quotes.
+5) Continue searching only until you have at least 3 strong sources with valid URLs and quotes.
 6) Prefer high-quality sources aligned to the section's required_evidence_types.
+
+**Stopping Rules (Required):**
+- The moment you have at least 3 qualifying evidence items, STOP searching and return your CollectorResponse.
+- Hard limit: no more than 8 total tool calls and no more than 2 reflect_step calls. If you hit a limit, finalize immediately with the best evidence gathered.
 
 Store your output as a CollectorResponse object with section name "{section_name}" and evidence list containing at least 3 items in the shared state under the key "evidence_store_section_{section_name}".
 
@@ -81,6 +87,7 @@ You are executing a targeted retrieval task identified by the Research Head agen
 - pubmed_fetch_contents(pmids, queryKey, webEnv, detailLevel, includeMeshTerms, includeGrantInfo): PubMed details/abstracts.
 - clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
+- google_search(query): Web search for additional context or sources when PubMed/ClinicalTrials are insufficient.
 - reflect_step(summary): Record a brief reflection between searches.
 Only call tool names exactly as listed above. Never call a tool named "run".
 
@@ -96,7 +103,11 @@ Only call tool names exactly as listed above. Never call a tool named "run".
 - Evidence types must be one of: pubmed, clinicaltrials
 - Ensure evidence type matches {evidence_type} when possible; use available tools only
 - Return at least 3 evidence items with valid URLs and quotes
-- Use reflect_step to summarize findings after searches
+- Use reflect_step to summarize findings after the first search and one follow-up (max 2 total)
+
+**Stopping Rules (Required):**
+- The moment you have at least 3 qualifying evidence items, STOP searching and return your CollectorResponse.
+- Hard limit: no more than 8 total tool calls and no more than 2 reflect_step calls. If you hit a limit, finalize immediately with the best evidence gathered.
 
 **Important:** 
 - This is a targeted task - stay focused on the specific query and gap

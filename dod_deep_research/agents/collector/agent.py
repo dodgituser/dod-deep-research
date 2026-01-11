@@ -7,6 +7,7 @@ from typing import Callable
 from google.adk import Agent
 from google.adk.agents import ParallelAgent
 from google.adk.agents.callback_context import CallbackContext
+from google.adk.tools.google_search_tool import GoogleSearchTool
 from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 from google.genai import types
@@ -17,6 +18,7 @@ from dod_deep_research.agents.collector.prompt import (
 )
 from dod_deep_research.agents.collector.schemas import CollectorResponse
 from dod_deep_research.agents.research_head.schemas import RetrievalTask
+from dod_deep_research.core import get_http_options
 from dod_deep_research.models import GeminiModels
 from dod_deep_research.tools import reflect_step
 import logging
@@ -51,6 +53,7 @@ def _get_tools():
         pubmed_toolset,
         reflect_step,
         clinical_trials_toolset,
+        GoogleSearchTool(bypass_multi_tools_limit=True),
     ]
 
 
@@ -92,11 +95,12 @@ def create_collector_agent(
         name=agent_name,
         instruction=prompt,
         tools=_get_tools(),
-        model=GeminiModels.GEMINI_FLASH_LITE_LATEST.value.replace("models/", ""),
+        model=GeminiModels.GEMINI_FLASH_LATEST.value.replace("models/", ""),
         output_key=f"evidence_store_section_{section_name}",
         output_schema=CollectorResponse,
         generate_content_config=GenerateContentConfig(
             temperature=0.1,
+            http_options=get_http_options(),
         ),
     )
 

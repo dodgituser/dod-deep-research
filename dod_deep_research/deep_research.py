@@ -367,6 +367,10 @@ async def run_pipeline_async(
             f"Injected {len(evidence_store.items)} evidence items into DeepResearchOutput"
         )
 
+    state_file = events_file.parent / "session_state.json"
+    state_file.write_text(json.dumps(state, indent=2, default=str))
+    logger.info(f"Session state saved to: {state_file}")
+
     logger.debug("Constructing SharedState from session state")
     shared_state = SharedState(
         drug_name=state.get("drug_name"),

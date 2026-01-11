@@ -46,6 +46,21 @@ def inline_json_schema(model: type[BaseModel]) -> dict[str, Any]:
     return inlined
 
 
+def get_http_options() -> types.HttpOptions:
+    """
+    Build shared HTTP options for model retries.
+
+    Returns:
+        types.HttpOptions: HTTP options with retry configuration.
+    """
+    return types.HttpOptions(
+        retry_options=types.HttpRetryOptions(
+            initial_delay=5,
+            attempts=3,
+        ),
+    )
+
+
 def _format_tool_payload(payload: dict, max_chars: int = 800) -> str:
     """Format tool payloads for logging with truncation."""
     try:
@@ -55,6 +70,28 @@ def _format_tool_payload(payload: dict, max_chars: int = 800) -> str:
     if len(text) > max_chars:
         return f"{text[:max_chars]}...[truncated]"
     return text
+
+
+def _sanitize_agent_name(agent_name: str) -> str:
+    """Sanitize agent name for filesystem paths."""
+    return "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in agent_name)
+
+
+def _get_agent_log_path(session_id: str, agent_name: str) -> Path:
+    """Build a per-agent log file path for the current session."""
+    logs_dir = Path(__file__).resolve().parent / "research" / "agent_logs"
+    logs_dir.mkdir(exist_ok=True)
+    safe_name = _sanitize_agent_name(agent_name or "unknown")
+    return logs_dir / f"{session_id}_{safe_name}.log"
+
+
+def _log_agent_event(session_id: str, agent_name: str, message: str) -> None:
+    """Append a message to the per-agent log file."""
+    log_path = _get_agent_log_path(session_id, agent_name)
+    log_path.parent.mkdir(exist_ok=True)
+    timestamp = datetime.now().isoformat()
+    with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
+        handle.write(f"[{timestamp}] {message}\n")
 
 
 def build_runner(
@@ -107,9 +144,20 @@ async def run_agent(
         session_id=session_id,
         new_message=new_message,
     ):
+        agent_name = event.author or "unknown"
+        _log_agent_event(
+            session_id,
+            agent_name,
+            f"event received: is_final={event.is_final_response()}",
+        )
         func_calls = event.get_function_calls()
         if func_calls:
             for call in func_calls:
+                _log_agent_event(
+                    session_id,
+                    agent_name,
+                    f"tool_call name={call.name} args={_format_tool_payload(call.args or {})}",
+                )
                 logger.info(
                     "Tool call: author=%s name=%s args=%s",
                     event.author,
@@ -121,6 +169,11 @@ async def run_agent(
         if func_responses:
             for response in func_responses:
                 response_payload = response.response or {}
+                _log_agent_event(
+                    session_id,
+                    agent_name,
+                    f"tool_response name={response.name} result={_format_tool_payload(response_payload)}",
+                )
                 if isinstance(response_payload, dict) and response_payload.get("error"):
                     logger.warning(
                         "Tool error: author=%s name=%s error=%s",
@@ -148,17 +201,32 @@ async def run_agent(
             for part in event.content.parts:
                 if part.text:
                     saw_text = True
+                    _log_agent_event(
+                        session_id,
+                        agent_name,
+                        f"final_text {part.text[:2000]}",
+                    )
                     try:
                         parsed_json = json.loads(part.text)
                         logger.info(f"Parsed JSON response from agent '{event.author}'")
                         logger.debug(f"Parsed JSON: {parsed_json}")
                         json_responses.append(parsed_json)
                     except json.JSONDecodeError as e:
+                        _log_agent_event(
+                            session_id,
+                            agent_name,
+                            f"final_text_parse_error {e}",
+                        )
                         logger.warning(
                             f"Failed to parse JSON from agent '{event.author}': {e}. "
                             f"Text preview: {part.text[:100]}..."
                         )
             if not saw_text:
+                _log_agent_event(
+                    session_id,
+                    agent_name,
+                    "final_response_no_text",
+                )
                 final_response_empty[event.author] = (
                     final_response_empty.get(event.author, 0) + 1
                 )
@@ -166,6 +234,11 @@ async def run_agent(
                     f"Final response from agent '{event.author}' had no text parts."
                 )
         else:
+            _log_agent_event(
+                session_id,
+                agent_name,
+                "final_response_no_content",
+            )
             final_response_empty[event.author] = (
                 final_response_empty.get(event.author, 0) + 1
             )
