@@ -9,7 +9,7 @@ from google.genai import types
 
 from dod_deep_research.agents.research_head.prompt import RESEARCH_HEAD_AGENT_PROMPT
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
-from dod_deep_research.agents.shared_state import (
+from dod_deep_research.agents.evidence import (
     aggregate_evidence,
     extract_section_stores,
 )

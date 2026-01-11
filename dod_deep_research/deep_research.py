@@ -23,16 +23,16 @@ from dod_deep_research.agents.sequence_agents import (
     get_pre_aggregation_agent,
     get_post_aggregation_agent,
 )
-from dod_deep_research.agents.shared_state import (
+from dod_deep_research.agents.evidence import (
     DeepResearchOutput,
-    SharedState,
+    EvidenceStore,
     aggregate_evidence,
     extract_section_stores,
 )
+from dod_deep_research.agents.shared_state import SharedState
 from dod_deep_research.agents.writer.schemas import WriterOutput
 from dod_deep_research.prompts.indication_prompt import generate_indication_prompt
 from dod_deep_research.loggy import setup_logging
-from dod_deep_research.agents.shared_state import EvidenceStore
 import logging
 
 setup_logging(level=logging.DEBUG)

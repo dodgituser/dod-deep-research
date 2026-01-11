@@ -94,8 +94,9 @@ def create_collector_agent(
         ),
     )
 
-    logger.info(f"Agent tools: {agent.tools}")
-
+    logger.debug(
+        f"Collector agent {agent_name} created with tools: {agent.tools} and prompt: {agent.instruction}"
+    )
     return agent
 
 
