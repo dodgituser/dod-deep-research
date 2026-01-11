@@ -1,0 +1,29 @@
+{
+  "indication": "cancer",
+  "drug_name": "IL-2",
+  "drug_form": "low-dose IL-2",
+  "drug_generic_name": "Aldesleukin",
+  "research_plan": {
+    "disease": "cancer",
+    "research_areas": [
+      "market_opportunity_analysis"
+    ],
+    "sections": [
+      {
+        "name": "market_opportunity_analysis",
+        "description": "Assess the market and opportunity for low-dose IL-2 in cancer.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What is the potential market size for cancer treatments in the US?",
+          "What is the annual incidence of new cancer diagnoses in the US?",
+          "What specific unmet needs in cancer treatment can low-dose IL-2 address?",
+          "How does low-dose IL-2 differentiate from current and pipeline competitors?"
+        ],
+        "scope": "Focus on market opportunity for low-dose IL-2 in cancer."
+      }
+    ]
+  }
+}

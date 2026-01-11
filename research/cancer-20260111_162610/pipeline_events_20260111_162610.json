@@ -1,0 +1,403 @@
+[
+  {
+    "disease": "cancer",
+    "research_areas": [
+      "rationale_executive_summary",
+      "disease_overview",
+      "therapeutic_landscape",
+      "current_treatment_guidelines",
+      "competitor_analysis",
+      "clinical_trials_analysis",
+      "market_opportunity_analysis"
+    ],
+    "sections": [
+      {
+        "name": "rationale_executive_summary",
+        "description": "This section will provide a concise summary of the key findings regarding the use of low-dose IL-2 (Aldesleukin) for cancer. It will assess the rationale for its development, highlight the unmet medical needs in cancer it could address, summarize the supporting pre-clinical and clinical evidence, and note any relevant regulatory history or special designations from the FDA/EMA for IL-2 in oncology.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What is the therapeutic mechanism of low-dose IL-2 as an immunotherapy support in cancer?",
+          "What are the primary treatment gaps and unmet needs in the current cancer therapy landscape that low-dose IL-2 could potentially fill?",
+          "What is the summary of key pre-clinical and clinical evidence supporting the use of low-dose IL-2 for cancer?",
+          "Are there any existing FDA or EMA regulatory milestones or special designations (e.g., Orphan Drug, Fast Track) for IL-2 in the treatment of cancer?",
+          "What is the overall recommendation on whether to pursue further development of low-dose IL-2 for cancer?"
+        ],
+        "scope": "The scope is a high-level executive summary focused exclusively on low-dose IL-2 for cancer. It should synthesize the core findings from all other sections of the report to present a concluding assessment and recommendation. Tangential information on other diseases or high-dose IL-2 should be excluded."
+      },
+      {
+        "name": "disease_overview",
+        "description": "This section will provide a comprehensive overview of cancer as a disease. It will cover a high-level description of its characteristics and pathophysiology, epidemiology in the US, standard diagnostic procedures, relevant biomarkers for diagnosis and prognosis, and potential patient populations for whom low-dose IL-2 therapy might be contraindicated.",
+        "required_evidence_types": [
+          "pubmed"
+        ],
+        "key_questions": [
+          "What are the defining characteristics of cancer, including typical symptoms, sequelae, and mortality/morbidity rates?",
+          "What is the current incidence and prevalence of cancer in the United States, including key demographic variations?",
+          "How is cancer diagnosed, and what are the common screening procedures and tests involved?",
+          "What is the pathophysiology of cancer, and what is the specific therapeutic target for low-dose IL-2 within this context?",
+          "What are the clinically validated diagnostic and prognostic biomarkers currently recommended in cancer treatment guidelines?",
+          "Which cancer patient populations might be excluded from low-dose IL-2 therapy due to potential contraindications or lack of efficacy?"
+        ],
+        "scope": "This section must focus strictly on cancer. The content should cover general disease characteristics, US epidemiology, diagnosis, and pathophysiology with a specific emphasis on the immunological aspects relevant to IL-2's mechanism of action. Information on other diseases is out of scope."
+      },
+      {
+        "name": "therapeutic_landscape",
+        "description": "This section will detail the current therapeutic landscape specifically for cancer. It will present, in table format, the approved therapies, competing immunomodulators in development, and other key therapies in the pipeline for cancer, including details on their mechanism of action, owner, and development status.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What are the currently FDA-approved therapies for cancer, including their owners, brand/generic names, approval years, mechanisms of action, and efficacy?",
+          "Which competing immunomodulator therapies are currently in development for cancer, and what is their status (preclinical, clinical phase), mechanism, and trial ID?",
+          "What other key non-immunomodulator therapies are in development for cancer, including their owner, mechanism, and clinical development status?"
+        ],
+        "scope": "The scope is to provide a structured overview of the treatment options for cancer. The analysis should be confined to therapies specifically indicated for cancer and categorized into approved drugs, competing immunomodulators in development, and other key pipeline assets, as per the template guidance."
+      },
+      {
+        "name": "current_treatment_guidelines",
+        "description": "This section will summarize the current standard-of-care treatment guidelines for cancer from major oncology organizations (e.g., NCCN, ASCO). It will also analyze how low-dose IL-2 could potentially be integrated into these existing treatment paradigms.",
+        "required_evidence_types": [
+          "pubmed"
+        ],
+        "key_questions": [
+          "What are the current treatment guidelines for cancer as established by major medical bodies?",
+          "Where could low-dose IL-2 potentially fit into the current treatment algorithm for cancer (e.g., as a monotherapy, combination therapy, adjuvant, or neoadjuvant treatment)?",
+          "What is the rationale for adding low-dose IL-2 to the existing standard of care for cancer?"
+        ],
+        "scope": "This section is focused on summarizing established, evidence-based treatment guidelines for cancer. The analysis should then be centered on the strategic positioning of low-dose IL-2 within these guidelines, avoiding speculation not supported by clinical or pre-clinical data."
+      },
+      {
+        "name": "competitor_analysis",
+        "description": "This section will conduct a focused analysis of direct competitors to low-dose IL-2 therapy for cancer. It will summarize information on these competitors, their development status, potential market impact, and relevant market trends in oncology treatment.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "Who are the main companies and what are the specific assets in development that would be considered direct competitors to low-dose IL-2 in the cancer market?",
+          "What is the mechanism of action and clinical development stage of these competing therapies?",
+          "What is the potential market impact of these competitors on the positioning of a low-dose IL-2 therapy for cancer?",
+          "What are the prevailing market trends in cancer treatment that could influence the competitive landscape?"
+        ],
+        "scope": "The scope is limited to direct competitors of low-dose IL-2 for cancer. This includes other IL-2 variants, IL-2 pathway modulators, or other immunotherapies with a similar proposed mechanism or target patient population. A broad overview of all cancer drugs is not required."
+      },
+      {
+        "name": "clinical_trials_analysis",
+        "description": "This section will provide a detailed analysis of clinical trials that have investigated low-dose IL-2 for the treatment of cancer. The analysis will be segmented into completed, recruiting/active, and terminated/unknown status trials, with comprehensive details provided for each trial in a structured table format.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What are the results, designs, endpoints, and publications of completed clinical trials of low-dose IL-2 in cancer?",
+          "What are the key parameters (NCTID, sponsor, enrollment, design, endpoints) of ongoing (recruiting or active) clinical trials of low-dose IL-2 in cancer?",
+          "What is known about terminated or unknown status clinical trials of low-dose IL-2 in cancer, including their design and endpoints?",
+          "What is the collective evidence from these trials regarding the efficacy and safety profile of low-dose IL-2 in cancer?"
+        ],
+        "scope": "This section's scope is strictly confined to clinical trials where low-dose IL-2 is the investigational agent for cancer. High-dose IL-2 trials are excluded unless they provide direct, relevant context for low-dose applications. All data must be sourced from ClinicalTrials.gov and associated publications."
+      },
+      {
+        "name": "market_opportunity_analysis",
+        "description": "This section will assess the market and opportunity for a low-dose IL-2 therapy specifically for cancer. It will cover the potential market size, relevant patents, special regulatory designations, the competitive landscape, unmet needs, asset differentiation, and the annual incidence of cancer in the US.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What is the estimated potential market size for new cancer treatments in the United States?",
+          "What is the annual incidence of new cancer diagnoses in the US?",
+          "What specific unmet needs in cancer treatment can low-dose IL-2 address?",
+          "How does low-dose IL-2 differentiate from current and pipeline competitors in terms of efficacy, safety, cost, or administration for cancer patients?",
+          "Are there any key patents protecting low-dose IL-2 formulations or their use in cancer?",
+          "Have any IL-2 derivatives or formulations received FDA fast-track, orphan drug, or other special designations for cancer?",
+          "Who are the key players in the competitor landscape for cancer, and what is their potential market penetration?"
+        ],
+        "scope": "The scope is to evaluate the commercial viability of low-dose IL-2 specifically for the cancer market. The analysis must remain focused on the indication of cancer, using US market data. It should clearly define the opportunity by highlighting unmet needs and the unique value proposition of low-dose IL-2."
+      }
+    ]
+  },
+  {
+    "continue_research": true,
+    "gaps": [
+      {
+        "section": "disease_overview",
+        "missing_questions": [
+          "What are the primary motor and non-motor symptoms of Parkinson's disease?"
+        ],
+        "notes": "The evidence collected focuses on motor symptoms but lacks detail on common non-motor symptoms, which are crucial for a complete overview."
+      },
+      {
+        "section": "therapeutic_landscape",
+        "missing_questions": [
+          "What are the unmet needs in the current therapeutic landscape?"
+        ],
+        "notes": "While current and emerging therapies are identified, there is no evidence detailing the limitations of existing treatments or the specific needs that new therapies aim to address."
+      }
+    ],
+    "tasks": [
+      {
+        "section": "therapeutic_landscape",
+        "evidence_type": "pubmed",
+        "query": "unmet needs and challenges in Parkinson's disease treatment",
+        "preferred_tool": "pubmed_search_articles",
+        "priority": "high"
+      },
+      {
+        "section": "disease_overview",
+        "evidence_type": "pubmed",
+        "query": "non-motor symptoms of Parkinson's disease review",
+        "preferred_tool": "pubmed_search_articles",
+        "priority": "medium"
+      }
+    ]
+  },
+  {
+    "continue_research": true,
+    "gaps": [
+      {
+        "section": "clinical_trials_analysis",
+        "missing_evidence_types": [
+          "clinicaltrials"
+        ],
+        "missing_questions": [
+          "What are the key ongoing or recently completed clinical trials for Parkinson's disease?",
+          "What are the primary endpoints and study designs of these trials?"
+        ],
+        "notes": "The research has so far only collected evidence from PubMed. To adequately analyze the clinical trial landscape, evidence directly from clinical trial registries is required as per the research plan."
+      },
+      {
+        "section": "competitor_analysis",
+        "missing_questions": [
+          "Who are the key competitors in the Parkinson's disease market?",
+          "What are the mechanisms of action of competitor drugs in development?"
+        ],
+        "notes": "There is a lack of specific evidence focused on the competitor landscape. While some emerging therapies were identified, a targeted search is needed to profile key competitors and their pipelines."
+      }
+    ],
+    "tasks": [
+      {
+        "section": "clinical_trials_analysis",
+        "evidence_type": "clinicaltrials",
+        "query": "phase 2 AND phase 3 interventional trials for Parkinson's disease",
+        "preferred_tool": "clinicaltrials_search_studies",
+        "priority": "high"
+      },
+      {
+        "section": "competitor_analysis",
+        "evidence_type": "pubmed",
+        "query": "emerging drugs and competitor landscape for Parkinson's disease treatment",
+        "preferred_tool": "pubmed_search_articles",
+        "priority": "high"
+      }
+    ]
+  },
+  {
+    "continue_research": false,
+    "gaps": [
+      {
+        "section": "market_opportunity_analysis",
+        "missing_questions": [
+          "What is the estimated market size for Parkinson's disease therapies?",
+          "What are the growth drivers and trends in the market?"
+        ],
+        "notes": "The collected evidence provides a strong foundation on the disease, therapies, and clinical trials, but lacks specific data on market size and commercial opportunity. This is the final major gap to address before concluding the research phase."
+      },
+      {
+        "section": "current_treatment_guidelines",
+        "notes": "While therapies have been discussed, a dedicated search for official treatment guidelines from major neurological associations would strengthen the report's foundation."
+      }
+    ],
+    "tasks": [
+      {
+        "section": "market_opportunity_analysis",
+        "evidence_type": "pubmed",
+        "query": "Parkinson's disease market size, growth drivers, and commercial trends",
+        "preferred_tool": "pubmed_search_articles",
+        "priority": "high"
+      },
+      {
+        "section": "current_treatment_guidelines",
+        "evidence_type": "pubmed",
+        "query": "NICE or AAN practice guidelines for Parkinson's disease treatment",
+        "preferred_tool": "pubmed_search_articles",
+        "priority": "medium"
+      }
+    ]
+  },
+  {
+    "metadata": {
+      "generated_at": "2024-07-09T14:30:00Z",
+      "model": "writer_agent"
+    },
+    "indication_profile": {
+      "disease_name": "Glioblastoma",
+      "ontology_ids": [
+        "MONDO:0018177",
+        "DOID:1319"
+      ],
+      "icd_10_codes": [
+        "C71"
+      ],
+      "patient_population_us": 10000,
+      "key_biomarkers": [
+        {
+          "name": "IDH1/2 mutations",
+          "role": "prognostic"
+        },
+        {
+          "name": "MGMT promoter methylation",
+          "role": "predictive"
+        },
+        {
+          "name": "EGFR amplification",
+          "role": "prognostic"
+        }
+      ]
+    },
+    "mechanistic_rationales": [
+      {
+        "mechanism_name": "Local CTLA-4 Blockade",
+        "relevance_score": "high",
+        "evidence_ids": [
+          "mechanism_of_action_E1",
+          "mechanism_of_action_E2",
+          "mechanism_of_action_E3"
+        ],
+        "status": "established",
+        "confidence": 0.9
+      },
+      {
+        "mechanism_name": "Local CD40 Agonism",
+        "relevance_score": "high",
+        "evidence_ids": [
+          "mechanism_of_action_E1",
+          "mechanism_of_action_E2"
+        ],
+        "status": "established",
+        "confidence": 0.9
+      }
+    ],
+    "competitive_landscape": [
+      {
+        "company_name": "Daiichi Sankyo",
+        "drug_name": "Teserpaturev (DB-107)",
+        "mechanism": "Oncolytic HSV-1",
+        "stage": "phase_2",
+        "nct_ids": [
+          "NCT05929653"
+        ],
+        "evidence_ids": [
+          "competitive_landscape_E1"
+        ]
+      },
+      {
+        "company_name": "Northwest Biotherapeutics",
+        "drug_name": "DCVax-L",
+        "mechanism": "Autologous dendritic cell vaccine",
+        "stage": "phase_3",
+        "nct_ids": [
+          "NCT00045968"
+        ],
+        "evidence_ids": [
+          "competitive_landscape_E2"
+        ]
+      },
+      {
+        "company_name": "Regeneron",
+        "drug_name": "Cemiplimab (REGN2810)",
+        "mechanism": "PD-1 inhibitor",
+        "stage": "discontinued",
+        "nct_ids": [
+          "NCT03718968"
+        ],
+        "evidence_ids": [
+          "competitive_landscape_E3"
+        ]
+      },
+      {
+        "company_name": "DNAtrix",
+        "drug_name": "DNX-2401",
+        "mechanism": "Oncolytic adenovirus",
+        "stage": "phase_2",
+        "nct_ids": [
+          "NCT03714334",
+          "NCT01956734"
+        ],
+        "evidence_ids": [
+          "competitive_landscape_E4"
+        ]
+      }
+    ],
+    "drug_specific_trials": [
+      {
+        "nct_id": "NCT06263304",
+        "trial_status": "recruiting",
+        "phase": "phase_1",
+        "intervention_name": "Beremagene geperpavec",
+        "dose": "Up to 5x10^9 viral particles",
+        "route": "other",
+        "design": "Open-label, single-arm, dose-escalation and expansion cohort study.",
+        "enrollment": 48,
+        "sponsor": "Krystal Biotech, Inc.",
+        "primary_outcome_met": "pending",
+        "evidence_ids": [
+          "clinical_trials_E1"
+        ]
+      },
+      {
+        "nct_id": "NCT03333342",
+        "trial_status": "recruiting",
+        "phase": "phase_1",
+        "intervention_name": "Beremagene geperpavec",
+        "dose": "Dose escalation",
+        "route": "other",
+        "design": "Platform trial for pediatric patients with high-grade gliomas.",
+        "enrollment": 250,
+        "sponsor": "Institut Gustave Roussy",
+        "primary_outcome_met": "pending",
+        "evidence_ids": [
+          "clinical_trials_E3"
+        ]
+      }
+    ],
+    "provenance": [
+      {
+        "key": "disease_overview",
+        "value": [
+          "disease_overview_E1",
+          "disease_overview_E2",
+          "disease_overview_E3",
+          "disease_overview_E4"
+        ]
+      },
+      {
+        "key": "mechanism_of_action",
+        "value": [
+          "mechanism_of_action_E1",
+          "mechanism_of_action_E2",
+          "mechanism_of_action_E3"
+        ]
+      },
+      {
+        "key": "competitive_landscape",
+        "value": [
+          "competitive_landscape_E1",
+          "competitive_landscape_E2",
+          "competitive_landscape_E3",
+          "competitive_landscape_E4"
+        ]
+      },
+      {
+        "key": "clinical_trials",
+        "value": [
+          "clinical_trials_E1",
+          "clinical_trials_E3"
+        ]
+      }
+    ]
+  }
+]

@@ -59,7 +59,10 @@ def get_collector_tools():
 
 
 def create_collector_agent(
-    section_name: str, task_override: RetrievalTask | None = None
+    section_name: str,
+    task_override: RetrievalTask | None = None,
+    before_agent_callback: Callable[[CallbackContext], types.Content | None]
+    | None = None,
 ) -> Agent:
     """
     Create a collector agent for a specific section.
@@ -67,6 +70,7 @@ def create_collector_agent(
     Args:
         section_name: Name of the section to collect evidence for.
         task_override: Optional RetrievalTask to create a task-focused collector.
+        before_agent_callback: Callback to run before the agent executes.
 
     Returns:
         Agent: Configured collector agent for the section.
@@ -96,20 +100,29 @@ def create_collector_agent(
         ),
     )
 
+    if before_agent_callback:
+        agent.before_agent_callback = before_agent_callback
+
     logger.debug(
         f"Collector agent {agent_name} created with tools: {agent.tools} and prompt: {agent.instruction}"
     )
     return agent
 
 
-def create_collector_agents(sections: list[str]) -> ParallelAgent:
+def create_collector_agents(
+    sections: list[str],
+    after_agent_callback: Callable[[CallbackContext], types.Content | None]
+    | None = None,
+) -> ParallelAgent:
     """
     Create a list of collector agents for the given sections.
     """
-    return ParallelAgent(
+    parallel_agent = ParallelAgent(
         name="evidence_collectors",
         sub_agents=[create_collector_agent(section) for section in sections],
+        after_agent_callback=after_agent_callback,
     )
+    return parallel_agent
 
 
 def create_targeted_collector_agent(task: RetrievalTask) -> Agent:
@@ -125,7 +138,7 @@ def create_targeted_collector_agent(task: RetrievalTask) -> Agent:
     return create_collector_agent(section_name=task.section, task_override=task)
 
 
-def create_targeted_collectors_agent(
+def create_targeted_collector_agents(
     tasks: list[RetrievalTask],
     after_agent_callback: Callable[[CallbackContext], types.Content | None]
     | None = None,

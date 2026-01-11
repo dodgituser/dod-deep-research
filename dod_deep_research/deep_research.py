@@ -12,7 +12,7 @@ from google.adk.events import Event, EventActions
 
 from dod_deep_research.core import build_runner, run_agent, get_output_file
 
-from dod_deep_research.agents.collector.agent import create_targeted_collectors_agent
+from dod_deep_research.agents.collector.agent import create_targeted_collector_agents
 from dod_deep_research.agents.research_head.agent import (
     aggregate_evidence_after_collectors,
     research_head_agent,
@@ -26,8 +26,6 @@ from dod_deep_research.agents.sequence_agents import (
 from dod_deep_research.agents.evidence import (
     DeepResearchOutput,
     EvidenceStore,
-    aggregate_evidence,
-    extract_section_stores,
 )
 from dod_deep_research.agents.shared_state import SharedState
 from dod_deep_research.agents.writer.schemas import WriterOutput
@@ -35,7 +33,7 @@ from dod_deep_research.prompts.indication_prompt import generate_indication_prom
 from dod_deep_research.loggy import setup_logging
 import logging
 
-setup_logging(level=logging.DEBUG)
+setup_logging(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = typer.Typer()
 
@@ -92,44 +90,14 @@ async def run_pre_aggregation(
         session_id=session.id,
     )
 
-    logger.info("Running deterministic evidence aggregation")
     state = updated_session.state
     logger.info(f"Session state keys: {list(state.keys())}")
 
-    section_stores = extract_section_stores(state)
-    if section_stores:
-        logger.info(
-            f"Collector outputs found for sections: {sorted(section_stores.keys())}"
-        )
+    evidence_store = state.get("evidence_store")
+    if evidence_store:
+        logger.info("Evidence store already aggregated by collectors callback")
     else:
-        logger.warning(
-            "No collector outputs found in state (evidence_store_section_* keys missing)."
-        )
-    missing_sections = sorted(set(common_sections) - set(section_stores.keys()))
-    if missing_sections:
-        logger.warning(f"Missing collector outputs for sections: {missing_sections}")
-    logger.info(f"Aggregating evidence from {len(section_stores)} sections")
-    evidence_store = aggregate_evidence(section_stores)
-    logger.info(
-        f"Aggregation complete: {len(evidence_store.items)} unique evidence items"
-    )
-
-    evidence_event = Event(
-        author="user",
-        actions=EventActions(
-            state_delta={"evidence_store": evidence_store.model_dump()}
-        ),
-    )
-    await runner_pre.session_service.append_event(updated_session, evidence_event)
-
-    # Refresh session to get the latest state
-    updated_session = await runner_pre.session_service.get_session(
-        app_name=app_name,
-        user_id=user_id,
-        session_id=session.id,
-    )
-
-    logger.info(f"Updated session {updated_session.id} state with aggregated evidence")
+        logger.warning("Evidence store missing after collectors")
 
     return updated_session, json_responses
 
@@ -198,7 +166,7 @@ async def run_iterative_research_loop(
             break
 
         logger.info(f"Running {len(research_head_plan.tasks)} targeted collectors")
-        targeted_collectors = create_targeted_collectors_agent(
+        targeted_collectors = create_targeted_collector_agents(
             research_head_plan.tasks,
             after_agent_callback=aggregate_evidence_after_collectors,
         )
