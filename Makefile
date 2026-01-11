@@ -24,7 +24,7 @@ clean:
 	@echo "Clean complete."
 
 compose-up:
-	@echo "Starting docker compose services..."
+	@echo "Starting docker compose services, building from scratch and starting in detached mode..."
 	docker compose -f docker-compose.yml build --no-cache
 	docker compose -f docker-compose.yml up -d
 

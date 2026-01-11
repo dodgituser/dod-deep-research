@@ -30,8 +30,8 @@ def _get_tools():
     pubmed_toolset = McpToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=os.getenv("PUBMED_MCP_URL", "http://127.0.0.1:3017/mcp"),
-            timeout=20,
-            sse_read_timeout=20,
+            timeout=60,
+            sse_read_timeout=60,
             headers={"Accept": "application/json, text/event-stream"},
             terminate_on_close=False,
         ),
@@ -40,6 +40,8 @@ def _get_tools():
     clinical_trials_toolset = McpToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=os.getenv("CLINICAL_TRIALS_MCP_URL", "http://127.0.0.1:3018/mcp"),
+            timeout=60,
+            sse_read_timeout=60,
             headers={"Accept": "application/json, text/event-stream"},
             terminate_on_close=False,
         ),

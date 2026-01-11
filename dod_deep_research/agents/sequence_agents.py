@@ -25,8 +25,11 @@ def get_pre_aggregation_agent() -> SequentialAgent:
         ],
     )
 
+
 # Iterative research loop is done in the deep_research.py file manually not leveraging ADK workflow agents.
 
+
+# TODO: Currently we only have one writer agent, but in the future we may have multiple agents as apart of the post-aggregation pipeline.
 def get_post_aggregation_agent() -> SequentialAgent:
     """
     Build the post-aggregation pipeline (writer).

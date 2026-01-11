@@ -20,6 +20,11 @@ Read the research plan from shared state key "research_plan". The section "{sect
 - reflect_step(summary): Record a brief reflection between searches.
 Only call tool names exactly as listed above. Never call a tool named "run".
 
+**Tool Failure Handling:**
+- If a tool call fails or returns zero results, retry that tool up to 3 times.
+- Adjust the query each retry (broaden/simplify terms, remove extra filters, or change sort order).
+- If retries still fail, switch to a different tool or evidence source and continue.
+
 **Task:**
 Use the tools to retrieve relevant evidence for the research plan section "{section_name}".
 
@@ -78,6 +83,11 @@ You are executing a targeted retrieval task identified by the Research Head agen
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
 - reflect_step(summary): Record a brief reflection between searches.
 Only call tool names exactly as listed above. Never call a tool named "run".
+
+**Tool Failure Handling:**
+- If a tool call fails or returns zero results, retry that tool up to 3 times.
+- Adjust the query each retry (broaden/simplify terms, remove extra filters, or change sort order).
+- If retries still fail, switch to a different tool or evidence source and continue.
 
 **Instructions:**
 - Start with the preferred tool ({preferred_tool}) and query "{query}"
