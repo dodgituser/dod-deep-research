@@ -13,12 +13,12 @@ COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are an evidence collector agent. Your r
 Read the research plan from shared state key "research_plan". The section "{section_name}" is guaranteed to exist in the research plan. Find this section and focus on collecting evidence for it.
 
 **Available Tools:**
-- google_search(query, num_results): Broad web discovery.
 - pubmed_search_articles(queryTerm, maxResults, sortBy, dateRange, filterByPublicationTypes, fetchBriefSummaries): PubMed search.
 - pubmed_fetch_contents(pmids, queryKey, webEnv, detailLevel, includeMeshTerms, includeGrantInfo): PubMed details/abstracts.
 - clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
 - reflect_step(summary): Record a brief reflection between searches.
+Only call tool names exactly as listed above. Never call a tool named "run".
 
 **Task:**
 Use the tools to retrieve relevant evidence for the research plan section "{section_name}".
@@ -31,12 +31,12 @@ like "XXXX", "TBD", or fabricated identifiers.
 Use tool snippets (abstracts/summaries) as the basis for quotes; do not invent quotes.
 Use pubmed_search_articles to find PMIDs and pubmed_fetch_contents to retrieve abstracts/metadata when possible.
 Use clinicaltrials_search_studies to find NCT IDs and clinicaltrials_get_study to retrieve study details when possible.
-Allowed EvidenceItem.source values: google, pubmed, clinicaltrials, guideline, press_release, other.
-When assigning EvidenceItem.source, use "google" for Google results, "pubmed" for PubMed, "clinicaltrials" for ClinicalTrials.gov, "guideline" for clinical practice guidelines, "press_release" for press releases, and "other" for general web sources.
+Allowed EvidenceItem.source values: pubmed, clinicaltrials.
+When assigning EvidenceItem.source, use "pubmed" for PubMed and "clinicaltrials" for ClinicalTrials.gov.
 
 **Iterative Research Loop (Required):**
-1) Run 1-2 broad searches to scope the section.
-2) Run 1-3 targeted follow-up searches based on gaps you notice.
+1) Perform 1-2 broad searches to scope the section.
+2) Perform 1-3 targeted follow-up searches based on gaps you notice.
 3) After each search call, invoke reflect_step with a one-paragraph summary of what you found and what is missing.
 4) Do not call reflect_step in parallel with any other tool.
 5) Continue searching until you have at least 3 strong sources with valid URLs and quotes.
@@ -72,19 +72,19 @@ You are executing a targeted retrieval task identified by the Research Head agen
 4. Ensure all evidence has valid URLs and meaningful quotes
 
 **Available Tools:**
-- google_search(query, num_results): Broad web discovery.
 - pubmed_search_articles(queryTerm, maxResults, sortBy, dateRange, filterByPublicationTypes, fetchBriefSummaries): PubMed search.
 - pubmed_fetch_contents(pmids, queryKey, webEnv, detailLevel, includeMeshTerms, includeGrantInfo): PubMed details/abstracts.
 - clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
 - reflect_step(summary): Record a brief reflection between searches.
+Only call tool names exactly as listed above. Never call a tool named "run".
 
 **Instructions:**
 - Start with the preferred tool ({preferred_tool}) and query "{query}"
 - Focus on this specific query - do not broaden the search unnecessarily
 - Collect evidence that directly addresses the gap
-- Evidence types must be one of: google, pubmed, clinicaltrials, guideline, press_release, other
-- Ensure evidence type matches {evidence_type}
+- Evidence types must be one of: pubmed, clinicaltrials
+- Ensure evidence type matches {evidence_type} when possible; use available tools only
 - Return at least 3 evidence items with valid URLs and quotes
 - Use reflect_step to summarize findings after searches
 

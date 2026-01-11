@@ -36,7 +36,7 @@ class RetrievalTask(BaseModel):
     )
     evidence_type: EvidenceSource = Field(
         ...,
-        description="Preferred evidence type (pubmed, clinicaltrials, google, guideline, press_release, other).",
+        description="Preferred evidence type (pubmed, clinicaltrials).",
     )
     query: str = Field(
         ...,
@@ -44,7 +44,7 @@ class RetrievalTask(BaseModel):
     )
     preferred_tool: PreferredTool = Field(
         ...,
-        description="Tool to use (pubmed_search_articles, clinicaltrials_search_studies, google_search).",
+        description="Tool to use (pubmed_search_articles, clinicaltrials_search_studies).",
     )
     priority: TaskPriority = Field(
         ...,

@@ -39,6 +39,7 @@ pubmed_host, pubmed_port = split_host_port(PUBMED_URL)
 clinical_trials_host, clinical_trials_port = split_host_port(CLINICAL_TRIALS_URL)
 VERBOSE_OUTPUT = os.getenv("MCP_TEST_VERBOSE", "").lower() in {"1", "true", "yes"}
 INVOKE_TOOLS = os.getenv("MCP_TEST_INVOKE", "").lower() in {"1", "true", "yes"}
+PREVIEW_MAX_CHARS = 1200
 
 # Pytest markers to skip tests if services are not running
 requires_pubmed_mcp = pytest.mark.skipif(
@@ -146,7 +147,10 @@ async def assert_tools_list(client, url, expected_tool):
     tool_names = {tool.get("name") for tool in tools if isinstance(tool, dict)}
     if VERBOSE_OUTPUT:
         sample = sorted(name for name in tool_names if name)[:10]
-        print(f"MCP tools/list returned {len(tool_names)} tool(s); sample={sample}")
+        print("\n=== MCP tools/list ===")
+        print(f"URL: {url}")
+        print(f"Tool count: {len(tool_names)}")
+        print(f"Sample: {sample}")
     assert expected_tool in tool_names, (
         f"Expected tool '{expected_tool}' not found in MCP tool list."
     )
@@ -163,8 +167,15 @@ async def maybe_invoke_tool(client, url, tool_name, arguments):
         {"name": tool_name, "arguments": arguments},
     )
     if VERBOSE_OUTPUT:
-        preview = json.dumps(result)[:500]
-        print(f"tools/call {tool_name} result preview: {preview}...")
+        preview = json.dumps(result, indent=2, sort_keys=True)
+        if len(preview) > PREVIEW_MAX_CHARS:
+            preview = f"{preview[:PREVIEW_MAX_CHARS]}...\n[truncated]"
+        print("\n=== MCP tools/call ===")
+        print(f"URL: {url}")
+        print(f"Tool: {tool_name}")
+        print(f"Args: {json.dumps(arguments, sort_keys=True)}")
+        print("Result:")
+        print(preview)
     assert result, f"Expected non-empty result from tools/call {tool_name}"
 
 
@@ -178,7 +189,7 @@ async def test_direct_pubmed_endpoint():
             client,
             PUBMED_URL,
             "pubmed_search_articles",
-            {"query": "IL-2 cancer"},
+            {"queryTerm": "IL-2 cancer"},
         )
 
 

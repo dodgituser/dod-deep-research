@@ -1,14 +1,63 @@
 """Functional tests for collector agent."""
 
+import json
 import uuid
 
 import pytest
 from google.genai import types
+from google.adk.models.llm_response import LlmResponse
 
 from dod_deep_research.agents.collector.agent import create_collector_agent
 from dod_deep_research.agents.collector.schemas import CollectorResponse
 from dod_deep_research.agents.planner.schemas import CommonSection
 from dod_deep_research.deep_research import build_runner, run_agent
+
+
+def _mock_evidence_payload(section_name: str) -> dict:
+    """
+    Build a deterministic CollectorResponse payload for tests.
+
+    Args:
+        section_name: Section name for evidence.
+
+    Returns:
+        dict: Mock collector response payload.
+    """
+    return {
+        "section": section_name,
+        "evidence": [
+            {
+                "id": "E1",
+                "source": "pubmed",
+                "title": "Amyotrophic lateral sclerosis overview",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/00000001/",
+                "quote": "ALS is a progressive neurodegenerative disease.",
+                "year": 2020,
+                "tags": ["als", "overview"],
+                "section": section_name,
+            },
+            {
+                "id": "E2",
+                "source": "pubmed",
+                "title": "ALS diagnostics and biomarkers",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/00000002/",
+                "quote": "Diagnosis is supported by clinical and electrodiagnostic criteria.",
+                "year": 2021,
+                "tags": ["als", "diagnosis"],
+                "section": section_name,
+            },
+            {
+                "id": "E3",
+                "source": "pubmed",
+                "title": "Epidemiology of ALS",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/00000003/",
+                "quote": "ALS incidence is estimated at 1-2 per 100,000 person-years.",
+                "year": 2019,
+                "tags": ["als", "epidemiology"],
+                "section": section_name,
+            },
+        ],
+    }
 
 
 @pytest.mark.asyncio
@@ -27,6 +76,18 @@ async def test_collector_agent():
     # Create a collector agent for disease_overview section
     section_name = CommonSection.DISEASE_OVERVIEW.value
     collector = create_collector_agent(section_name)
+    collector.tools = []
+
+    def _mock_before_model_callback(callback_context=None, llm_request=None):
+        payload = _mock_evidence_payload(section_name)
+        return LlmResponse(
+            content=types.Content(
+                role="model",
+                parts=[types.Part.from_text(text=json.dumps(payload))],
+            )
+        )
+
+    collector.before_model_callback = _mock_before_model_callback
 
     runner = build_runner(agent=collector, app_name="test_collector")
     user_id = "test_user"
@@ -36,8 +97,11 @@ async def test_collector_agent():
     test_message = types.Content(
         parts=[
             types.Part.from_text(
-                text="My specific disease indication for this report is: ALS. "
-                "Please collect evidence for the disease_overview section about ALS."
+                text=(
+                    "My specific disease indication for this report is: ALS. "
+                    "Please collect evidence for the disease_overview section about ALS. "
+                    "Use PubMed tools only and include at least 3 citations."
+                )
             )
         ],
         role="user",
@@ -58,7 +122,7 @@ async def test_collector_agent():
                     {
                         "name": section_name,
                         "description": "Overview of ALS disease",
-                        "required_evidence_types": ["pubmed", "google"],
+                        "required_evidence_types": ["pubmed"],
                         "key_questions": ["What is ALS?", "How is ALS diagnosed?"],
                         "scope": "Focus on ALS disease characteristics",
                     }

@@ -24,3 +24,5 @@ def setup_logging(level: int = logging.INFO) -> logging.Logger:
     logging.getLogger("google_adk.google.adk.models.google_llm").setLevel(
         logging.WARNING
     )
+    logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+    logging.getLogger("anyio").setLevel(logging.CRITICAL)

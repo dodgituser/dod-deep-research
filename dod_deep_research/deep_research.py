@@ -20,8 +20,8 @@ from dod_deep_research.agents.research_head.agent import (
 from dod_deep_research.agents.planner.schemas import get_common_sections
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 from dod_deep_research.agents.sequence_agents import (
-    pre_aggregation_agent,
-    post_aggregation_agent,
+    get_pre_aggregation_agent,
+    get_post_aggregation_agent,
 )
 from dod_deep_research.agents.shared_state import (
     DeepResearchOutput,
@@ -105,6 +105,9 @@ async def run_pre_aggregation(
         logger.warning(
             "No collector outputs found in state (evidence_store_section_* keys missing)."
         )
+    missing_sections = sorted(set(common_sections) - set(section_stores.keys()))
+    if missing_sections:
+        logger.warning(f"Missing collector outputs for sections: {missing_sections}")
     logger.info(f"Aggregating evidence from {len(section_stores)} sections")
     evidence_store = aggregate_evidence(section_stores)
     logger.info(
@@ -321,9 +324,9 @@ async def run_pipeline_async(
     app_name = "deep_research"
     user_id = "user"
     session_id = str(uuid.uuid4())
-    runner_pre = build_runner(agent=pre_aggregation_agent, app_name=app_name)
+    runner_pre = build_runner(agent=get_pre_aggregation_agent(), app_name=app_name)
     runner_loop = build_runner(agent=research_head_agent, app_name=app_name)
-    runner_post = build_runner(agent=post_aggregation_agent, app_name=app_name)
+    runner_post = build_runner(agent=get_post_aggregation_agent(), app_name=app_name)
 
     events_file = get_output_file(indication)
     logger.info(f"Events will be saved to: {events_file}")

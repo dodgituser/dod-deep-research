@@ -53,9 +53,9 @@ RESEARCH_HEAD_AGENT_PROMPT = """You are a Research Head agent responsible for an
 5. **Task Generation Guidelines:**
    - Create specific, actionable retrieval tasks
    - Prioritize tasks using: high, medium, low
-   - Evidence types must be one of: google, pubmed, clinicaltrials, guideline, press_release, other
-   - Tools must be one of: pubmed_search_articles, clinicaltrials_search_studies, google_search
-   - Match preferred_tool to evidence_type (pubmed_search_articles for pubmed, clinicaltrials_search_studies for clinicaltrials, google_search for google)
+   - Evidence types must be one of: pubmed, clinicaltrials
+   - Tools must be one of: pubmed_search_articles, clinicaltrials_search_studies
+   - Match preferred_tool to evidence_type (pubmed_search_articles for pubmed, clinicaltrials_search_studies for clinicaltrials)
    - Write clear, focused queries that target specific gaps
 
 6. **Exit Criteria:**

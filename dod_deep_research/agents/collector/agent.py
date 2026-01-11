@@ -7,7 +7,6 @@ from typing import Callable
 from google.adk import Agent
 from google.adk.agents import ParallelAgent
 from google.adk.agents.callback_context import CallbackContext
-from google.adk.tools import FunctionTool, google_search
 from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 from google.genai import types
@@ -20,6 +19,10 @@ from dod_deep_research.agents.collector.schemas import CollectorResponse
 from dod_deep_research.agents.research_head.schemas import RetrievalTask
 from dod_deep_research.models import GeminiModels
 from dod_deep_research.tools import reflect_step
+import logging
+from google.genai.types import GenerateContentConfig
+
+logger = logging.getLogger(__name__)
 
 
 def _get_tools():
@@ -27,6 +30,8 @@ def _get_tools():
     pubmed_toolset = McpToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=os.getenv("PUBMED_MCP_URL", "http://127.0.0.1:3017/mcp"),
+            timeout=20,
+            sse_read_timeout=20,
             headers={"Accept": "application/json, text/event-stream"},
             terminate_on_close=False,
         ),
@@ -41,11 +46,14 @@ def _get_tools():
         tool_filter=["clinicaltrials_search_studies", "clinicaltrials_get_study"],
     )
     return [
-        google_search,
         pubmed_toolset,
+        reflect_step,
         clinical_trials_toolset,
-        FunctionTool(reflect_step),
     ]
+
+
+def get_collector_tools():
+    return _get_tools()
 
 
 def create_collector_agent(
@@ -74,14 +82,21 @@ def create_collector_agent(
         prompt = COLLECTOR_AGENT_PROMPT_TEMPLATE.format(section_name=section_name)
         agent_name = f"collector_{section_name}"
 
-    return Agent(
+    agent = Agent(
         name=agent_name,
         instruction=prompt,
         tools=_get_tools(),
-        model=GeminiModels.GEMINI_25_FLASH_LITE.value.replace("models/", ""),
+        model=GeminiModels.GEMINI_FLASH_LITE_LATEST.value.replace("models/", ""),
         output_key=f"evidence_store_section_{section_name}",
         output_schema=CollectorResponse,
+        generate_content_config=GenerateContentConfig(
+            temperature=0.1,
+        ),
     )
+
+    logger.info(f"Agent tools: {agent.tools}")
+
+    return agent
 
 
 def create_collector_agents(sections: list[str]) -> ParallelAgent:
