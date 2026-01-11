@@ -25,6 +25,7 @@ def get_pre_aggregation_agent() -> SequentialAgent:
         ],
     )
 
+# Iterative research loop is done in the deep_research.py file manually not leveraging ADK workflow agents.
 
 def get_post_aggregation_agent() -> SequentialAgent:
     """
