@@ -1,0 +1,501 @@
+[
+  {
+    "disease": "cancer",
+    "research_areas": [
+      "rationale_executive_summary",
+      "disease_overview",
+      "therapeutic_landscape",
+      "current_treatment_guidelines",
+      "competitor_analysis",
+      "clinical_trials_analysis",
+      "market_opportunity_analysis"
+    ],
+    "sections": [
+      {
+        "name": "rationale_executive_summary",
+        "description": "Summarize the core findings and recommendation for using low-dose IL-2 in cancer. This section should cover the unmet need in cancer treatment, a summary of pre-clinical and clinical evidence, and any relevant regulatory history for IL-2 (e.g., Aldesleukin) in cancer.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What is the therapeutic rationale for using low-dose IL-2 in cancer, either as immunotherapy support or for other mechanisms?",
+          "What are the key unmet needs in current cancer therapy that low-dose IL-2 could potentially address?",
+          "What is a high-level summary of the pre-clinical and clinical evidence supporting the use of low-dose IL-2 in cancer?",
+          "Are there any existing FDA/EMA designations or approval milestones for IL-2 specifically in the context of cancer treatment?"
+        ],
+        "scope": "This section must provide a concise summary of the entire report, focusing exclusively on the viability and evidence for developing low-dose IL-2 for cancer. It should synthesize information from all other sections to present a clear recommendation."
+      },
+      {
+        "name": "disease_overview",
+        "description": "Provide a comprehensive overview of cancer, including its characteristics, US epidemiology, diagnostic methods, pathophysiology relevant to IL-2's mechanism, key biomarkers, and potential exclusion criteria for IL-2 therapy.",
+        "required_evidence_types": [
+          "pubmed"
+        ],
+        "key_questions": [
+          "What are the general characteristics of cancer, including presenting symptoms, sequelae, mortality, and morbidity?",
+          "What is the incidence and prevalence of cancer in the US market?",
+          "How is cancer diagnosed, and are there any significant diagnostic delays or undiagnosed populations relevant to IL-2 therapy positioning?",
+          "What is the pathophysiology of cancer, and what is the specific therapeutic target for low-dose IL-2 within this context?",
+          "What are the commonly used, clinically validated diagnostic and prognostic biomarkers for cancer?",
+          "What are the potential contraindications or exclusion criteria for IL-2 therapy in cancer patients?"
+        ],
+        "scope": "Focus exclusively on cancer. The overview should provide sufficient biological and clinical context to understand the rationale for IL-2 therapy. Avoid discussing other diseases. Since 'cancer' is broad, focus on aspects relevant to immunotherapies."
+      },
+      {
+        "name": "therapeutic_landscape",
+        "description": "Detail the current therapeutic landscape for cancer, focusing on approved treatments, competing immunomodulators in development, and other key therapies in the pipeline.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What are the currently FDA-approved therapies for cancer, including their mechanism of action and efficacy?",
+          "What competing immunomodulators are in development for cancer, and what is their current clinical or preclinical status?",
+          "What other key therapies are in the pipeline for cancer?",
+          "What is the regulatory status of these competing therapies (e.g., FDA-approved, withdrawn, non-US approvals)?"
+        ],
+        "scope": "The analysis should be specific to cancer treatments, particularly those that would compete with or be used in combination with an immunomodulator like low-dose IL-2. Information should be structured in tables as specified in the report template."
+      },
+      {
+        "name": "current_treatment_guidelines",
+        "description": "Summarize the current, established treatment guidelines for cancer and describe how low-dose IL-2 could potentially be integrated into these guidelines.",
+        "required_evidence_types": [
+          "pubmed"
+        ],
+        "key_questions": [
+          "What do current treatment guidelines (e.g., from NCCN, ASCO) recommend for the management of cancer?",
+          "Where in the established treatment paradigms could low-dose IL-2 potentially fit?",
+          "How could low-dose IL-2 be added to or integrated with existing standard-of-care treatments for cancer based on its mechanism and clinical data?"
+        ],
+        "scope": "Focus on established, consensus treatment guidelines for cancer from major oncology organizations. Analyze the potential positioning of low-dose IL-2 as a monotherapy or combination therapy within these existing frameworks."
+      },
+      {
+        "name": "competitor_analysis",
+        "description": "Analyze the direct competitors to a low-dose IL-2 therapy for cancer, including their potential market impact and relevant market trends in oncology.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "Who are the direct competitors developing therapies with similar mechanisms (e.g., other IL-2 variants, cytokines) or for the same patient populations in cancer?",
+          "What is the development status and potential market impact of these competitor assets in the cancer space?",
+          "What are the current market trends in cancer treatment, particularly in the field of immunotherapy?"
+        ],
+        "scope": "Confine the analysis to direct competitors of low-dose IL-2 within the cancer indication. This includes other IL-2-based therapies, other cytokine modulators, and therapies targeting similar immune pathways."
+      },
+      {
+        "name": "clinical_trials_analysis",
+        "description": "Conduct a detailed analysis of clinical trials involving low-dose IL-2 specifically for the treatment of cancer. This includes completed, active, and terminated trials.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What completed clinical trials have evaluated low-dose IL-2 in cancer, and what were their designs, endpoints, and key results regarding efficacy and toxicity?",
+          "What are the details of currently recruiting or active clinical trials of low-dose IL-2 in cancer?",
+          "Are there any terminated or unknown status trials of low-dose IL-2 in cancer, and what information is available about them?",
+          "For each trial, what is the NCTID, sponsor, enrollment, design, endpoints, and publication status?"
+        ],
+        "scope": "Focus strictly on clinical trials where low-dose IL-2 is investigated for cancer. Exclude trials focused solely on high-dose IL-2 unless they provide essential context. Present findings in the specified table formats for completed, active, and terminated trials."
+      },
+      {
+        "name": "market_opportunity_analysis",
+        "description": "Assess the market and opportunity for a low-dose IL-2 therapy in cancer, covering market size, relevant patents, regulatory designations, the competitor landscape, and specific unmet needs.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What is the potential market size for cancer treatments in the US?",
+          "What patents are relevant to low-dose IL-2 formulations or its use in cancer?",
+          "Does low-dose IL-2 have any special FDA designations (e.g., Orphan Drug, Fast Track) for any type of cancer?",
+          "Who are the key players in the competitor landscape for cancer, and what is their potential market penetration?",
+          "What specific unmet needs or treatment gaps in cancer can low-dose IL-2 address?",
+          "How does low-dose IL-2 differentiate from current therapies for cancer in terms of efficacy, toxicity, cost, or administration?"
+        ],
+        "scope": "This analysis must be exclusively focused on the market opportunity for low-dose IL-2 within the cancer indication. It should clearly define a specific niche or treatment gap that the asset could realistically fill."
+      }
+    ]
+  },
+  {
+    "section": "therapeutic_landscape",
+    "evidence": [
+      {
+        "id": "therapeutic_landscape_E1",
+        "source": "pubmed",
+        "title": "Lymphodepletion, tumor-infiltrating lymphocytes, and high versus low dose IL-2 followed by pembrolizumab in patients with metastatic melanoma.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/40815607/",
+        "quote": "In Arm-2 [low-dose IL-2] (n = 7), one patient had an ongoing PR for over 76 months, one had SD, and five had PD. The toxicity profiles were comparable; however, patients in Arm-2 had lower grade 3 febrile neutropenia (57% vs. 71%) and shorter hospitalization (median 16 days vs. 18 days). No correlation was observed between TIL phenotype and clinical response... suggesting low-dose IL-2 as an alternative to high-dose IL-2 after TIL administration.",
+        "year": 2025,
+        "tags": [
+          "Melanoma",
+          "TILs",
+          "Toxicity Comparison"
+        ],
+        "section": "therapeutic_landscape"
+      },
+      {
+        "id": "therapeutic_landscape_E2",
+        "source": "pubmed",
+        "title": "\u03b1TIGIT-IL2 achieves tumor regression by promoting tumor-infiltrating regulatory T cell fragility in mouse models.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/41107262/",
+        "quote": "Combination therapy with \u03b1TIGIT-IL2 and PD-1 blocker could eliminate triple-negative breast cancer (TNBC) tumors resistant to immune checkpoint blockade (ICB) therapy. These findings provide the basis for developing a new generation of immunocytokines that target Tcells and promote their fragility in the tumor milieu, resulting in robust antitumor immunity.",
+        "year": 2025,
+        "tags": [
+          "TNBC",
+          "Engineered IL-2",
+          "Combination Therapy"
+        ],
+        "section": "therapeutic_landscape"
+      },
+      {
+        "id": "therapeutic_landscape_E3",
+        "source": "pubmed",
+        "title": "Combination Image-Guided and Antibody-Targeted \u03b1-Therapy Before Targeted Immunotherapy for Treatment of Solid Tumors.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/40813233/",
+        "quote": "Triple therapy (fractionated IGRT plus low-dose TAT followed by immunocytokine therapy) was studied in the colon cancer model, demonstrating complete cures in the majority of mice and rejection of all rechallenges. When the study was repeated for immunophenotyping 2 d after the completion of therapy, significant increases in natural killer and CD8-positive/interferon-gamma-positive cells were observed with triple therapy.",
+        "year": 2025,
+        "tags": [
+          "Solid Tumors",
+          "Immunocytokine",
+          "Preclinical Efficacy"
+        ],
+        "section": "therapeutic_landscape"
+      },
+      {
+        "id": "therapeutic_landscape_E4",
+        "source": "clinicaltrials",
+        "title": "ACTolog in Patients With Solid Cancers",
+        "url": "https://clinicaltrials.gov/study/NCT02876510",
+        "quote": "Phase I Adoptive Cellular Therapy Trial With Endogenous CD8+ T Cells (ACTolog\u00ae IMA101) Alone or in Combination With Atezolizumab in Patients With Relapsed and/or Refractory Solid Cancers",
+        "year": 2025,
+        "tags": [
+          "TILs",
+          "Atezolizumab",
+          "Solid Cancers"
+        ],
+        "section": "therapeutic_landscape"
+      },
+      {
+        "id": "therapeutic_landscape_E5",
+        "source": "clinicaltrials",
+        "title": "Chemotherapy Followed by gp100 Lymphocytes and Aldesleukin to Treat Melanoma",
+        "url": "https://clinicaltrials.gov/study/NCT00665470",
+        "quote": "Phase II Study in Patients With Metastatic Melanoma Using a Non-Myeloablative Lymphocyte Depleting Regimen of Chemotherapy Followed by Infusion of gp100 Reactive Peripheral Blood Lymphocytes (PBL) and High or Low Dose Aldesleukin",
+        "year": 2007,
+        "tags": [
+          "Melanoma",
+          "Aldesleukin Dosing",
+          "TILs"
+        ],
+        "section": "therapeutic_landscape"
+      },
+      {
+        "id": "therapeutic_landscape_E6",
+        "source": "clinicaltrials",
+        "title": "Biological Therapy in Treating Women With Stage IV Breast Cancer",
+        "url": "https://clinicaltrials.gov/study/NCT00027807",
+        "quote": "Treatment of Stage IV Breast Cancer With OKT3 x Herceptin Armed Activated T Cells, Low Dose IL-2, And GM-CSF (Phase I Only as of 4-22-09 as Per IRB Approval Date)",
+        "year": 2001,
+        "tags": [
+          "Breast Cancer",
+          "Targeted T-cell Therapy",
+          "IL-2 Combination"
+        ],
+        "section": "therapeutic_landscape"
+      }
+    ]
+  },
+  {
+    "continue_research": true,
+    "gaps": [
+      {
+        "section": "therapeutic_landscape",
+        "missing_evidence_types": [
+          "clinicaltrials"
+        ],
+        "missing_questions": [
+          "What are the existing treatment options for HER2-positive breast cancer after trastuzumab failure?",
+          "What are the limitations of current second-line therapies for HER2-positive breast cancer?"
+        ],
+        "notes": "The section currently lacks clinical trial data, which is required to understand the current treatment landscape and ongoing research for second-line therapies."
+      },
+      {
+        "section": "competitor_analysis",
+        "missing_questions": [
+          "Which companies are developing novel therapies for trastuzumab-resistant HER2-positive breast cancer?",
+          "What are the key competitor drugs in late-stage clinical development?"
+        ],
+        "notes": "Insufficient evidence collected (only 1 trial). A broader search is needed to identify more competitor drugs and sponsoring companies."
+      }
+    ],
+    "tasks": [
+      {
+        "section": "therapeutic_landscape",
+        "evidence_type": "clinicaltrials",
+        "query": "Phase 3 clinical trials for second-line treatment of HER2-positive breast cancer after trastuzumab",
+        "preferred_tool": "clinicaltrials_search_studies",
+        "priority": "high"
+      },
+      {
+        "section": "competitor_analysis",
+        "evidence_type": "clinicaltrials",
+        "query": "Phase II OR Phase III trials for trastuzumab-resistant HER2-positive breast cancer excluding trastuzumab deruxtecan",
+        "preferred_tool": "clinicaltrials_search_studies",
+        "priority": "high"
+      }
+    ]
+  },
+  {
+    "continue_research": true,
+    "gaps": [
+      {
+        "section": "therapeutic_landscape",
+        "missing_evidence_types": [
+          "clinicaltrials"
+        ],
+        "missing_questions": [
+          "What are the existing treatment options for HER2-positive breast cancer after trastuzumab failure?",
+          "What are the limitations of current second-line therapies for HER2-positive breast cancer?"
+        ],
+        "notes": "The section has PubMed articles but is missing the required clinical trial evidence to provide a complete view of current and upcoming therapies."
+      },
+      {
+        "section": "competitor_analysis",
+        "missing_questions": [
+          "Which companies are developing novel therapies for trastuzumab-resistant HER2-positive breast cancer?",
+          "What are the key competitor drugs in late-stage clinical development?"
+        ],
+        "notes": "Evidence is insufficient. Only one clinical trial has been collected, which is not enough to answer the key questions about the competitive landscape."
+      }
+    ],
+    "tasks": [
+      {
+        "section": "therapeutic_landscape",
+        "evidence_type": "clinicaltrials",
+        "query": "clinical trials for second-line therapy in HER2-positive breast cancer after trastuzumab",
+        "preferred_tool": "clinicaltrials_search_studies",
+        "priority": "high"
+      },
+      {
+        "section": "competitor_analysis",
+        "evidence_type": "clinicaltrials",
+        "query": "Phase II OR Phase III trials for trastuzumab-resistant HER2-positive breast cancer",
+        "preferred_tool": "clinicaltrials_search_studies",
+        "priority": "high"
+      }
+    ]
+  },
+  {
+    "continue_research": true,
+    "gaps": [
+      {
+        "section": "therapeutic_landscape",
+        "missing_evidence_types": [
+          "clinicaltrials"
+        ],
+        "missing_questions": [
+          "What are the existing treatment options for HER2-positive breast cancer after trastuzumab failure?",
+          "What are the limitations of current second-line therapies for HER2-positive breast cancer?"
+        ],
+        "notes": "The section has PubMed articles but is still missing the required clinical trial evidence to provide a complete view of current and emerging therapies."
+      },
+      {
+        "section": "competitor_analysis",
+        "missing_questions": [
+          "Which companies are developing novel therapies for trastuzumab-resistant HER2-positive breast cancer?",
+          "What are the key competitor drugs in late-stage clinical development?"
+        ],
+        "notes": "The number of evidence items (2) is still insufficient to provide a comprehensive competitor overview. More clinical trials are needed to fully answer the key questions."
+      }
+    ],
+    "tasks": [
+      {
+        "section": "therapeutic_landscape",
+        "evidence_type": "clinicaltrials",
+        "query": "Phase II OR Phase III trials for second-line treatment of HER2-positive breast cancer after trastuzumab failure",
+        "preferred_tool": "clinicaltrials_search_studies",
+        "priority": "high"
+      },
+      {
+        "section": "competitor_analysis",
+        "evidence_type": "clinicaltrials",
+        "query": "late-stage clinical trials for HER2-positive breast cancer resistant to trastuzumab",
+        "preferred_tool": "clinicaltrials_search_studies",
+        "priority": "medium"
+      }
+    ]
+  },
+  {
+    "continue_research": false,
+    "gaps": [],
+    "tasks": []
+  },
+  {
+    "metadata": {
+      "generated_at": "2024-05-21T10:30:00Z",
+      "model": "writer_agent"
+    },
+    "indication_profile": {
+      "disease_name": "Crohn's Disease",
+      "ontology_ids": [
+        "MeSH:D003414"
+      ],
+      "icd_10_codes": [
+        "K50"
+      ],
+      "patient_population_us": 780000,
+      "key_biomarkers": [
+        {
+          "name": "C-reactive protein (CRP)",
+          "role": "monitoring"
+        },
+        {
+          "name": "Fecal calprotectin (FCP)",
+          "role": "monitoring"
+        }
+      ]
+    },
+    "mechanistic_rationales": [
+      {
+        "mechanism_name": "IL-12/23 Inhibition",
+        "relevance_score": "high",
+        "evidence_ids": [
+          "mechanism_of_action_E1",
+          "mechanism_of_action_E2"
+        ],
+        "status": "established",
+        "confidence": 0.95
+      }
+    ],
+    "competitive_landscape": [
+      {
+        "company_name": "AbbVie",
+        "drug_name": "Adalimumab (Humira)",
+        "mechanism": "TNF-alpha inhibitor",
+        "stage": "approved",
+        "nct_ids": [],
+        "evidence_ids": [
+          "competitors_E1"
+        ]
+      },
+      {
+        "company_name": "Takeda",
+        "drug_name": "Vedolizumab (Entyvio)",
+        "mechanism": "Integrin inhibitor",
+        "stage": "approved",
+        "nct_ids": [],
+        "evidence_ids": [
+          "competitors_E1"
+        ]
+      },
+      {
+        "company_name": "AbbVie",
+        "drug_name": "Risankizumab (Skyrizi)",
+        "mechanism": "IL-23 inhibitor",
+        "stage": "approved",
+        "nct_ids": [
+          "NCT03105128",
+          "NCT03104413"
+        ],
+        "evidence_ids": [
+          "competitors_E2"
+        ]
+      },
+      {
+        "company_name": "AbbVie",
+        "drug_name": "Upadacitinib (Rinvoq)",
+        "mechanism": "JAK inhibitor",
+        "stage": "approved",
+        "nct_ids": [
+          "NCT03345836",
+          "NCT03345849"
+        ],
+        "evidence_ids": [
+          "competitors_E3"
+        ]
+      }
+    ],
+    "drug_specific_trials": [
+      {
+        "nct_id": "NCT01369329",
+        "trial_status": "completed",
+        "phase": "phase_3",
+        "intervention_name": "Ustekinumab",
+        "dose": "~6 mg/kg",
+        "route": "iv",
+        "design": "Randomized, double-blind, placebo-controlled trial in patients who had failed or were intolerant to one or more anti-TNF\u03b1 therapies.",
+        "enrollment": 741,
+        "sponsor": "Janssen Research & Development, LLC",
+        "primary_outcome_met": "yes",
+        "evidence_ids": [
+          "clinical_trials_E1"
+        ]
+      },
+      {
+        "nct_id": "NCT01369342",
+        "trial_status": "completed",
+        "phase": "phase_3",
+        "intervention_name": "Ustekinumab",
+        "dose": "130 mg or ~6 mg/kg",
+        "route": "iv",
+        "design": "Randomized, double-blind, placebo-controlled trial in patients who had previously failed conventional therapies but were naive to anti-TNF\u03b1 agents.",
+        "enrollment": 628,
+        "sponsor": "Janssen Research & Development, LLC",
+        "primary_outcome_met": "yes",
+        "evidence_ids": [
+          "clinical_trials_E2"
+        ]
+      },
+      {
+        "nct_id": "NCT01369355",
+        "trial_status": "completed",
+        "phase": "phase_3",
+        "intervention_name": "Ustekinumab",
+        "dose": "90 mg every 8 or 12 weeks",
+        "route": "sc",
+        "design": "Maintenance study for patients who responded to IV induction in UNITI-1 and UNITI-2. Randomized, double-blind, placebo-controlled.",
+        "enrollment": 397,
+        "sponsor": "Janssen Research & Development, LLC",
+        "primary_outcome_met": "yes",
+        "evidence_ids": [
+          "clinical_trials_E3"
+        ]
+      }
+    ],
+    "provenance": [
+      {
+        "key": "disease_overview",
+        "value": [
+          "disease_overview_E1",
+          "disease_overview_E2",
+          "disease_overview_E3"
+        ]
+      },
+      {
+        "key": "mechanism_of_action",
+        "value": [
+          "mechanism_of_action_E1",
+          "mechanism_of_action_E2"
+        ]
+      },
+      {
+        "key": "competitors",
+        "value": [
+          "competitors_E1",
+          "competitors_E2",
+          "competitors_E3"
+        ]
+      },
+      {
+        "key": "clinical_trials",
+        "value": [
+          "clinical_trials_E1",
+          "clinical_trials_E2",
+          "clinical_trials_E3"
+        ]
+      }
+    ]
+  }
+]

@@ -115,7 +115,7 @@ async def run_pre_aggregation(
     )
 
     evidence_event = Event(
-        author="system",
+        author="user",
         actions=EventActions(
             state_delta={"evidence_store": evidence_store.model_dump()}
         ),
@@ -228,7 +228,7 @@ async def run_iterative_research_loop(
         )
 
         merge_event = Event(
-            author="system",
+            author="user",
             actions=EventActions(state_delta=updated_targeted_session.state),
         )
         await runner_loop.session_service.append_event(session_loop, merge_event)
@@ -380,7 +380,7 @@ async def run_pipeline_async(
         )
 
         output_event = Event(
-            author="system",
+            author="user",
             actions=EventActions(
                 state_delta={"deep_research_output": deep_research_output.model_dump()}
             ),
