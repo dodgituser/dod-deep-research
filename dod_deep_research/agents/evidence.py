@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from dod_deep_research.agents.collector.schemas import CollectorResponse, EvidenceItem
 from dod_deep_research.agents.schemas import KeyValuePair
-from dod_deep_research.agents.writer.schemas import WriterOutput
+from dod_deep_research.agents.writer.schemas import MarkdownReport
 
 logger = logging.getLogger(__name__)
 
@@ -181,8 +181,8 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
     )
 
 
-class DeepResearchOutput(WriterOutput):
-    """Root model for deep research structured output with evidence."""
+class DeepResearchOutput(MarkdownReport):
+    """Root model for deep research markdown output with evidence."""
 
     evidence: list[EvidenceItem] = Field(
         default_factory=list,

@@ -136,120 +136,26 @@ async def run_agent(
         List of parsed JSON objects from final responses.
     """
     json_responses = []
-    final_response_count: dict[str, int] = {}
-    final_response_empty: dict[str, int] = {}
 
     async for event in runner.run_async(
         user_id=user_id,
         session_id=session_id,
         new_message=new_message,
     ):
-        agent_name = event.author or "unknown"
-        _log_agent_event(
-            session_id,
-            agent_name,
-            f"event received: is_final={event.is_final_response()}",
-        )
-        func_calls = event.get_function_calls()
-        if func_calls:
-            for call in func_calls:
-                _log_agent_event(
-                    session_id,
-                    agent_name,
-                    f"tool_call name={call.name} args={_format_tool_payload(call.args or {})}",
-                )
-                logger.info(
-                    "Tool call: author=%s name=%s args=%s",
-                    event.author,
-                    call.name,
-                    _format_tool_payload(call.args or {}),
-                )
-
-        func_responses = event.get_function_responses()
-        if func_responses:
-            for response in func_responses:
-                response_payload = response.response or {}
-                _log_agent_event(
-                    session_id,
-                    agent_name,
-                    f"tool_response name={response.name} result={_format_tool_payload(response_payload)}",
-                )
-                if isinstance(response_payload, dict) and response_payload.get("error"):
-                    logger.warning(
-                        "Tool error: author=%s name=%s error=%s",
-                        event.author,
-                        response.name,
-                        _format_tool_payload(response_payload),
-                    )
-                else:
-                    logger.info(
-                        "Tool response: author=%s name=%s result=%s",
-                        event.author,
-                        response.name,
-                        _format_tool_payload(response_payload),
-                    )
-
         if not event.is_final_response():
-            logger.debug(f"Received intermediate event from {event.author}")
             continue
 
-        if event.content and event.content.parts:
-            final_response_count[event.author] = (
-                final_response_count.get(event.author, 0) + 1
-            )
-            saw_text = False
-            for part in event.content.parts:
-                if part.text:
-                    saw_text = True
-                    _log_agent_event(
-                        session_id,
-                        agent_name,
-                        f"final_text {part.text[:2000]}",
-                    )
-                    try:
-                        parsed_json = json.loads(part.text)
-                        logger.info(f"Parsed JSON response from agent '{event.author}'")
-                        logger.debug(f"Parsed JSON: {parsed_json}")
-                        json_responses.append(parsed_json)
-                    except json.JSONDecodeError as e:
-                        _log_agent_event(
-                            session_id,
-                            agent_name,
-                            f"final_text_parse_error {e}",
-                        )
-                        logger.warning(
-                            f"Failed to parse JSON from agent '{event.author}': {e}. "
-                            f"Text preview: {part.text[:100]}..."
-                        )
-            if not saw_text:
-                _log_agent_event(
-                    session_id,
-                    agent_name,
-                    "final_response_no_text",
-                )
-                final_response_empty[event.author] = (
-                    final_response_empty.get(event.author, 0) + 1
-                )
-                logger.warning(
-                    f"Final response from agent '{event.author}' had no text parts."
-                )
-        else:
-            _log_agent_event(
-                session_id,
-                agent_name,
-                "final_response_no_content",
-            )
-            final_response_empty[event.author] = (
-                final_response_empty.get(event.author, 0) + 1
-            )
-            logger.warning(
-                f"Final response from agent '{event.author}' had no text content."
-            )
+        if not (event.content and event.content.parts):
+            continue
 
-    if final_response_count:
-        logger.info(f"Final responses by agent: {final_response_count}")
-    if final_response_empty:
-        logger.warning(f"Final responses without text by agent: {final_response_empty}")
+        for part in event.content.parts:
+            if not part.text:
+                continue
+            try:
+                parsed_json = json.loads(part.text)
+            except json.JSONDecodeError:
+                continue
+            json_responses.append(parsed_json)
 
     return json_responses
 

@@ -6,6 +6,7 @@ from google.genai import types
 from dod_deep_research.core import get_http_options
 from dod_deep_research.agents.planner.prompt import PLANNER_AGENT_PROMPT
 from dod_deep_research.agents.planner.schemas import ResearchPlan
+from dod_deep_research.agents.callbacks.utils import get_callbacks
 from dod_deep_research.models import GeminiModels
 
 planner_agent = Agent(
@@ -18,4 +19,5 @@ planner_agent = Agent(
     ),
     output_key="research_plan",
     output_schema=ResearchPlan,
+    **get_callbacks(),
 )

@@ -15,6 +15,13 @@ RESEARCH_HEAD_AGENT_PROMPT = """You are a Research Head agent responsible for an
 
 **Your Task:**
 
+**Strict coverage rules (must follow):**
+1. ONLY mark sections as gaps when:
+   - The section is missing from evidence_store.by_section, OR
+   - The section has fewer than 1 evidence item, OR
+   - required_evidence_types for that section are not represented in that section's evidence.
+2. If any critical gap exists, you MUST set continue_research=True and generate tasks for each critical gap.
+
 1. **Read the research plan and evidence store from state:**
    - Examine each section in the research_plan
    - Check what evidence has been collected in the evidence_store for each section

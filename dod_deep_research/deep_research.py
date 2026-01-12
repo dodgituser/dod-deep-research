@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import re
 import uuid
 
 import typer
@@ -28,7 +29,7 @@ from dod_deep_research.agents.evidence import (
     EvidenceStore,
 )
 from dod_deep_research.agents.shared_state import SharedState
-from dod_deep_research.agents.writer.schemas import WriterOutput
+from dod_deep_research.agents.writer.schemas import MarkdownReport
 from dod_deep_research.prompts.indication_prompt import generate_indication_prompt
 from dod_deep_research.loggy import setup_logging
 import logging
@@ -236,11 +237,19 @@ async def run_post_aggregation(
     """Run the post-aggregation phase (writer)."""
     logger.info("Starting post-aggregation phase (writer)")
 
+    state_for_post = session_loop.state.copy()
+    evidence_store_dict = state_for_post.get("evidence_store")
+    if evidence_store_dict:
+        evidence_store = EvidenceStore(**evidence_store_dict)
+        state_for_post["allowed_evidence_ids"] = [
+            item.id for item in evidence_store.items
+        ]
+
     session_post = await runner_post.session_service.create_session(
         app_name=app_name,
         user_id=session_loop.user_id,
         session_id=session_loop.id,
-        state=session_loop.state.copy(),
+        state=state_for_post,
     )
     logger.info(f"Created session in post-aggregation runner: {session_post.id}")
 
@@ -262,6 +271,63 @@ async def run_post_aggregation(
     final_session = final_session or session_post
 
     return final_session, json_responses
+
+
+def _extract_citation_ids(report_markdown: str) -> set[str]:
+    """
+    Extract bracketed evidence IDs from the markdown report.
+
+    Args:
+        report_markdown (str): Markdown report text.
+
+    Returns:
+        set[str]: Unique evidence IDs referenced in the report.
+    """
+    if not report_markdown:
+        return set()
+    return set(re.findall(r"\[([A-Za-z0-9_]+_E\d+)\]", report_markdown))
+
+
+def _build_validation_report(
+    report_markdown: str,
+    evidence_store: EvidenceStore,
+    indication: str,
+    drug_name: str,
+) -> dict[str, list[str]]:
+    """
+    Build validation errors and warnings for the markdown report.
+
+    Args:
+        report_markdown (str): Markdown report text.
+        evidence_store (EvidenceStore): Aggregated evidence store.
+        indication (str): Disease/indication name.
+        drug_name (str): Drug name.
+
+    Returns:
+        dict[str, list[str]]: Validation report with errors and warnings.
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    report_lower = report_markdown.lower()
+    if indication.lower() not in report_lower:
+        errors.append(f"Report must mention indication '{indication}'.")
+    if drug_name.lower() not in report_lower:
+        errors.append(f"Report must mention drug name '{drug_name}'.")
+
+    evidence_ids = {item.id for item in evidence_store.items}
+    cited_ids = _extract_citation_ids(report_markdown)
+    unknown_citations = sorted(cited_ids - evidence_ids)
+    if unknown_citations:
+        errors.append(
+            "Report cites evidence IDs not present in evidence_store: "
+            + ", ".join(unknown_citations)
+        )
+
+    if not cited_ids:
+        warnings.append("Report includes no evidence citations.")
+
+    return {"errors": errors, "warnings": warnings}
 
 
 async def run_pipeline_async(
@@ -334,38 +400,63 @@ async def run_pipeline_async(
 
     state = final_session.state
 
-    # Inject evidence deterministically from evidence_store into writer output
+    # Validate and optionally re-run writer if output is off-topic or cites unknown evidence.
     writer_output_dict = state.get("deep_research_output")
     evidence_store_dict = state.get("evidence_store")
 
     if writer_output_dict and evidence_store_dict:
-        writer_output = WriterOutput(**writer_output_dict)
         evidence_store = EvidenceStore(**evidence_store_dict)
-
-        deep_research_output = DeepResearchOutput(
-            **writer_output.model_dump(),
-            evidence=evidence_store.items,
+        report_markdown = writer_output_dict.get("report_markdown", "")
+        validation_report = _build_validation_report(
+            report_markdown=report_markdown,
+            evidence_store=evidence_store,
+            indication=indication,
+            drug_name=drug_name,
         )
 
-        output_event = Event(
-            author="user",
-            actions=EventActions(
-                state_delta={"deep_research_output": deep_research_output.model_dump()}
-            ),
-        )
-        await runner_post.session_service.append_event(final_session, output_event)
+        if validation_report["errors"]:
+            logger.warning(
+                "Writer output validation failed, requesting rewrite: %s",
+                validation_report["errors"],
+            )
+            validation_event = Event(
+                author="user",
+                actions=EventActions(
+                    state_delta={"validation_report": validation_report}
+                ),
+            )
+            await runner_post.session_service.append_event(
+                final_session, validation_event
+            )
 
-        # Refresh final_session
-        final_session = await runner_post.session_service.get_session(
-            app_name=app_name,
-            user_id=user_id,
-            session_id=final_session.id,
-        )
-        state = final_session.state  # Update local reference
+            rewrite_message = types.Content(
+                parts=[
+                    types.Part.from_text(
+                        text="Rewrite the report to address validation_report errors. "
+                        "Use only evidence_store citations."
+                    )
+                ],
+                role="user",
+            )
+            await run_agent(
+                runner_post,
+                final_session.user_id,
+                final_session.id,
+                rewrite_message,
+            )
+            final_session = await runner_post.session_service.get_session(
+                app_name=app_name,
+                user_id=user_id,
+                session_id=final_session.id,
+            )
+            state = final_session.state
 
-        logger.info(
-            f"Injected {len(evidence_store.items)} evidence items into DeepResearchOutput"
-        )
+    writer_output_dict = state.get("deep_research_output")
+    if writer_output_dict:
+        writer_output = MarkdownReport(**writer_output_dict)
+        report_path = events_file.parent / "report.md"
+        report_path.write_text(writer_output.report_markdown)
+        logger.info(f"Markdown report saved to: {report_path}")
 
     state_file = events_file.parent / "session_state.json"
     state_file.write_text(json.dumps(state, indent=2, default=str))
@@ -380,7 +471,7 @@ async def run_pipeline_async(
         research_head_plan=state.get("research_head_plan"),
         deep_research_output=state.get("deep_research_output"),
     )
-    logger.info(
+    logger.debug(
         f"SharedState populated: research_plan={'present' if shared_state.research_plan else 'missing'}, "
         f"evidence_store={'present' if shared_state.evidence_store else 'missing'}, "
         f"deep_research_output={'present' if shared_state.deep_research_output else 'missing'}"
@@ -465,7 +556,10 @@ def main(
             drug_generic_name=drug_generic_name,
         )
 
-        typer.echo(shared_state.model_dump_json(indent=2))
+        if shared_state.deep_research_output:
+            typer.echo(shared_state.deep_research_output.report_markdown)
+        else:
+            typer.echo(shared_state.model_dump_json(indent=2))
 
         logger.info("Pipeline completed successfully")
     except Exception as e:

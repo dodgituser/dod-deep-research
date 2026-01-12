@@ -8,6 +8,7 @@ from google.adk.agents.callback_context import CallbackContext
 from google.genai import types
 
 from dod_deep_research.core import get_http_options
+from dod_deep_research.agents.callbacks.utils import get_callbacks
 from dod_deep_research.agents.research_head.prompt import RESEARCH_HEAD_AGENT_PROMPT
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 from dod_deep_research.agents.evidence import (
@@ -27,6 +28,7 @@ research_head_agent = Agent(
     ),
     output_key="research_head_plan",
     output_schema=ResearchHeadPlan,
+    **get_callbacks(),
 )
 
 

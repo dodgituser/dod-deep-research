@@ -43,5 +43,5 @@ class SharedState(BaseModel):
     )
     deep_research_output: DeepResearchOutput | None = Field(
         default=None,
-        description="DeepResearchOutput model: Complete structured research output (Writer output)",
+        description="DeepResearchOutput model: Complete markdown research output (Writer output)",
     )
