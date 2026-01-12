@@ -29,7 +29,6 @@ Analyze the indication prompt you receive and extract the disease indication and
 - Use the indication prompt's detailed instructions, source requirements, and content focus guidelines to inform your section descriptions, key questions, and scope.
 - Ensure each section is designed to be researched independently by a parallel evidence collector.
 - Make sure sections are well-defined with clear evidence requirements, indication-specific key questions, and section-specific scope that aligns with the comprehensive report template.
-- For required_evidence_types, use only: pubmed, clinicaltrials.
 
 You must create exactly one ResearchSection for each predefined section.
 

@@ -5,7 +5,6 @@ from google.adk.models import LlmResponse
 
 from dod_deep_research.agents.callbacks.utils import (
     format_payload,
-    get_session_id,
     log_agent_event,
 )
 
@@ -24,11 +23,10 @@ def after_model_callback(
         LlmResponse | None: Returning a response replaces the model response.
     """
     agent_name = callback_context.agent_name or "unknown"
-    session_id = get_session_id(callback_context)
     payload = {
         "type": "after_model",
         "agent_name": agent_name,
         "payload": {"response": llm_response},
     }
-    log_agent_event(session_id, agent_name, format_payload(payload))
+    log_agent_event(agent_name, format_payload(payload))
     return None

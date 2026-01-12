@@ -6,9 +6,7 @@ from dod_deep_research.agents.collector.agent import create_collector_agents
 from dod_deep_research.agents.planner.agent import planner_agent
 from dod_deep_research.agents.writer.agent import writer_agent
 from dod_deep_research.agents.planner.schemas import get_common_sections
-from dod_deep_research.agents.research_head.agent import (
-    aggregate_evidence_after_collectors,
-)
+from dod_deep_research.agents.evidence import aggregate_evidence_after_collectors
 
 
 def get_pre_aggregation_agent() -> SequentialAgent:

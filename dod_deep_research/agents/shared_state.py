@@ -32,7 +32,7 @@ class SharedState(BaseModel):
     )
     research_plan: ResearchPlan | None = Field(
         default=None,
-        description="ResearchPlan model: Structured plan with disease, research_areas and sections (each section has name, description, required_evidence_types, key_questions, scope) (Meta-planner output)",
+        description="ResearchPlan model: Structured plan with disease, research_areas and sections (each section has name, description, key_questions, scope) (Meta-planner output)",
     )
     evidence_store: EvidenceStore | None = Field(
         default=None,

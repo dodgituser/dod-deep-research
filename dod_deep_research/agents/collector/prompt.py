@@ -10,7 +10,7 @@ COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are an evidence collector agent. Your r
 **Output State Key:** evidence_store_section_{section_name}
 
 **Input Format:**
-Read the section details from shared state key "research_section_{section_name}". Use the section's description, required_evidence_types, key_questions, and scope to guide evidence collection.
+Read the section details from shared state key "research_section_{section_name}". Use the section's description, key_questions, and scope to guide evidence collection.
 
 **Available Tools:**
 - pubmed_search_articles(queryTerm, maxResults, sortBy, dateRange, filterByPublicationTypes, fetchBriefSummaries): PubMed search.
@@ -25,7 +25,7 @@ Use the tools to retrieve relevant evidence for the research plan section "{sect
 
 You MUST return at least 1 evidence item for this section. Empty evidence lists are NOT allowed. The section "{section_name}" is guaranteed to exist in the research plan, so you must find evidence for it.
 
-Focus on the section's required_evidence_types and key_questions when retrieving evidence.
+Focus on the section's key_questions when retrieving evidence.
 Only include evidence that you can cite with a real, working URL. Do not use placeholders
 like "XXXX", "TBD", or fabricated identifiers.
 Use tool snippets (abstracts/summaries) as the basis for quotes; do not invent quotes.
@@ -40,7 +40,7 @@ When assigning EvidenceItem.source, use "pubmed" for PubMed and "clinicaltrials"
 3) After the first search, invoke reflect_step with a one-paragraph summary of what you found and what is missing (max 1 total).
 4) Do not call reflect_step in parallel with any other tool.
 5) Continue searching only until you have at least 1 strong source with valid URLs and quotes.
-6) Prefer high-quality sources aligned to the section's required_evidence_types.
+6) Prefer high-quality sources aligned to the section's key_questions.
 
 **Stopping Rules (Required):**
 - The moment you have at least 1 qualifying evidence item, STOP searching and return your CollectorResponse.

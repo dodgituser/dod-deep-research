@@ -26,12 +26,7 @@
     "sections": [
       {
         "name": "rationale_executive_summary",
-        "description": "Summarize the core findings and recommendation for using low-dose IL-2 in cancer. This section will cover the therapeutic mechanism of IL-2, the unmet need in cancer treatment, a summary of pre-clinical and clinical evidence, and any relevant regulatory history for IL-2 in oncology.",
-        "required_evidence_types": [
-          "pubmed",
-          "clinicaltrials"
-        ],
-        "key_questions": [
+        "description": "Summarize the core findings and recommendation for using low-dose IL-2 in cancer. This section will cover the therapeutic mechanism of IL-2, the unmet need in cancer treatment, a summary of pre-clinical and clinical evidence, and any relevant regulatory history for IL-2 in oncology.",        "key_questions": [
           "What is the therapeutic mechanism of low-dose IL-2 relevant to cancer?",
           "What are the key unmet needs in the current treatment landscape for cancer that IL-2 could address?",
           "What is the summary of pre-clinical and clinical evidence supporting the use of low-dose IL-2 in cancer?",
@@ -42,11 +37,7 @@
       },
       {
         "name": "disease_overview",
-        "description": "Provide a comprehensive overview of cancer, including its characteristics, epidemiology in the US, diagnostic methods, pathophysiology relevant to IL-2's mechanism as immunotherapy support, and clinically validated biomarkers. Also, identify potential patient populations with cancer for whom IL-2 therapy may be contraindicated.",
-        "required_evidence_types": [
-          "pubmed"
-        ],
-        "key_questions": [
+        "description": "Provide a comprehensive overview of cancer, including its characteristics, epidemiology in the US, diagnostic methods, pathophysiology relevant to IL-2's mechanism as immunotherapy support, and clinically validated biomarkers. Also, identify potential patient populations with cancer for whom IL-2 therapy may be contraindicated.",        "key_questions": [
           "What are the high-level characteristics of cancer, including presenting symptoms, sequelae, and mortality/morbidity?",
           "What is the incidence and prevalence of cancer in the US market?",
           "How is cancer diagnosed, and are there significant diagnostic delays or undiagnosed populations?",
@@ -58,12 +49,7 @@
       },
       {
         "name": "therapeutic_landscape",
-        "description": "Detail the current therapeutic landscape for cancer. This includes creating tables for approved therapies, competing immunomodulators in development, and other key therapies in development specifically for cancer.",
-        "required_evidence_types": [
-          "pubmed",
-          "clinicaltrials"
-        ],
-        "key_questions": [
+        "description": "Detail the current therapeutic landscape for cancer. This includes creating tables for approved therapies, competing immunomodulators in development, and other key therapies in development specifically for cancer.",        "key_questions": [
           "What therapies are currently FDA-approved for cancer, including their owner, mechanism of action, and efficacy?",
           "What competing immunomodulators are in development for cancer, and what is their status (preclinical, phase, trial ID)?",
           "What other key therapies are in development for cancer, including their mechanism and status?"
@@ -72,11 +58,7 @@
       },
       {
         "name": "current_treatment_guidelines",
-        "description": "Summarize the current, established treatment guidelines for cancer and analyze how low-dose IL-2 could potentially be integrated into these guidelines, for instance as immunotherapy support.",
-        "required_evidence_types": [
-          "pubmed"
-        ],
-        "key_questions": [
+        "description": "Summarize the current, established treatment guidelines for cancer and analyze how low-dose IL-2 could potentially be integrated into these guidelines, for instance as immunotherapy support.",        "key_questions": [
           "What are the current consensus treatment guidelines for cancer from major oncology organizations?",
           "Based on its mechanism and clinical data, where could low-dose IL-2 fit into the existing treatment paradigms for cancer (e.g., as monotherapy, combination therapy, specific lines of treatment)?"
         ],
@@ -84,12 +66,7 @@
       },
       {
         "name": "competitor_analysis",
-        "description": "Analyze the direct competitors to a low-dose IL-2 therapy for cancer. This includes summarizing information on their development status, potential market impact, and relevant market trends for cancer treatment.",
-        "required_evidence_types": [
-          "pubmed",
-          "clinicaltrials"
-        ],
-        "key_questions": [
+        "description": "Analyze the direct competitors to a low-dose IL-2 therapy for cancer. This includes summarizing information on their development status, potential market impact, and relevant market trends for cancer treatment.",        "key_questions": [
           "Who are the direct competitors developing IL-2 pathway modulators or other immunotherapies for cancer?",
           "What is the development status and potential market impact of these competitor assets?",
           "What are the key market trends in the treatment of cancer that could affect the positioning of a low-dose IL-2 therapy?"
@@ -98,12 +75,7 @@
       },
       {
         "name": "clinical_trials_analysis",
-        "description": "Conduct a detailed analysis of clinical trials involving low-dose IL-2 for the treatment of cancer. The analysis should be structured into completed, recruiting/active, and terminated/unknown status trials.",
-        "required_evidence_types": [
-          "pubmed",
-          "clinicaltrials"
-        ],
-        "key_questions": [
+        "description": "Conduct a detailed analysis of clinical trials involving low-dose IL-2 for the treatment of cancer. The analysis should be structured into completed, recruiting/active, and terminated/unknown status trials.",        "key_questions": [
           "What are the completed clinical trials of low-dose IL-2 in cancer, and what were their designs, endpoints, results (efficacy and toxicity), and publication status?",
           "What are the currently active, recruiting, or not-yet-recruiting trials for low-dose IL-2 in cancer, including their design, enrollment goals, and endpoints?",
           "Are there any terminated or unknown status trials for low-dose IL-2 in cancer, and what information is available about them?"
@@ -112,12 +84,7 @@
       },
       {
         "name": "market_opportunity_analysis",
-        "description": "Assess the market and opportunity for a low-dose IL-2 therapy specifically in the cancer market. This includes market size, relevant patents, regulatory designations, the competitor landscape, unmet needs, and asset differentiation.",
-        "required_evidence_types": [
-          "pubmed",
-          "clinicaltrials"
-        ],
-        "key_questions": [
+        "description": "Assess the market and opportunity for a low-dose IL-2 therapy specifically in the cancer market. This includes market size, relevant patents, regulatory designations, the competitor landscape, unmet needs, and asset differentiation.",        "key_questions": [
           "What is the potential market size for cancer treatments in the US?",
           "What is the annual incidence of cancer in the US?",
           "Are there any relevant patents for IL-2 formulations or their use in cancer?",

@@ -69,9 +69,6 @@ async def test_planner_agent():
     for section in research_plan.sections:
         assert section.name is not None, "Section should have a name"
         assert section.description is not None, "Section should have a description"
-        assert len(section.required_evidence_types) > 0, (
-            "Section should have required evidence types"
-        )
         assert len(section.key_questions) > 0, "Section should have key questions"
         assert section.scope is not None, "Section should have scope"
 

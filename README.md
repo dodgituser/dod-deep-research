@@ -52,7 +52,6 @@ Structured research plan containing:
 - `sections`: List of `ResearchSection` objects with:
   - `name`: Section name (e.g., "epidemiology", "biomarkers")
   - `description`: Section description
-  - `required_evidence_types`: List of required evidence types
   - `key_questions`: Section-specific research questions
 - `key_questions`: Overall research questions
 - `scope`: Research scope and boundaries

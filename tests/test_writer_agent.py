@@ -86,7 +86,6 @@ async def test_writer_agent():
                     {
                         "name": "disease_overview",
                         "description": "Overview of ALS",
-                        "required_evidence_types": ["pubmed"],
                         "key_questions": ["What is ALS?"],
                         "scope": "ALS disease characteristics",
                     }

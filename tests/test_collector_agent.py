@@ -122,11 +122,16 @@ async def test_collector_agent():
                     {
                         "name": section_name,
                         "description": "Overview of ALS disease",
-                        "required_evidence_types": ["pubmed"],
                         "key_questions": ["What is ALS?", "How is ALS diagnosed?"],
                         "scope": "Focus on ALS disease characteristics",
                     }
                 ],
+            },
+            f"research_section_{section_name}": {
+                "name": section_name,
+                "description": "Overview of ALS disease",
+                "key_questions": ["What is ALS?", "How is ALS diagnosed?"],
+                "scope": "Focus on ALS disease characteristics",
             },
         },
     )

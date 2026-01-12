@@ -80,14 +80,12 @@ async def test_research_head_agent():
                     {
                         "name": "disease_overview",
                         "description": "Overview of ALS",
-                        "required_evidence_types": ["pubmed", "clinicaltrials"],
                         "key_questions": ["What is ALS?", "How is ALS diagnosed?"],
                         "scope": "ALS disease characteristics",
                     },
                     {
                         "name": "clinical_trials_analysis",
                         "description": "Clinical trials for IL-2 in ALS",
-                        "required_evidence_types": ["clinicaltrials"],
                         "key_questions": ["What trials exist for IL-2 in ALS?"],
                         "scope": "IL-2 trials in ALS",
                     },
