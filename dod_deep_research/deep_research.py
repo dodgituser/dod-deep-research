@@ -16,6 +16,7 @@ from google.adk.events import Event, EventActions
 from dod_deep_research.core import build_runner, run_agent, get_output_file
 
 from dod_deep_research.agents.collector.agent import create_targeted_collector_agents
+from dod_deep_research.agents.planner.agent import create_planner_agent
 from dod_deep_research.agents.research_head.agent import research_head_agent
 from dod_deep_research.agents.planner.schemas import get_common_sections
 from dod_deep_research.agents.research_head.schemas import (
@@ -67,16 +68,9 @@ async def run_pre_aggregation(
     **kwargs,
 ) -> tuple[runners.Session, list[dict]]:
     """Run the pre-aggregation phase (planner + collectors)."""
-    prompt_text = generate_indication_prompt(
-        disease=indication,
-        drug_name=drug_name,
-        drug_form=drug_form,
-        drug_generic_name=drug_generic_name,
-    )
-    logger.debug(f"Generated prompt: {prompt_text}")
-
+    user_prompt = "Run the research pipeline"
     new_message = types.Content(
-        parts=[types.Part.from_text(text=prompt_text)],
+        parts=[types.Part.from_text(text=user_prompt)],
         role="user",
     )
 
@@ -374,7 +368,18 @@ async def run_pipeline_async(
     app_name = "deep_research"
     user_id = "user"
     session_id = str(uuid.uuid4())
-    runner_pre = build_runner(agent=get_pre_aggregation_agent(), app_name=app_name)
+    indication_prompt = generate_indication_prompt(
+        disease=indication,
+        drug_name=drug_name,
+        drug_form=drug_form,
+        drug_generic_name=drug_generic_name,
+    )
+    logger.debug("Generated indication prompt for planner.")
+    planner_agent = create_planner_agent(indication_prompt=indication_prompt)
+    runner_pre = build_runner(
+        agent=get_pre_aggregation_agent(planner=planner_agent),
+        app_name=app_name,
+    )
     runner_loop = build_runner(agent=research_head_agent, app_name=app_name)
     runner_post = build_runner(agent=get_post_aggregation_agent(), app_name=app_name)
 

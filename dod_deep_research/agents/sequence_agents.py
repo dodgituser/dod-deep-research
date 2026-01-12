@@ -1,5 +1,7 @@
 """Deep research sequential agent pipeline with map-reduce architecture."""
 
+from google.adk import Agent
+
 from google.adk.agents import SequentialAgent
 
 from dod_deep_research.agents.collector.agent import create_collector_agents
@@ -9,17 +11,18 @@ from dod_deep_research.agents.planner.schemas import get_common_sections
 from dod_deep_research.agents.evidence import aggregate_evidence_after_collectors
 
 
-def get_pre_aggregation_agent() -> SequentialAgent:
+def get_pre_aggregation_agent(planner: Agent | None = None) -> SequentialAgent:
     """
     Build the pre-aggregation pipeline (planner + collectors).
 
     Returns:
         SequentialAgent: Configured pre-aggregation agent.
     """
+    planner_agent_to_use = planner or planner_agent
     return SequentialAgent(
         name="pre_aggregation_pipeline",
         sub_agents=[
-            planner_agent,
+            planner_agent_to_use,
             create_collector_agents(
                 [section.value for section in get_common_sections()],
                 after_agent_callback=aggregate_evidence_after_collectors,

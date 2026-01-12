@@ -107,7 +107,7 @@ def create_collector_agent(
         agent.before_agent_callback = before_agent_callback
 
     logger.debug(
-        f"Collector agent {agent_name} created with tools: {agent.tools} and prompt: {agent.instruction}"
+        f"""Collector agent {agent_name} created with tools: {agent.tools} and prompt: {agent.instruction}"""
     )
     return agent
 
