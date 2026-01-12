@@ -4,13 +4,13 @@ COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are an evidence collector agent. Your r
 
 **Assigned Section:** {section_name}
 
-**Input State Key:** research_plan
-**State Context:** {{state.research_plan?}}
+**Input State Key:** research_section_{section_name}
+**State Context:** {{state.research_section_{section_name}?}}
 
 **Output State Key:** evidence_store_section_{section_name}
 
 **Input Format:**
-Read the research plan from shared state key "research_plan". The section "{section_name}" is guaranteed to exist in the research plan. Find this section and focus on collecting evidence for it.
+Read the section details from shared state key "research_section_{section_name}". Use the section's description, required_evidence_types, key_questions, and scope to guide evidence collection.
 
 **Available Tools:**
 - pubmed_search_articles(queryTerm, maxResults, sortBy, dateRange, filterByPublicationTypes, fetchBriefSummaries): PubMed search.
@@ -58,6 +58,9 @@ TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collec
 **Assigned Section:** {section_name}
 **Missing Questions:** {missing_questions}
 **Gap Notes:** {notes}
+
+**Input State Key:** research_section_{section_name}
+**State Context:** {{state.research_section_{section_name}?}}
 
 **Output State Key:** evidence_store_section_{section_name}
 
