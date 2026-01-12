@@ -2,15 +2,19 @@
 
 import json
 import logging
+import shutil
 from typing import Any
 
 from google.adk import runners
 from google.adk.apps.app import App
+from google.adk.events import Event, EventActions
 from google.adk.plugins import ReflectAndRetryToolPlugin
 from google.genai import types
 from pathlib import Path
 from datetime import datetime
 from pydantic import BaseModel
+
+from dod_deep_research.agents.planner.schemas import ResearchPlan
 
 logger = logging.getLogger(__name__)
 
@@ -135,3 +139,54 @@ def get_output_file(indication: str):
     output_dir.mkdir(exist_ok=True)
     output_file = output_dir / f"pipeline_events_{timestamp}.json"
     return output_file
+
+
+def prepare_outputs_dir() -> Path:
+    """
+    Create the outputs directory and clear any existing run subdirectories.
+
+    Returns:
+        Path: Path to the outputs directory.
+    """
+    outputs_dir = Path(__file__).resolve().parent / "outputs"
+    outputs_dir.mkdir(exist_ok=True)
+    for entry in outputs_dir.iterdir():
+        if entry.is_dir():
+            shutil.rmtree(entry)
+    return outputs_dir
+
+
+async def persist_research_sections(
+    session_service: runners.InMemorySessionService,
+    session: runners.Session,
+    research_plan: dict[str, Any],
+) -> runners.Session:
+    """
+    Persist per-section state derived from the research plan.
+
+    Args:
+        session_service: Session service used to append events.
+        session: Session to update.
+        research_plan: Research plan dict from state.
+
+    Returns:
+        runners.Session: Updated session with research_section_* keys.
+    """
+    plan = ResearchPlan(**research_plan)
+    section_state = {
+        f"research_section_{section.name}": section.model_dump()
+        for section in plan.sections
+    }
+    if not section_state:
+        return session
+
+    merge_event = Event(
+        author="system",
+        actions=EventActions(state_delta=section_state),
+    )
+    await session_service.append_event(session, merge_event)
+    return await session_service.get_session(
+        app_name=session.app_name,
+        user_id=session.user_id,
+        session_id=session.id,
+    )

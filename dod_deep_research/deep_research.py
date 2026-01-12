@@ -3,9 +3,7 @@
 import asyncio
 import json
 import re
-import shutil
 import uuid
-from pathlib import Path
 
 import typer
 from google.genai import types
@@ -13,7 +11,13 @@ from google.genai import types
 from google.adk import runners
 from google.adk.events import Event, EventActions
 
-from dod_deep_research.core import build_runner, run_agent, get_output_file
+from dod_deep_research.core import (
+    build_runner,
+    run_agent,
+    get_output_file,
+    persist_research_sections,
+    prepare_outputs_dir,
+)
 
 from dod_deep_research.agents.collector.agent import (
     create_collector_agents,
@@ -21,7 +25,7 @@ from dod_deep_research.agents.collector.agent import (
 )
 from dod_deep_research.agents.planner.agent import create_planner_agent
 from dod_deep_research.agents.research_head.agent import research_head_agent
-from dod_deep_research.agents.planner.schemas import get_common_sections, ResearchPlan
+from dod_deep_research.agents.planner.schemas import get_common_sections
 from dod_deep_research.agents.research_head.schemas import (
     ResearchHeadPlan,
 )
@@ -39,21 +43,6 @@ import logging
 setup_logging(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = typer.Typer()
-
-
-def _prepare_outputs_dir() -> Path:
-    """
-    Create the outputs directory and clear any existing run subdirectories.
-
-    Returns:
-        Path: Path to the outputs directory.
-    """
-    outputs_dir = Path(__file__).resolve().parent / "outputs"
-    outputs_dir.mkdir(exist_ok=True)
-    for entry in outputs_dir.iterdir():
-        if entry.is_dir():
-            shutil.rmtree(entry)
-    return outputs_dir
 
 
 async def run_pre_aggregation(
@@ -82,6 +71,7 @@ async def run_pre_aggregation(
     )
     logger.info(f"Created session: {session.id}")
 
+    # run research planner
     json_responses = await run_agent(
         runner_planner,
         session.user_id,
@@ -103,31 +93,19 @@ async def run_pre_aggregation(
     logger.info(f"Session state keys: {list(state.keys())}")
 
     research_plan = state.get("research_plan")
+    # If research_plan is present, extract sections and update state
     if research_plan:
         try:
-            plan = ResearchPlan(**research_plan)
+            updated_session = await persist_research_sections(
+                runner_planner.session_service,
+                updated_session,
+                research_plan,
+            )
         except Exception as exc:
-            logger.warning("Failed to parse research_plan for section state: %s", exc)
+            logger.warning("Failed to persist research section state: %s", exc)
         else:
-            section_state = {
-                f"research_section_{section.name}": section.model_dump()
-                for section in plan.sections
-            }
-            if section_state:
-                merge_event = Event(
-                    author="system",
-                    actions=EventActions(state_delta=section_state),
-                )
-                await runner_planner.session_service.append_event(
-                    updated_session, merge_event
-                )
-                updated_session = await runner_planner.session_service.get_session(
-                    app_name=app_name,
-                    user_id=user_id,
-                    session_id=session.id,
-                )
-                state = updated_session.state
-
+            state = updated_session.state
+    # Run inital draft collectors
     collectors_session = await runner_collectors.session_service.create_session(
         app_name=app_name,
         user_id=session.user_id,
@@ -623,7 +601,7 @@ def main(
         logger.info(f"Drug generic name specified: {drug_generic_name}")
 
     try:
-        _prepare_outputs_dir()
+        prepare_outputs_dir()
         shared_state = run_pipeline(
             indication=indication,
             drug_name=drug_name,
