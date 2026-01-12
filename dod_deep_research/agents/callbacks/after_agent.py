@@ -19,8 +19,7 @@ def after_agent_callback(callback_context: CallbackContext) -> types.Content | N
     agent_name = callback_context.agent_name or "unknown"
     payload = {
         "type": "after_agent",
-        "agent_name": agent_name,
-        "payload": {"state": callback_context.state},
+        "payload": {"state": format_state(callback_context.state)},
     }
-    log_agent_event(agent_name, "after_agent", format_state(payload))
+    log_agent_event(agent_name, "after_agent", payload)
     return None

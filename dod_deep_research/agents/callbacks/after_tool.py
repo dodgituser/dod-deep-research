@@ -29,13 +29,12 @@ def after_tool_callback(
     agent_name = tool_context.agent_name or "unknown"
     payload = {
         "type": "after_tool",
-        "agent_name": agent_name,
         "payload": {
             "tool_name": tool.name,
-            "tool_context": tool_context,
+            "tool_context": format_payload(tool_context),
             "tool_args": args,
             "tool_response": tool_response,
         },
     }
-    log_agent_event(agent_name, "after_tool", format_payload(payload))
+    log_agent_event(agent_name, "after_tool", payload)
     return None

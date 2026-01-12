@@ -25,12 +25,11 @@ def before_tool_callback(
     agent_name = tool_context.agent_name or "unknown"
     payload = {
         "type": "before_tool",
-        "agent_name": agent_name,
         "payload": {
             "tool_name": tool.name,
-            "tool_context": tool_context,
+            "tool_context": format_payload(tool_context),
             "tool_args": args,
         },
     }
-    log_agent_event(agent_name, "before_tool", format_payload(payload))
+    log_agent_event(agent_name, "before_tool", payload)
     return None

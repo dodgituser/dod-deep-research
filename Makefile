@@ -1,4 +1,4 @@
-.PHONY: check-quality fix-quality commit clean compose-up compose-down run-pipeline run
+.PHONY: check-quality fix-quality commit clean compose-up compose-down run-pipeline run log-print
 
 check-quality:
 	@echo "Checking formatting and linting with ruff..."
@@ -55,3 +55,10 @@ run:
 	if [ -n "$(DRUG_GENERIC_NAME)" ]; then cmd="$$cmd --drug-generic-name \"$(DRUG_GENERIC_NAME)\""; fi; \
 	echo "$$cmd"; \
 	eval $$cmd
+
+log-print:
+	@if [ -z "$(AGENT)" ] || [ -z "$(CALLBACK)" ]; then \
+		echo "Usage: make log-print AGENT='...' CALLBACK='before_model'"; \
+		exit 1; \
+	fi
+	@jq . "outputs/agent_logs/$(AGENT)/$(AGENT)_callback_$(CALLBACK).jsonl"

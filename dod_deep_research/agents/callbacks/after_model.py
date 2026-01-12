@@ -22,8 +22,7 @@ def after_model_callback(
     agent_name = callback_context.agent_name or "unknown"
     payload = {
         "type": "after_model",
-        "agent_name": agent_name,
-        "payload": {"response": llm_response},
+        "payload": {"response": format_payload(llm_response)},
     }
-    log_agent_event(agent_name, "after_model", format_payload(payload))
+    log_agent_event(agent_name, "after_model", payload)
     return None
