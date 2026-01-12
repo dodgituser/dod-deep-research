@@ -1,9 +1,9 @@
 """Schemas for research head agent."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from dod_deep_research.agents.planner.schemas import CommonSection
-from dod_deep_research.agents.schemas import EvidenceSource, PreferredTool, TaskPriority
+from typing import Self
 
 
 class ResearchGap(BaseModel):
@@ -12,10 +12,6 @@ class ResearchGap(BaseModel):
     section: CommonSection = Field(
         ...,
         description="Section name with identified gaps.",
-    )
-    missing_evidence_types: list[EvidenceSource] = Field(
-        default_factory=list,
-        description="Required evidence types not yet collected (e.g., ['pubmed', 'clinicaltrials']).",
     )
     missing_questions: list[str] = Field(
         default_factory=list,
@@ -27,33 +23,8 @@ class ResearchGap(BaseModel):
     )
 
 
-class RetrievalTask(BaseModel):
-    """Targeted retrieval task to fill evidence gaps."""
-
-    section: CommonSection = Field(
-        ...,
-        description="Target section for this retrieval task.",
-    )
-    evidence_type: EvidenceSource = Field(
-        ...,
-        description="Preferred evidence type (pubmed, clinicaltrials).",
-    )
-    query: str = Field(
-        ...,
-        description="Search query string for this task.",
-    )
-    preferred_tool: PreferredTool = Field(
-        ...,
-        description="Tool to use (pubmed_search_articles, clinicaltrials_search_studies).",
-    )
-    priority: TaskPriority = Field(
-        ...,
-        description="Priority level: high, medium, or low.",
-    )
-
-
 class ResearchHeadPlan(BaseModel):
-    """Research Head output plan with gaps and retrieval tasks."""
+    """Research Head output plan with gaps only."""
 
     continue_research: bool = Field(
         ...,
@@ -63,7 +34,15 @@ class ResearchHeadPlan(BaseModel):
         default_factory=list,
         description="List of identified gaps in evidence coverage.",
     )
-    tasks: list[RetrievalTask] = Field(
-        default_factory=list,
-        description="Prioritized retrieval tasks to fill identified gaps.",
-    )
+
+    @model_validator(mode="after")
+    def _ensure_continue_research(self) -> Self:
+        """
+        Ensures continue_research is true when gaps are present.
+
+        Returns:
+            ResearchHeadPlan: Updated model instance.
+        """
+        if self.gaps:
+            self.continue_research = True
+        return self

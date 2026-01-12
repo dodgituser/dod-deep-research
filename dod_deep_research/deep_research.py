@@ -21,7 +21,9 @@ from dod_deep_research.agents.research_head.agent import (
     research_head_agent,
 )
 from dod_deep_research.agents.planner.schemas import get_common_sections
-from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
+from dod_deep_research.agents.research_head.schemas import (
+    ResearchHeadPlan,
+)
 from dod_deep_research.agents.sequence_agents import (
     get_pre_aggregation_agent,
     get_post_aggregation_agent,
@@ -171,18 +173,18 @@ async def run_iterative_research_loop(
         logger.info(
             "ResearchHead plan summary: "
             f"continue_research={research_head_plan.continue_research}, "
-            f"tasks={len(research_head_plan.tasks)}, gaps={len(research_head_plan.gaps)}"
+            f"gaps={len(research_head_plan.gaps)}"
         )
 
-        if not research_head_plan.continue_research or not research_head_plan.tasks:
-            logger.info(
-                "ResearchHead determined gaps are resolved, exiting loop or no tasks"
-            )
+        if not research_head_plan.gaps:
+            logger.info("ResearchHead determined gaps are resolved")
             break
 
-        logger.info(f"Running {len(research_head_plan.tasks)} targeted collectors")
+        logger.info(
+            f"Running targeted collectors for {len(research_head_plan.gaps)} gaps"
+        )
         targeted_collectors = create_targeted_collector_agents(
-            research_head_plan.tasks,
+            research_head_plan.gaps,
             after_agent_callback=aggregate_evidence_after_collectors,
         )
         runner_targeted = build_runner(agent=targeted_collectors, app_name=app_name)

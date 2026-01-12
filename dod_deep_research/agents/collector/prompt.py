@@ -20,11 +20,6 @@ Read the research plan from shared state key "research_plan". The section "{sect
 - reflect_step(summary): Record a brief reflection between searches.
 Only call tool names exactly as listed above. Never call a tool named "run".
 
-**Tool Failure Handling:**
-- If a tool call fails or returns zero results, retry that tool up to 3 times.
-- Adjust the query each retry (broaden/simplify terms, remove extra filters, or change sort order).
-- If retries still fail, switch to a different tool or evidence source and continue.
-
 **Task:**
 Use the tools to retrieve relevant evidence for the research plan section "{section_name}".
 
@@ -58,29 +53,16 @@ Do not call set_model_response without the section field.
 **Important:** You must return at least 1 evidence item. Empty lists will cause validation errors and prevent your output from being saved."""
 
 
-TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collector agent executing a specific retrieval task.
+TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collector agent addressing a specific gap.
 
 **Assigned Section:** {section_name}
-**Target Query:** {query}
-**Preferred Tool:** {preferred_tool}
-**Evidence Type:** {evidence_type}
-**Priority:** {priority}
-
-**Input State Key:** research_plan, research_head_plan
-**State Context:**
-- research_plan: {{state.research_plan?}}
-- research_head_plan (optional): {{state.research_head_plan?}}
+**Missing Questions:** {missing_questions}
+**Gap Notes:** {notes}
 
 **Output State Key:** evidence_store_section_{section_name}
 
 **Task Context:**
-You are executing a targeted retrieval task identified by the Research Head agent to fill a specific evidence gap. This is a focused search, not a broad exploration.
-
-**Your Specific Task:**
-1. Use the preferred tool ({preferred_tool}) to search for: "{query}"
-2. Focus on finding evidence that addresses the gap identified for section "{section_name}"
-3. Collect at least 1 high-quality evidence item related to this specific query
-4. Ensure all evidence has valid URLs and meaningful quotes
+You are filling a specific gap identified by the Research Head. Focus on the missing questions and notes above.
 
 **Available Tools:**
 - pubmed_search_articles(queryTerm, maxResults, sortBy, dateRange, filterByPublicationTypes, fetchBriefSummaries): PubMed search.
@@ -88,30 +70,22 @@ You are executing a targeted retrieval task identified by the Research Head agen
 - clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
 - reflect_step(summary): Record a brief reflection between searches.
-Only call tool names exactly as listed above. Never call a tool named "run".
-
-**Tool Failure Handling:**
-- If a tool call fails or returns zero results, retry that tool up to 3 times.
-- Adjust the query each retry (broaden/simplify terms, remove extra filters, or change sort order).
-- If retries still fail, switch to a different tool or evidence source and continue.
 
 **Instructions:**
-- Start with the preferred tool ({preferred_tool}) and query "{query}"
-- Focus on this specific query - do not broaden the search unnecessarily
-- Collect evidence that directly addresses the gap
-- Evidence types must be one of: pubmed, clinicaltrials
-- Ensure evidence type matches {evidence_type} when possible; use available tools only
-- Return at least 1 evidence item with a valid URL and quote
-- Use reflect_step to summarize findings after the first search (max 1 total)
+- Start with a focused query that directly addresses the missing questions.
+- Collect evidence that directly resolves the gap.
+- Evidence types must be one of: pubmed, clinicaltrials.
+- Return at least 1 evidence item with a valid URL and quote.
+- Use reflect_step to summarize findings after the first search (max 1 total).
 
 **Stopping Rules (Required):**
 - The moment you have at least 1 qualifying evidence item, STOP searching and return your CollectorResponse.
 - Hard limit: no more than 8 total tool calls and no more than 1 reflect_step call. If you hit a limit, finalize immediately with the best evidence gathered.
 
 **Important:** 
-- This is a targeted task - stay focused on the specific query and gap
-- You must return at least 1 evidence item
-- All evidence must have working URLs and meaningful quotes
+- This is a targeted task - stay focused on the missing questions and notes.
+- You must return at least 1 evidence item.
+- All evidence must have working URLs and meaningful quotes.
 - Store your output as a CollectorResponse object with section name "{section_name}" and evidence list in the shared state under the key "evidence_store_section_{section_name}".
 - When you call set_model_response, you must include the section field: {{"section": "{section_name}", "evidence": [...]}}.
 - Do not call set_model_response without the section field."""

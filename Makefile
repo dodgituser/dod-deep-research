@@ -57,8 +57,18 @@ run:
 	eval $$cmd
 
 log-print:
-	@if [ -z "$(AGENT)" ] || [ -z "$(CALLBACK)" ]; then \
-		echo "Usage: make log-print AGENT='...' CALLBACK='before_model'"; \
+	@if [ -z "$(AGENT)" ]; then \
+		echo "Usage: make log-print AGENT='planner_agent'"; \
 		exit 1; \
 	fi
-	@jq . "outputs/agent_logs/$(AGENT)/$(AGENT)_callback_$(CALLBACK).jsonl"
+	@logs_dir="outputs/agent_logs/$(AGENT)"; \
+	if [ ! -d "$$logs_dir" ]; then \
+		echo "No logs directory found at $$logs_dir. Run the pipeline to generate logs."; \
+		exit 1; \
+	fi; \
+	files=$$(ls "$$logs_dir"/* 2>/dev/null); \
+	if [ -z "$$files" ]; then \
+		echo "No logs found for agent: $(AGENT) in $$logs_dir"; \
+		exit 1; \
+	fi; \
+	cat $$files | sed -E 's/^\\[[^]]+\\] //' | jq .

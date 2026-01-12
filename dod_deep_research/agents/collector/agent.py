@@ -17,7 +17,7 @@ from dod_deep_research.agents.collector.prompt import (
 )
 from dod_deep_research.agents.collector.schemas import CollectorResponse
 from dod_deep_research.agents.callbacks.utils import get_callbacks
-from dod_deep_research.agents.research_head.schemas import RetrievalTask
+from dod_deep_research.agents.research_head.schemas import ResearchGap
 from dod_deep_research.core import get_http_options
 from dod_deep_research.models import GeminiModels
 from dod_deep_research.tools import reflect_step
@@ -63,7 +63,7 @@ def get_collector_tools():
 
 def create_collector_agent(
     section_name: str,
-    task_override: RetrievalTask | None = None,
+    gap_override: ResearchGap | None = None,
     before_agent_callback: Callable[[CallbackContext], types.Content | None]
     | None = None,
 ) -> Agent:
@@ -72,21 +72,19 @@ def create_collector_agent(
 
     Args:
         section_name: Name of the section to collect evidence for.
-        task_override: Optional RetrievalTask to create a task-focused collector.
+        gap_override: Optional research gap override for targeted collection.
         before_agent_callback: Callback to run before the agent executes.
 
     Returns:
         Agent: Configured collector agent for the section.
     """
-    if task_override:
+    if gap_override:
         prompt = TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
             section_name=section_name,
-            query=task_override.query,
-            preferred_tool=task_override.preferred_tool,
-            evidence_type=task_override.evidence_type,
-            priority=task_override.priority,
+            missing_questions=", ".join(gap_override.missing_questions) or "None",
+            notes=gap_override.notes or "None",
         )
-        agent_name = f"targeted_collector_{section_name}_{task_override.priority}"
+        agent_name = f"targeted_collector_{section_name}"
     else:
         prompt = COLLECTOR_AGENT_PROMPT_TEMPLATE.format(section_name=section_name)
         agent_name = f"collector_{section_name}"
@@ -130,21 +128,21 @@ def create_collector_agents(
     return parallel_agent
 
 
-def create_targeted_collector_agent(task: RetrievalTask) -> Agent:
+def create_targeted_collector_agent(gap: ResearchGap) -> Agent:
     """
-    Create a targeted collector agent for a specific retrieval task.
+    Create a targeted collector agent for a specific research gap.
 
     Args:
-        task: RetrievalTask specifying the targeted collection parameters.
+        gap: ResearchGap specifying the targeted collection parameters.
 
     Returns:
         Agent: Configured targeted collector agent.
     """
-    return create_collector_agent(section_name=task.section, task_override=task)
+    return create_collector_agent(section_name=gap.section, gap_override=gap)
 
 
 def create_targeted_collector_agents(
-    tasks: list[RetrievalTask],
+    gaps: list[ResearchGap],
     after_agent_callback: Callable[[CallbackContext], types.Content | None]
     | None = None,
 ) -> ParallelAgent:
@@ -152,19 +150,19 @@ def create_targeted_collector_agents(
     Create a parallel agent with targeted collectors for the given tasks.
 
     Args:
-        tasks: List of RetrievalTask objects.
+        gaps: List of ResearchGap objects.
         after_agent_callback: Optional callback to run after collectors complete.
 
     Returns:
         ParallelAgent with targeted collector agents.
     """
-    if not tasks:
+    if not gaps:
         return ParallelAgent(
             name="targeted_collectors_empty",
             sub_agents=[],
         )
 
-    collector_agents = [create_targeted_collector_agent(task) for task in tasks]
+    collector_agents = [create_targeted_collector_agent(gap) for gap in gaps]
 
     parallel_agent = ParallelAgent(
         name="targeted_collectors",
