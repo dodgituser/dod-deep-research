@@ -79,7 +79,7 @@ def _sanitize_agent_name(agent_name: str) -> str:
 
 def _get_agent_log_path(session_id: str, agent_name: str) -> Path:
     """Build a per-agent log file path for the current session."""
-    logs_dir = Path(__file__).resolve().parent / "research" / "agent_logs"
+    logs_dir = Path(__file__).resolve().parent / "outputs" / "agent_logs"
     logs_dir.mkdir(exist_ok=True)
     safe_name = _sanitize_agent_name(agent_name or "unknown")
     return logs_dir / f"{session_id}_{safe_name}.log"
@@ -162,9 +162,9 @@ async def run_agent(
 
 def get_output_file(indication: str):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    research_dir = Path(__file__).parent / "research"
-    research_dir.mkdir(exist_ok=True)
-    output_dir = research_dir / f"{indication}-{timestamp}"
+    outputs_dir = Path(__file__).parent / "outputs"
+    outputs_dir.mkdir(exist_ok=True)
+    output_dir = outputs_dir / f"{indication}-{timestamp}"
     output_dir.mkdir(exist_ok=True)
     output_file = output_dir / f"pipeline_events_{timestamp}.json"
     return output_file

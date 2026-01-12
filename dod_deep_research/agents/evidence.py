@@ -8,7 +8,6 @@ from pydantic import BaseModel, Field, model_validator
 
 from dod_deep_research.agents.collector.schemas import CollectorResponse, EvidenceItem
 from dod_deep_research.agents.schemas import KeyValuePair
-from dod_deep_research.agents.writer.schemas import MarkdownReport
 
 logger = logging.getLogger(__name__)
 
@@ -179,36 +178,3 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
         by_source=by_source_kvp,
         hash_index=hash_index_kvp,
     )
-
-
-class DeepResearchOutput(MarkdownReport):
-    """Root model for deep research markdown output with evidence."""
-
-    evidence: list[EvidenceItem] = Field(
-        default_factory=list,
-        description=(
-            "All evidence items referenced in the output. This field is automatically "
-            "populated from evidence_store.items after generation."
-        ),
-    )
-
-    def to_evidence_table(self) -> list[dict[str, Any]]:
-        """
-        Generate evidence table specification.
-
-        Returns:
-            list[dict]: List of evidence entries formatted for table display.
-        """
-        return [
-            {
-                "id": ev.id,
-                "source": ev.source,
-                "title": ev.title,
-                "url": ev.url,
-                "year": ev.year,
-                "quote": ev.quote,
-                "tags": ev.tags,
-                "section": ev.section,
-            }
-            for ev in self.evidence
-        ]

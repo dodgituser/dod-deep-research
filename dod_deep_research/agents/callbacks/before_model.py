@@ -6,7 +6,6 @@ from google.adk.models import LlmRequest, LlmResponse
 from dod_deep_research.agents.callbacks.utils import (
     format_llm_request,
     format_payload,
-    get_session_id,
     log_agent_event,
 )
 
@@ -25,11 +24,10 @@ def before_model_callback(
         types.LlmResponse | None: Returning a response skips the model call.
     """
     agent_name = callback_context.agent_name or "unknown"
-    session_id = get_session_id(callback_context)
     payload = {
         "type": "before_model",
         "agent_name": agent_name,
         "payload": {"prompt": format_llm_request(llm_request)},
     }
-    log_agent_event(session_id, agent_name, format_payload(payload))
+    log_agent_event(agent_name, "before_model", format_payload(payload))
     return None

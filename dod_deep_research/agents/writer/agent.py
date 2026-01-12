@@ -13,7 +13,7 @@ writer_agent = Agent(
     name="writer_agent",
     instruction=WRITER_AGENT_PROMPT,
     tools=[],
-    model=GeminiModels.GEMINI_30_PRO.value.replace("models/", ""),
+    model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
     generate_content_config=types.GenerateContentConfig(
         http_options=get_http_options(),
     ),

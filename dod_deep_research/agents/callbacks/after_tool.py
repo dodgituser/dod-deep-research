@@ -9,7 +9,10 @@ from dod_deep_research.agents.callbacks.utils import format_payload, log_agent_e
 
 
 def after_tool_callback(
-    tool: BaseTool, tool_response: dict[str, Any], tool_context: ToolContext
+    tool: BaseTool,
+    tool_response: dict[str, Any],
+    tool_context: ToolContext,
+    args: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """
     Logs tool results after execution.
@@ -18,20 +21,21 @@ def after_tool_callback(
         tool (BaseTool): Tool instance that ran.
         tool_response (dict[str, Any]): Tool response payload.
         tool_context (ToolContext): Tool execution context.
+        args (dict[str, Any] | None): Tool arguments if provided.
 
     Returns:
         dict[str, Any] | None: Returning a dict replaces the tool response.
     """
     agent_name = tool_context.agent_name or "unknown"
-    session_id = getattr(tool_context, "session_id", None) or "unknown"
     payload = {
         "type": "after_tool",
         "agent_name": agent_name,
         "payload": {
             "tool_name": tool.name,
             "tool_context": tool_context,
+            "tool_args": args,
             "tool_response": tool_response,
         },
     }
-    log_agent_event(session_id, agent_name, format_payload(payload))
+    log_agent_event(agent_name, "after_tool", format_payload(payload))
     return None

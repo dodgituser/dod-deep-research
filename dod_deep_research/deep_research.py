@@ -3,7 +3,9 @@
 import asyncio
 import json
 import re
+import shutil
 import uuid
+from pathlib import Path
 
 import typer
 from google.genai import types
@@ -24,10 +26,7 @@ from dod_deep_research.agents.sequence_agents import (
     get_pre_aggregation_agent,
     get_post_aggregation_agent,
 )
-from dod_deep_research.agents.evidence import (
-    DeepResearchOutput,
-    EvidenceStore,
-)
+from dod_deep_research.agents.evidence import EvidenceStore
 from dod_deep_research.agents.shared_state import SharedState
 from dod_deep_research.agents.writer.schemas import MarkdownReport
 from dod_deep_research.prompts.indication_prompt import generate_indication_prompt
@@ -37,6 +36,21 @@ import logging
 setup_logging(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = typer.Typer()
+
+
+def _prepare_outputs_dir() -> Path:
+    """
+    Create the outputs directory and clear any existing run subdirectories.
+
+    Returns:
+        Path: Path to the outputs directory.
+    """
+    outputs_dir = Path(__file__).resolve().parent / "outputs"
+    outputs_dir.mkdir(exist_ok=True)
+    for entry in outputs_dir.iterdir():
+        if entry.is_dir():
+            shutil.rmtree(entry)
+    return outputs_dir
 
 
 async def run_pre_aggregation(
@@ -549,6 +563,7 @@ def main(
         logger.info(f"Drug generic name specified: {drug_generic_name}")
 
     try:
+        _prepare_outputs_dir()
         shared_state = run_pipeline(
             indication=indication,
             drug_name=drug_name,

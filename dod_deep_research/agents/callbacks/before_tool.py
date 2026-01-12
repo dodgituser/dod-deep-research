@@ -23,7 +23,6 @@ def before_tool_callback(
         dict[str, Any] | None: Returning a dict skips tool execution.
     """
     agent_name = tool_context.agent_name or "unknown"
-    session_id = getattr(tool_context, "session_id", None) or "unknown"
     payload = {
         "type": "before_tool",
         "agent_name": agent_name,
@@ -33,5 +32,5 @@ def before_tool_callback(
             "tool_args": args,
         },
     }
-    log_agent_event(session_id, agent_name, format_payload(payload))
+    log_agent_event(agent_name, "before_tool", format_payload(payload))
     return None

@@ -48,9 +48,9 @@ run:
 		echo "Usage: make run INDICATION='...' DRUG_NAME='...' [DRUG_FORM='...'] [DRUG_GENERIC_NAME='...']"; \
 		exit 1; \
 	fi
-	@mkdir -p research
+	@mkdir -p outputs
 	@docker compose -f docker-compose.yml --profile pipeline build --no-cache; \
-	cmd="docker compose -f docker-compose.yml --profile pipeline run --rm -v \"$(PWD)/research:/app/dod_deep_research/research\" pipeline --indication \"$(INDICATION)\" --drug-name \"$(DRUG_NAME)\""; \
+	cmd="docker compose -f docker-compose.yml --profile pipeline run --rm -v \"$(PWD)/outputs:/app/dod_deep_research/outputs\" pipeline --indication \"$(INDICATION)\" --drug-name \"$(DRUG_NAME)\""; \
 	if [ -n "$(DRUG_FORM)" ]; then cmd="$$cmd --drug-form \"$(DRUG_FORM)\""; fi; \
 	if [ -n "$(DRUG_GENERIC_NAME)" ]; then cmd="$$cmd --drug-generic-name \"$(DRUG_GENERIC_NAME)\""; fi; \
 	echo "$$cmd"; \

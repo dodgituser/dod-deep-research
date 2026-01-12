@@ -13,37 +13,6 @@ def sanitize_agent_name(agent_name: str) -> str:
     return "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in agent_name)
 
 
-def get_session_id(callback_context: Any) -> str:
-    """
-    Best-effort extraction of session id from callback context.
-
-    Args:
-        callback_context (Any): Callback context with session data.
-
-    Returns:
-        str: Session id if available, otherwise "unknown".
-    """
-    session_id = getattr(callback_context, "session_id", None)
-    if session_id:
-        return str(session_id)
-    session = getattr(callback_context, "session", None)
-    if session:
-        for attr in ("id", "session_id"):
-            value = getattr(session, attr, None)
-            if value:
-                return str(value)
-    state = getattr(callback_context, "state", None)
-    if state:
-        for key in ("session_id", "id"):
-            try:
-                value = state.get(key) if isinstance(state, dict) else state[key]
-            except Exception:
-                value = None
-            if value:
-                return str(value)
-    return "unknown"
-
-
 def format_state(state: Any) -> str:
     """
     Format state into JSON with truncation.
@@ -64,22 +33,28 @@ def format_state(state: Any) -> str:
     return text
 
 
-def log_agent_event(session_id: str, agent_name: str, message: str) -> None:
+def log_agent_event(
+    agent_name: str, callback_type: str, payload: dict[str, Any]
+) -> None:
     """
     Append a message to the per-agent log file.
 
     Args:
-        session_id (str): Session identifier.
         agent_name (str): Agent name for log file naming.
-        message (str): Message to append.
+        callback_type (str): Callback type used for the log file name.
+        payload (dict[str, Any]): Payload to append as JSONL.
     """
-    logs_dir = Path(__file__).resolve().parents[2] / "research" / "agent_logs"
-    logs_dir.mkdir(exist_ok=True)
     safe_name = sanitize_agent_name(agent_name or "unknown")
-    log_path = logs_dir / f"{session_id}_{safe_name}.log"
+    safe_callback = sanitize_agent_name(callback_type or "unknown")
+    logs_dir = (
+        Path(__file__).resolve().parents[2] / "outputs" / "agent_logs" / safe_name
+    )
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    log_path = logs_dir / f"{safe_name}_callback_{safe_callback}.jsonl"
     timestamp = datetime.now().isoformat()
+    entry = {"timestamp": timestamp, **payload}
     with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
-        handle.write(f"[{timestamp}] {message}\n")
+        handle.write(json.dumps(entry, default=str) + "\n")
 
 
 def format_llm_request(llm_request: LlmRequest) -> str:

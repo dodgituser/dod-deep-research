@@ -2,7 +2,8 @@
 
 from pydantic import BaseModel, Field
 
-from dod_deep_research.agents.evidence import DeepResearchOutput, EvidenceStore
+from dod_deep_research.agents.evidence import EvidenceStore
+from dod_deep_research.agents.writer.schemas import MarkdownReport
 from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 
@@ -18,7 +19,7 @@ class SharedState(BaseModel):
     - evidence_store_section_* (CollectorResponse): Collectors → Deterministic aggregation function
     - evidence_store (EvidenceStore): Aggregation function → ResearchHead/Writer
     - research_head_plan (ResearchHeadPlan): ResearchHead → Targeted Collectors
-    - deep_research_output (DeepResearchOutput): Writer → Final
+    - deep_research_output (MarkdownReport): Writer → Final
     """
 
     drug_name: str | None = Field(
@@ -41,7 +42,7 @@ class SharedState(BaseModel):
         default=None,
         description="ResearchHeadPlan model: Gap analysis and targeted retrieval tasks (ResearchHead output)",
     )
-    deep_research_output: DeepResearchOutput | None = Field(
+    deep_research_output: MarkdownReport | None = Field(
         default=None,
-        description="DeepResearchOutput model: Complete markdown research output (Writer output)",
+        description="MarkdownReport model: Complete markdown research output (Writer output)",
     )

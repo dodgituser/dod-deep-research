@@ -100,14 +100,14 @@ The aggregator merges all section-specific evidence stores:
 The writer generates the final structured output:
 - Reads aggregated evidence store and research plan
 - Uses section organization for coherent narrative
-- Generates complete `DeepResearchOutput` with:
+- Generates complete markdown report with:
   - Indication profile
   - Mechanistic rationales
   - Competitive landscape
   - IL-2 specific trials
   - Evidence citations
 
-**Output**: `DeepResearchOutput` stored in `deep_research_output` state key
+**Output**: `MarkdownReport` stored in `deep_research_output` state key
 
 ## Benefits
 
@@ -165,5 +165,4 @@ The pipeline uses the following state keys for inter-agent communication:
 - `research_plan`: `ResearchPlan` (Meta-planner output)
 - `evidence_store_section_{section_name}`: `CollectorResponse` (Collector outputs)
 - `evidence_store`: `EvidenceStore` (Aggregator output)
-- `deep_research_output`: `DeepResearchOutput` (Writer output)
-
+- `deep_research_output`: `MarkdownReport` (Writer output)

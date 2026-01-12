@@ -132,6 +132,7 @@ COPYRIGHT.txt
 .ruff_cache
 .cursor/plans
 
+/outputs/
 outputs/youtube_token.pkl
 youtube_token.pkl
 crontab.txt
@@ -141,4 +142,4 @@ run_batch.sh
 
 # Ignore all .adk folders
 .adk/
-/research/agent_logs/
+/outputs/agent_logs/
