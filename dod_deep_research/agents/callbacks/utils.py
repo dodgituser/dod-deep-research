@@ -5,8 +5,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from google.adk.models import LlmRequest
-
 
 def sanitize_agent_name(agent_name: str) -> str:
     """Sanitize agent name for filesystem paths."""
@@ -33,16 +31,14 @@ def format_state(state: Any) -> str:
     return text
 
 
-def log_agent_event(
-    agent_name: str, callback_type: str, payload: dict[str, Any]
-) -> None:
+def log_agent_event(agent_name: str, callback_type: str, payload: Any) -> None:
     """
     Append a message to the per-agent log file.
 
     Args:
         agent_name (str): Agent name for log file naming.
         callback_type (str): Callback type used for the log file name.
-        payload (dict[str, Any]): Payload to append as JSONL.
+        payload (Any): Payload to append as JSONL.
     """
     safe_name = sanitize_agent_name(agent_name or "unknown")
     safe_callback = sanitize_agent_name(callback_type or "unknown")
@@ -52,37 +48,12 @@ def log_agent_event(
     logs_dir.mkdir(parents=True, exist_ok=True)
     log_path = logs_dir / f"{safe_name}_callback_{safe_callback}.jsonl"
     timestamp = datetime.now().isoformat()
-    entry = {"timestamp": timestamp, **payload}
+    if isinstance(payload, dict):
+        entry = {"timestamp": timestamp, **payload}
+    else:
+        entry = {"timestamp": timestamp, "payload": payload}
     with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
         handle.write(json.dumps(entry, default=str) + "\n")
-
-
-def format_llm_request(llm_request: LlmRequest) -> str:
-    """
-    Format LLM request contents into role/parts text.
-
-    Args:
-        llm_request (LlmRequest): LLM request containing prompt contents.
-
-    Returns:
-        str: Rendered prompt text.
-    """
-    contents = getattr(llm_request, "contents", None)
-    if not contents:
-        return str(llm_request)
-
-    chunks = []
-    for content in contents:
-        role = getattr(content, "role", "unknown")
-        parts = getattr(content, "parts", []) or []
-        part_texts = []
-        for part in parts:
-            text = getattr(part, "text", None)
-            part_texts.append(text if text is not None else str(part))
-        body = "\n".join(part_texts).strip()
-        chunks.append(f"{role}:\n{body}" if body else f"{role}:")
-
-    return "\n\n".join(chunks)
 
 
 def format_payload(payload: Any) -> str:

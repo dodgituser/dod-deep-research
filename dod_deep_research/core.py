@@ -61,39 +61,6 @@ def get_http_options() -> types.HttpOptions:
     )
 
 
-def _format_tool_payload(payload: dict, max_chars: int = 800) -> str:
-    """Format tool payloads for logging with truncation."""
-    try:
-        text = json.dumps(payload, default=str)
-    except TypeError:
-        text = str(payload)
-    if len(text) > max_chars:
-        return f"{text[:max_chars]}...[truncated]"
-    return text
-
-
-def _sanitize_agent_name(agent_name: str) -> str:
-    """Sanitize agent name for filesystem paths."""
-    return "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in agent_name)
-
-
-def _get_agent_log_path(session_id: str, agent_name: str) -> Path:
-    """Build a per-agent log file path for the current session."""
-    logs_dir = Path(__file__).resolve().parent / "outputs" / "agent_logs"
-    logs_dir.mkdir(exist_ok=True)
-    safe_name = _sanitize_agent_name(agent_name or "unknown")
-    return logs_dir / f"{session_id}_{safe_name}.log"
-
-
-def _log_agent_event(session_id: str, agent_name: str, message: str) -> None:
-    """Append a message to the per-agent log file."""
-    log_path = _get_agent_log_path(session_id, agent_name)
-    log_path.parent.mkdir(exist_ok=True)
-    timestamp = datetime.now().isoformat()
-    with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
-        handle.write(f"[{timestamp}] {message}\n")
-
-
 def build_runner(
     agent: object,
     app_name: str,
