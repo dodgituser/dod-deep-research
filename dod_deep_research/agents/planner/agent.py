@@ -7,13 +7,9 @@ from dod_deep_research.core import get_http_options
 from dod_deep_research.agents.planner.prompt import PLANNER_AGENT_PROMPT
 from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.agents.callbacks.utils import get_callbacks
-from dod_deep_research.agents.planner.callbacks import planner_after_agent_callback
 from dod_deep_research.models import GeminiModels
 
 callbacks = get_callbacks()  # Get default callbacks
-callbacks["after_agent_callback"] = (
-    planner_after_agent_callback  # Merge default with custom callback
-)
 
 
 def create_planner_agent(indication_prompt: str | None = None) -> Agent:

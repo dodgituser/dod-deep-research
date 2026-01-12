@@ -58,13 +58,28 @@ run:
 
 log-print:
 	@if [ -z "$(AGENT)" ]; then \
-		echo "Usage: make log-print AGENT='planner_agent'"; \
+		echo "Usage: make log-print AGENT='planner_agent' [LOG='before_tool' | LOG_FILE='planner_agent_callback_before_tool.jsonl']"; \
 		exit 1; \
 	fi
 	@logs_dir="outputs/agent_logs/$(AGENT)"; \
 	if [ ! -d "$$logs_dir" ]; then \
 		echo "No logs directory found at $$logs_dir. Run the pipeline to generate logs."; \
 		exit 1; \
+	fi; \
+	log_file=""; \
+	if [ -n "$(LOG_FILE)" ]; then \
+		log_file="$$logs_dir/$(LOG_FILE)"; \
+	elif [ -n "$(LOG)" ]; then \
+		log_suffix=$$(echo "$(LOG)" | tr ' ' '_' ); \
+		log_file="$$logs_dir/$(AGENT)_callback_$${log_suffix}.jsonl"; \
+	fi; \
+	if [ -n "$$log_file" ]; then \
+		if [ ! -f "$$log_file" ]; then \
+			echo "No log file found at $$log_file"; \
+			exit 1; \
+		fi; \
+		sed -E 's/^\\[[^]]+\\] //' "$$log_file" | jq .; \
+		exit 0; \
 	fi; \
 	files=$$(ls "$$logs_dir"/* 2>/dev/null); \
 	if [ -z "$$files" ]; then \

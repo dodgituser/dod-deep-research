@@ -18,7 +18,7 @@ from dod_deep_research.core import build_runner, run_agent, get_output_file
 from dod_deep_research.agents.collector.agent import create_targeted_collector_agents
 from dod_deep_research.agents.planner.agent import create_planner_agent
 from dod_deep_research.agents.research_head.agent import research_head_agent
-from dod_deep_research.agents.planner.schemas import get_common_sections
+from dod_deep_research.agents.planner.schemas import get_common_sections, ResearchPlan
 from dod_deep_research.agents.research_head.schemas import (
     ResearchHeadPlan,
 )
@@ -103,6 +103,32 @@ async def run_pre_aggregation(
 
     state = updated_session.state
     logger.info(f"Session state keys: {list(state.keys())}")
+
+    research_plan = state.get("research_plan")
+    if research_plan:
+        try:
+            plan = ResearchPlan(**research_plan)
+        except Exception as exc:
+            logger.warning("Failed to parse research_plan for section state: %s", exc)
+        else:
+            section_state = {
+                f"research_section_{section.name}": section.model_dump()
+                for section in plan.sections
+            }
+            if section_state:
+                merge_event = Event(
+                    author="user",
+                    actions=EventActions(state_delta=section_state),
+                )
+                await runner_pre.session_service.append_event(
+                    updated_session, merge_event
+                )
+                updated_session = await runner_pre.session_service.get_session(
+                    app_name=app_name,
+                    user_id=user_id,
+                    session_id=session.id,
+                )
+                state = updated_session.state
 
     evidence_store = state.get("evidence_store")
     if evidence_store:
