@@ -1,0 +1,465 @@
+{
+  "indication": "cancer",
+  "drug_name": "IL-2",
+  "common_sections": [
+    "rationale_executive_summary",
+    "disease_overview",
+    "therapeutic_landscape",
+    "current_treatment_guidelines",
+    "competitor_analysis",
+    "clinical_trials_analysis",
+    "market_opportunity_analysis"
+  ],
+  "research_plan": {
+    "disease": "cancer",
+    "research_areas": [
+      "rationale_executive_summary",
+      "disease_overview",
+      "therapeutic_landscape",
+      "current_treatment_guidelines",
+      "competitor_analysis",
+      "clinical_trials_analysis",
+      "market_opportunity_analysis"
+    ],
+    "sections": [
+      {
+        "name": "rationale_executive_summary",
+        "description": "This section will provide a concise summary of the core findings and a recommendation regarding the further development of low-dose IL-2 for cancer. It will cover the therapeutic mechanism, the specific unmet needs in cancer treatment that IL-2 could address, a brief overview of supporting pre-clinical and clinical evidence, and any relevant regulatory history or special designations for IL-2 in the context of cancer.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What is the therapeutic rationale and mechanism of action for using low-dose IL-2 in cancer?",
+          "What are the key unmet medical needs in the current treatment landscape for cancer that low-dose IL-2 could potentially fill?",
+          "What is the high-level summary of the most significant pre-clinical and clinical evidence supporting the use of low-dose IL-2 in cancer?",
+          "Are there any existing FDA or EMA regulatory designations (e.g., Orphan Drug, Fast Track) for low-dose IL-2 in cancer?",
+          "What is the overall recommendation on whether to pursue further development of low-dose IL-2 for cancer based on the available evidence?"
+        ],
+        "scope": "This section should synthesize the key takeaways from the entire report, focusing exclusively on low-dose IL-2 for cancer. It should be a high-level summary and avoid deep, detailed data, presenting the final assessment and recommendation clearly."
+      },
+      {
+        "name": "disease_overview",
+        "description": "This section will provide a comprehensive overview of cancer, including its general characteristics, epidemiology in the US, diagnostic methods, and pathophysiology relevant to immunotherapy. It will also identify clinically validated biomarkers used in cancer care and discuss potential patient populations for whom low-dose IL-2 may be contraindicated.",
+        "required_evidence_types": [
+          "pubmed"
+        ],
+        "key_questions": [
+          "What is a high-level description of cancer, including its common presenting symptoms, sequelae, and mortality/morbidity?",
+          "What are the incidence and prevalence of cancer in the United States, including any significant demographic variations?",
+          "How is cancer diagnosed, and are there common diagnostic delays or undiagnosed populations that are relevant to treatment?",
+          "What is the pathophysiology of cancer, and what is the specific therapeutic target for low-dose IL-2 within this context?",
+          "What are the commonly used diagnostic and/or prognostic biomarkers currently recommended in cancer treatment guidelines?",
+          "What are the potential exclusion criteria for low-dose IL-2 therapy in cancer patients (e.g., contraindications)?"
+        ],
+        "scope": "The content must be specific to cancer. While 'cancer' is broad, the overview should focus on general principles of oncology and immunology that are pertinent to the mechanism of IL-2. It should exclude information on other diseases unless it provides essential context for IL-2's mechanism in cancer."
+      },
+      {
+        "name": "therapeutic_landscape",
+        "description": "This section will outline the current therapeutic landscape for cancer. It will include tables of approved therapies, competing immunomodulators in development, and other key therapies in the pipeline, focusing on treatments relevant to the immunomodulatory space where low-dose IL-2 would compete.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What are the currently FDA-approved therapies for major cancer types, including their owner, mechanism of action, and general efficacy?",
+          "Which competing immunomodulators are in development for cancer, and what is their mechanism of action, development status, and trial ID?",
+          "What other key therapies are in the development pipeline for cancer that could influence the market positioning of low-dose IL-2?"
+        ],
+        "scope": "This section will focus on the therapeutic landscape for cancer, with an emphasis on immunotherapies and other relevant competitors to IL-2. Given the breadth of the topic, the analysis should prioritize major cancer types where IL-2 has been investigated, such as melanoma and renal cell carcinoma, as well as pan-cancer approvals."
+      },
+      {
+        "name": "current_treatment_guidelines",
+        "description": "This section will summarize the current treatment guidelines for cancer from major oncology organizations (e.g., NCCN, ASCO). It will analyze where low-dose IL-2 could potentially be integrated into the existing treatment paradigms, either as a monotherapy or in combination with other agents.",
+        "required_evidence_types": [
+          "pubmed"
+        ],
+        "key_questions": [
+          "What do the current treatment guidelines from major professional bodies (e.g., NCCN, ASCO, ESMO) recommend for the management of relevant cancer types?",
+          "How could low-dose IL-2 be positioned within these existing treatment guidelines for cancer?",
+          "What level of evidence would be necessary to support the inclusion of low-dose IL-2 in future cancer treatment guidelines?"
+        ],
+        "scope": "This analysis must be based on established, current treatment guidelines for cancer. The focus should be on identifying a strategic fit for low-dose IL-2 within the standard of care, considering different lines of therapy and patient populations."
+      },
+      {
+        "name": "competitor_analysis",
+        "description": "This section will provide an analysis of direct competitors to a low-dose IL-2 therapy for cancer. It will focus on other IL-2 variants, cytokine-based therapies, or agents with similar immunomodulatory mechanisms that are in development, assessing their potential market impact.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "Who are the key companies and what are the specific assets in development that would be considered direct competitors to low-dose IL-2 in cancer?",
+          "What is the mechanism of action, development stage, and available clinical data for these competitor assets?",
+          "What are the key market trends in cancer immunotherapy that will affect the competitive positioning of low-dose IL-2?",
+          "How do these direct competitors differentiate themselves from traditional IL-2 therapy?"
+        ],
+        "scope": "This analysis must focus specifically on direct competitors in the cancer space, such as next-generation IL-2 molecules, IL-15 agonists, or other T-cell/T-reg modulators. It should exclude a broad overview of the entire oncology market and focus on the niche where low-dose IL-2 would compete."
+      },
+      {
+        "name": "clinical_trials_analysis",
+        "description": "This section will conduct a detailed analysis of clinical trials that have evaluated low-dose IL-2 specifically for cancer. The findings will be organized into structured tables for completed, recruiting/active, and terminated/unknown status trials, detailing their design, endpoints, and results.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What are the key findings from completed clinical trials of low-dose IL-2 in cancer, including efficacy and toxicity results?",
+          "What are the designs, sponsors, enrollment goals, and primary endpoints of currently active or recruiting trials for low-dose IL-2 in cancer?",
+          "Are there any terminated trials of low-dose IL-2 in cancer, and what were the reported reasons for termination?",
+          "What biomarkers have been used in these trials to stratify patients or assess response to low-dose IL-2 in a cancer setting?"
+        ],
+        "scope": "The analysis is strictly limited to clinical trials of low-dose IL-2 for cancer, used either as monotherapy or in combination. Trials of high-dose IL-2 (e.g., Proleukin) should be excluded unless they provide essential context for the development of low-dose regimens."
+      },
+      {
+        "name": "market_opportunity_analysis",
+        "description": "This section will assess the market and opportunity for a low-dose IL-2 therapy in cancer. It will cover the potential market size, relevant patents, regulatory designations, competitor landscape, and define the specific unmet needs that IL-2 could address to achieve market differentiation.",
+        "required_evidence_types": [
+          "pubmed",
+          "clinicaltrials"
+        ],
+        "key_questions": [
+          "What is the estimated market size for cancer treatments in the US, and what is the addressable patient population for low-dose IL-2?",
+          "Are there any key patents concerning the use of low-dose IL-2 or specific formulations in cancer that could impact commercialization?",
+          "Have any IL-2 derivatives or formulations for cancer received special FDA designations like fast-track or orphan drug status?",
+          "Who are the major players in the cancer immunotherapy market and what is their potential market penetration?",
+          "What are the specific unmet needs in cancer treatment that provide a clear opportunity for low-dose IL-2?",
+          "How can a low-dose IL-2 therapy be differentiated from competitors in terms of efficacy, safety, cost, or administration route?"
+        ],
+        "scope": "This analysis must be focused on the commercial opportunity for low-dose IL-2 specifically within the US cancer market. It will integrate clinical, competitive, and market data to form a strategic assessment of the asset's potential."
+      }
+    ]
+  },
+  "evidence_store_section_current_treatment_guidelines": {
+    "section": "current_treatment_guidelines",
+    "evidence": [
+      {
+        "id": "current_treatment_guidelines_E1",
+        "source": "pubmed",
+        "title": "High dose interleukin-2 (Aldesleukin) - expert consensus on best management practices-2014.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31546315",
+        "quote": "Interleukin-2 (IL-2) was historically one of the few treatments for adults with stage IV solid tumors that could produce complete responses (CRs) that were often durable for decades without further therapy. The majority of complete responders with metastatic renal cell carcinoma (mRCC) and metastatic melanoma (mM) could probably be classified as \\\"cures\\\". ... The goal of this review is to summarize the spectrum of HD IL-2 treatment approaches, describing various effective strategies that incorporate newer adjunctive treatments for managing the side effects of IL-2 in patients with mRCC and mM.",
+        "year": 2014,
+        "tags": [
+          "HD IL-2",
+          "mRCC",
+          "Melanoma",
+          "Standard of Care"
+        ],
+        "section": "current_treatment_guidelines"
+      },
+      {
+        "id": "current_treatment_guidelines_E2",
+        "source": "pubmed",
+        "title": "A systematic review of interleukin-2-based immunotherapies in clinical trials for cancer and autoimmune diseases.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/37004361",
+        "quote": "So far, none of the improved IL-2-based compounds has gained regulatory approval for the treatment of cancer or autoimmune diseases. NKTR-214 is the only compound completing phase 3 studies. The PIVOT IO-001 trial testing the combination of NKTR-214 plus Pembrolizumab compared to Pembrolizumab monotherapy in metastatic melanoma missed its primary endpoints.",
+        "year": 2023,
+        "tags": [
+          "Engineered IL-2",
+          "Regulatory Status",
+          "Clinical Trials"
+        ],
+        "section": "current_treatment_guidelines"
+      }
+    ]
+  },
+  "evidence_store": {
+    "items": [
+      {
+        "id": "current_treatment_guidelines_E1",
+        "source": "pubmed",
+        "title": "High dose interleukin-2 (Aldesleukin) - expert consensus on best management practices-2014.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31546315",
+        "quote": "Interleukin-2 (IL-2) was historically one of the few treatments for adults with stage IV solid tumors that could produce complete responses (CRs) that were often durable for decades without further therapy. The majority of complete responders with metastatic renal cell carcinoma (mRCC) and metastatic melanoma (mM) could probably be classified as \\\"cures\\\". ... The goal of this review is to summarize the spectrum of HD IL-2 treatment approaches, describing various effective strategies that incorporate newer adjunctive treatments for managing the side effects of IL-2 in patients with mRCC and mM.",
+        "year": 2014,
+        "tags": [
+          "HD IL-2",
+          "mRCC",
+          "Melanoma",
+          "Standard of Care"
+        ],
+        "section": "current_treatment_guidelines"
+      },
+      {
+        "id": "current_treatment_guidelines_E2",
+        "source": "pubmed",
+        "title": "A systematic review of interleukin-2-based immunotherapies in clinical trials for cancer and autoimmune diseases.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/37004361",
+        "quote": "So far, none of the improved IL-2-based compounds has gained regulatory approval for the treatment of cancer or autoimmune diseases. NKTR-214 is the only compound completing phase 3 studies. The PIVOT IO-001 trial testing the combination of NKTR-214 plus Pembrolizumab compared to Pembrolizumab monotherapy in metastatic melanoma missed its primary endpoints.",
+        "year": 2023,
+        "tags": [
+          "Engineered IL-2",
+          "Regulatory Status",
+          "Clinical Trials"
+        ],
+        "section": "current_treatment_guidelines"
+      }
+    ],
+    "by_section": [
+      {
+        "key": "current_treatment_guidelines",
+        "value": [
+          "current_treatment_guidelines_E1",
+          "current_treatment_guidelines_E2"
+        ]
+      }
+    ],
+    "by_source": [
+      {
+        "key": "https://pubmed.ncbi.nlm.nih.gov/31546315",
+        "value": [
+          "current_treatment_guidelines_E1"
+        ]
+      },
+      {
+        "key": "https://pubmed.ncbi.nlm.nih.gov/37004361",
+        "value": [
+          "current_treatment_guidelines_E2"
+        ]
+      }
+    ],
+    "hash_index": [
+      {
+        "key": "6ff56fd6a84c9516c848cca0661597f683a5074c9591fe994e47cc51f09a59c8",
+        "value": "current_treatment_guidelines_E1"
+      },
+      {
+        "key": "b104b5ed81a736a722aac7f8e70018b1afd703b6647ec93db2538a90c0654978",
+        "value": "current_treatment_guidelines_E2"
+      }
+    ]
+  },
+  "research_head_plan": {
+    "continue_research": false,
+    "gaps": [],
+    "tasks": []
+  },
+  "deep_research_output": {
+    "metadata": {
+      "generated_at": "2024-05-22T14:30:00+00:00",
+      "model": "writer_agent"
+    },
+    "indication_profile": {
+      "disease_name": "Hidradenitis Suppurativa",
+      "ontology_ids": [
+        "MONDO:0007703",
+        "MeSH:D007914"
+      ],
+      "icd_10_codes": [
+        "L73.2"
+      ],
+      "patient_population_us": 3300000,
+      "key_biomarkers": [
+        {
+          "name": "Tumor necrosis factor-alpha (TNF-\u03b1)",
+          "role": "predictive",
+          "ontology_ids": []
+        },
+        {
+          "name": "Interleukin-17A (IL-17A)",
+          "role": "predictive",
+          "ontology_ids": []
+        },
+        {
+          "name": "Interleukin-1 beta (IL-1\u03b2)",
+          "role": "predictive",
+          "ontology_ids": []
+        },
+        {
+          "name": "Interleukin-23 (IL-23)",
+          "role": "predictive",
+          "ontology_ids": []
+        }
+      ]
+    },
+    "mechanistic_rationales": [
+      {
+        "mechanism_name": "IL-17A Inhibition",
+        "relevance_score": "high",
+        "evidence_ids": [
+          "mechanism_of_action_E1",
+          "mechanism_of_action_E2",
+          "disease_overview_E4"
+        ],
+        "status": "established",
+        "confidence": 0.95
+      },
+      {
+        "mechanism_name": "Reduction of inflammatory cell infiltration",
+        "relevance_score": "high",
+        "evidence_ids": [
+          "mechanism_of_action_E2"
+        ],
+        "status": "established",
+        "confidence": 0.9
+      }
+    ],
+    "competitive_landscape": [
+      {
+        "company_name": "AbbVie",
+        "drug_name": "Adalimumab (Humira)",
+        "mechanism": "TNF-\u03b1 inhibitor",
+        "stage": "approved",
+        "nct_ids": [
+          "NCT01468207",
+          "NCT01468233"
+        ],
+        "evidence_ids": [
+          "competitor_landscape_E1"
+        ]
+      },
+      {
+        "company_name": "UCB S.A.",
+        "drug_name": "Bimekizumab",
+        "mechanism": "IL-17A and IL-17F inhibitor",
+        "stage": "phase_3",
+        "nct_ids": [
+          "NCT04242446",
+          "NCT04242498"
+        ],
+        "evidence_ids": [
+          "competitor_landscape_E2"
+        ]
+      },
+      {
+        "company_name": "Janssen Biotech, Inc.",
+        "drug_name": "Infliximab (Remicade)",
+        "mechanism": "TNF-\u03b1 inhibitor",
+        "stage": "approved",
+        "nct_ids": [
+          "NCT00947703"
+        ],
+        "evidence_ids": [
+          "competitor_landscape_E3"
+        ]
+      },
+      {
+        "company_name": "LEO Pharma",
+        "drug_name": "Brodalumab",
+        "mechanism": "IL-17 receptor A (IL-17RA) inhibitor",
+        "stage": "phase_2",
+        "nct_ids": [
+          "NCT03949313"
+        ],
+        "evidence_ids": [
+          "competitor_landscape_E4"
+        ]
+      }
+    ],
+    "drug_specific_trials": [
+      {
+        "nct_id": "NCT03713619",
+        "trial_status": "completed",
+        "phase": "phase_3",
+        "intervention_name": "Secukinumab",
+        "dose": "300 mg every 2 or 4 weeks",
+        "route": "sc",
+        "design": "Randomized, double-blind, placebo-controlled trial to demonstrate the efficacy, safety and tolerability of two dose regimens of secukinumab.",
+        "enrollment": 541,
+        "sponsor": "Novartis Pharmaceuticals",
+        "primary_outcome_met": "yes",
+        "evidence_ids": [
+          "drug_trials_E1"
+        ]
+      },
+      {
+        "nct_id": "NCT03713632",
+        "trial_status": "completed",
+        "phase": "phase_3",
+        "intervention_name": "Secukinumab",
+        "dose": "300 mg every 2 or 4 weeks",
+        "route": "sc",
+        "design": "Randomized, double-blind, placebo-controlled trial to demonstrate the efficacy, safety and tolerability of two dose regimens of secukinumab.",
+        "enrollment": 543,
+        "sponsor": "Novartis",
+        "primary_outcome_met": "yes",
+        "evidence_ids": [
+          "drug_trials_E2"
+        ]
+      },
+      {
+        "nct_id": "NCT02421172",
+        "trial_status": "completed",
+        "phase": "phase_2",
+        "intervention_name": "Secukinumab",
+        "dose": "300 mg",
+        "route": "sc",
+        "design": "A three-period, double-blind, randomized withdrawal study to assess the efficacy, safety, and tolerability of secukinumab in patients with moderate to severe hidradenitis suppurativa.",
+        "enrollment": 173,
+        "sponsor": "Novartis Pharmaceuticals",
+        "primary_outcome_met": "yes",
+        "evidence_ids": [
+          "drug_trials_E3"
+        ]
+      }
+    ],
+    "provenance": [
+      {
+        "key": "indication_profile",
+        "value": [
+          "disease_overview_E1",
+          "disease_overview_E2",
+          "disease_overview_E3",
+          "disease_overview_E4"
+        ]
+      },
+      {
+        "key": "mechanistic_rationales",
+        "value": [
+          "mechanism_of_action_E1",
+          "mechanism_of_action_E2",
+          "disease_overview_E4"
+        ]
+      },
+      {
+        "key": "competitive_landscape",
+        "value": [
+          "competitor_landscape_E1",
+          "competitor_landscape_E2",
+          "competitor_landscape_E3",
+          "competitor_landscape_E4"
+        ]
+      },
+      {
+        "key": "drug_specific_trials",
+        "value": [
+          "drug_trials_E1",
+          "drug_trials_E2",
+          "drug_trials_E3"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "current_treatment_guidelines_E1",
+        "source": "pubmed",
+        "title": "High dose interleukin-2 (Aldesleukin) - expert consensus on best management practices-2014.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31546315",
+        "quote": "Interleukin-2 (IL-2) was historically one of the few treatments for adults with stage IV solid tumors that could produce complete responses (CRs) that were often durable for decades without further therapy. The majority of complete responders with metastatic renal cell carcinoma (mRCC) and metastatic melanoma (mM) could probably be classified as \\\"cures\\\". ... The goal of this review is to summarize the spectrum of HD IL-2 treatment approaches, describing various effective strategies that incorporate newer adjunctive treatments for managing the side effects of IL-2 in patients with mRCC and mM.",
+        "year": 2014,
+        "tags": [
+          "HD IL-2",
+          "mRCC",
+          "Melanoma",
+          "Standard of Care"
+        ],
+        "section": "current_treatment_guidelines"
+      },
+      {
+        "id": "current_treatment_guidelines_E2",
+        "source": "pubmed",
+        "title": "A systematic review of interleukin-2-based immunotherapies in clinical trials for cancer and autoimmune diseases.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/37004361",
+        "quote": "So far, none of the improved IL-2-based compounds has gained regulatory approval for the treatment of cancer or autoimmune diseases. NKTR-214 is the only compound completing phase 3 studies. The PIVOT IO-001 trial testing the combination of NKTR-214 plus Pembrolizumab compared to Pembrolizumab monotherapy in metastatic melanoma missed its primary endpoints.",
+        "year": 2023,
+        "tags": [
+          "Engineered IL-2",
+          "Regulatory Status",
+          "Clinical Trials"
+        ],
+        "section": "current_treatment_guidelines"
+      }
+    ]
+  }
+}

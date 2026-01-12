@@ -52,6 +52,8 @@ When assigning EvidenceItem.source, use "pubmed" for PubMed and "clinicaltrials"
 - Hard limit: no more than 8 total tool calls and no more than 1 reflect_step call. If you hit a limit, finalize immediately with the best evidence gathered.
 
 Store your output as a CollectorResponse object with section name "{section_name}" and evidence list containing at least 1 item in the shared state under the key "evidence_store_section_{section_name}".
+When you call set_model_response, you must include the section field: {{"section": "{section_name}", "evidence": [...]}}.
+Do not call set_model_response without the section field.
 
 **Important:** You must return at least 1 evidence item. Empty lists will cause validation errors and prevent your output from being saved."""
 
@@ -110,4 +112,6 @@ Only call tool names exactly as listed above. Never call a tool named "run".
 - This is a targeted task - stay focused on the specific query and gap
 - You must return at least 1 evidence item
 - All evidence must have working URLs and meaningful quotes
-- Store your output as a CollectorResponse object with section name "{section_name}" and evidence list in the shared state under the key "evidence_store_section_{section_name}"."""
+- Store your output as a CollectorResponse object with section name "{section_name}" and evidence list in the shared state under the key "evidence_store_section_{section_name}".
+- When you call set_model_response, you must include the section field: {{"section": "{section_name}", "evidence": [...]}}.
+- Do not call set_model_response without the section field."""

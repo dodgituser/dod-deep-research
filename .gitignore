@@ -138,3 +138,7 @@ crontab.txt
 com.streamerai.batch1.plist
 com.streamerai.batch2.plist
 run_batch.sh
+
+# Ignore all .adk folders
+.adk/
+/research/agent_logs/
