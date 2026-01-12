@@ -7,7 +7,6 @@ from typing import Callable
 from google.adk import Agent
 from google.adk.agents import ParallelAgent
 from google.adk.agents.callback_context import CallbackContext
-from google.adk.tools.google_search_tool import GoogleSearchTool
 from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 from google.genai import types
@@ -53,12 +52,11 @@ def _get_tools():
         pubmed_toolset,
         reflect_step,
         clinical_trials_toolset,
-        GoogleSearchTool(bypass_multi_tools_limit=True),
     ]
 
 
 def get_collector_tools():
-    """Return the collector toolset including PubMed, ClinicalTrials, and Google Search."""
+    """Return the collector toolset including PubMed and ClinicalTrials."""
     return _get_tools()
 
 

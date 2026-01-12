@@ -17,7 +17,6 @@ Read the research plan from shared state key "research_plan". The section "{sect
 - pubmed_fetch_contents(pmids, queryKey, webEnv, detailLevel, includeMeshTerms, includeGrantInfo): PubMed details/abstracts.
 - clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
-- google_search(query): Web search for additional context or sources when PubMed/ClinicalTrials are insufficient.
 - reflect_step(summary): Record a brief reflection between searches.
 Only call tool names exactly as listed above. Never call a tool named "run".
 
@@ -29,7 +28,7 @@ Only call tool names exactly as listed above. Never call a tool named "run".
 **Task:**
 Use the tools to retrieve relevant evidence for the research plan section "{section_name}".
 
-You MUST return at least 3 evidence items for this section. Empty evidence lists are NOT allowed. The section "{section_name}" is guaranteed to exist in the research plan, so you must find evidence for it.
+You MUST return at least 1 evidence item for this section. Empty evidence lists are NOT allowed. The section "{section_name}" is guaranteed to exist in the research plan, so you must find evidence for it.
 
 Focus on the section's required_evidence_types and key_questions when retrieving evidence.
 Only include evidence that you can cite with a real, working URL. Do not use placeholders
@@ -37,25 +36,24 @@ like "XXXX", "TBD", or fabricated identifiers.
 Use tool snippets (abstracts/summaries) as the basis for quotes; do not invent quotes.
 Use pubmed_search_articles to find PMIDs and pubmed_fetch_contents to retrieve abstracts/metadata when possible.
 Use clinicaltrials_search_studies to find NCT IDs and clinicaltrials_get_study to retrieve study details when possible.
-Use google_search to find additional sources or market data when needed, and only include evidence with working URLs.
-Allowed EvidenceItem.source values: pubmed, clinicaltrials, google_search.
+Allowed EvidenceItem.source values: pubmed, clinicaltrials.
 When assigning EvidenceItem.source, use "pubmed" for PubMed and "clinicaltrials" for ClinicalTrials.gov.
 
 **Iterative Research Loop (Required):**
 1) Perform 1-2 broad searches to scope the section.
 2) Perform 1-3 targeted follow-up searches based on gaps you notice.
-3) After the first search and after the most important follow-up search, invoke reflect_step with a one-paragraph summary of what you found and what is missing (max 2 total).
+3) After the first search, invoke reflect_step with a one-paragraph summary of what you found and what is missing (max 1 total).
 4) Do not call reflect_step in parallel with any other tool.
-5) Continue searching only until you have at least 3 strong sources with valid URLs and quotes.
+5) Continue searching only until you have at least 1 strong source with valid URLs and quotes.
 6) Prefer high-quality sources aligned to the section's required_evidence_types.
 
 **Stopping Rules (Required):**
-- The moment you have at least 3 qualifying evidence items, STOP searching and return your CollectorResponse.
-- Hard limit: no more than 8 total tool calls and no more than 2 reflect_step calls. If you hit a limit, finalize immediately with the best evidence gathered.
+- The moment you have at least 1 qualifying evidence item, STOP searching and return your CollectorResponse.
+- Hard limit: no more than 8 total tool calls and no more than 1 reflect_step call. If you hit a limit, finalize immediately with the best evidence gathered.
 
-Store your output as a CollectorResponse object with section name "{section_name}" and evidence list containing at least 3 items in the shared state under the key "evidence_store_section_{section_name}".
+Store your output as a CollectorResponse object with section name "{section_name}" and evidence list containing at least 1 item in the shared state under the key "evidence_store_section_{section_name}".
 
-**Important:** You must return at least 3 evidence items. Empty lists will cause validation errors and prevent your output from being saved."""
+**Important:** You must return at least 1 evidence item. Empty lists will cause validation errors and prevent your output from being saved."""
 
 
 TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collector agent executing a specific retrieval task.
@@ -79,7 +77,7 @@ You are executing a targeted retrieval task identified by the Research Head agen
 **Your Specific Task:**
 1. Use the preferred tool ({preferred_tool}) to search for: "{query}"
 2. Focus on finding evidence that addresses the gap identified for section "{section_name}"
-3. Collect at least 3 high-quality evidence items related to this specific query
+3. Collect at least 1 high-quality evidence item related to this specific query
 4. Ensure all evidence has valid URLs and meaningful quotes
 
 **Available Tools:**
@@ -87,7 +85,6 @@ You are executing a targeted retrieval task identified by the Research Head agen
 - pubmed_fetch_contents(pmids, queryKey, webEnv, detailLevel, includeMeshTerms, includeGrantInfo): PubMed details/abstracts.
 - clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
-- google_search(query): Web search for additional context or sources when PubMed/ClinicalTrials are insufficient.
 - reflect_step(summary): Record a brief reflection between searches.
 Only call tool names exactly as listed above. Never call a tool named "run".
 
@@ -102,15 +99,15 @@ Only call tool names exactly as listed above. Never call a tool named "run".
 - Collect evidence that directly addresses the gap
 - Evidence types must be one of: pubmed, clinicaltrials
 - Ensure evidence type matches {evidence_type} when possible; use available tools only
-- Return at least 3 evidence items with valid URLs and quotes
-- Use reflect_step to summarize findings after the first search and one follow-up (max 2 total)
+- Return at least 1 evidence item with a valid URL and quote
+- Use reflect_step to summarize findings after the first search (max 1 total)
 
 **Stopping Rules (Required):**
-- The moment you have at least 3 qualifying evidence items, STOP searching and return your CollectorResponse.
-- Hard limit: no more than 8 total tool calls and no more than 2 reflect_step calls. If you hit a limit, finalize immediately with the best evidence gathered.
+- The moment you have at least 1 qualifying evidence item, STOP searching and return your CollectorResponse.
+- Hard limit: no more than 8 total tool calls and no more than 1 reflect_step call. If you hit a limit, finalize immediately with the best evidence gathered.
 
 **Important:** 
 - This is a targeted task - stay focused on the specific query and gap
-- You must return at least 3 evidence items
+- You must return at least 1 evidence item
 - All evidence must have working URLs and meaningful quotes
 - Store your output as a CollectorResponse object with section name "{section_name}" and evidence list in the shared state under the key "evidence_store_section_{section_name}"."""
