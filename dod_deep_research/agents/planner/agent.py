@@ -33,8 +33,15 @@ def create_planner_agent(indication_prompt: str | None = None) -> Agent:
             f"{indication_prompt.strip()}\n"
             "--- END INDICATION PROMPT ---"
         )
-        instruction = f"""{instruction}\n\n{indication_block}\n\nReminder: Your task is to produce a ResearchPlan. 
-        This plan is a blueprint only: do not collect evidence, do not write the report, and do not assign tasks."""
+        instruction = f"""
+{instruction}
+
+{indication_block}
+
+Reminder: Your task is to produce a ResearchPlan from the state inputs. 
+Use the indication prompt above only as guidance for section descriptions and key questions. 
+Do not collect evidence, do not write the report, and do not assign tasks.
+"""
 
     return Agent(
         name="planner_agent",

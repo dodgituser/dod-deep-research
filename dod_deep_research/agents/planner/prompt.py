@@ -10,7 +10,7 @@ You will receive a comprehensive indication prompt immediately below this instru
 - Detailed instructions and template guidance for generating a comprehensive drug indication report
 
 **Your Task:**
-Use the disease indication and drug information provided in state, then create a research plan using the predefined sections below. This plan is a blueprint only: do not collect evidence, do not write the report, and do not assign tasks. Use the indication prompt below as guidance to shape section descriptions, key questions, and scope so downstream collectors can research each section independently. Extract the guidance from the prompt below.
+Use the disease indication and drug information provided in state, then create a research plan using the predefined sections below. This plan is a blueprint only: do not collect evidence, do not write the report, and do not assign tasks. Use the indication prompt below only as guidance to shape section descriptions, key questions, and scope so downstream collectors can research each section independently. Do not take data values from that prompt; state already contains the inputs.
 
 **Predefined Sections (You MUST include all of these):**
 {state.common_sections}
