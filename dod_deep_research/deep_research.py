@@ -15,17 +15,17 @@ from google.adk.events import Event, EventActions
 
 from dod_deep_research.core import build_runner, run_agent, get_output_file
 
-from dod_deep_research.agents.collector.agent import create_targeted_collector_agents
+from dod_deep_research.agents.collector.agent import (
+    create_collector_agents,
+    create_targeted_collector_agents,
+)
 from dod_deep_research.agents.planner.agent import create_planner_agent
 from dod_deep_research.agents.research_head.agent import research_head_agent
 from dod_deep_research.agents.planner.schemas import get_common_sections, ResearchPlan
 from dod_deep_research.agents.research_head.schemas import (
     ResearchHeadPlan,
 )
-from dod_deep_research.agents.sequence_agents import (
-    get_pre_aggregation_agent,
-    get_post_aggregation_agent,
-)
+from dod_deep_research.agents.sequence_agents import get_post_aggregation_agent
 from dod_deep_research.agents.evidence import (
     EvidenceStore,
     aggregate_evidence_after_collectors,
@@ -58,25 +58,18 @@ def _prepare_outputs_dir() -> Path:
 
 async def run_pre_aggregation(
     app_name: str,
-    runner_pre: runners.Runner,
+    runner_planner: runners.Runner,
+    runner_collectors: runners.Runner,
     user_id: str,
     session_id: str,
     indication: str,
     drug_name: str,
-    drug_form: str | None,
-    drug_generic_name: str | None,
     **kwargs,
 ) -> tuple[runners.Session, list[dict]]:
     """Run the pre-aggregation phase (planner + collectors)."""
-    user_prompt = "Run the research pipeline"
-    new_message = types.Content(
-        parts=[types.Part.from_text(text=user_prompt)],
-        role="user",
-    )
-
     logger.info("Starting pre-aggregation phase (planner + collectors)")
     common_sections = [section.value for section in get_common_sections()]
-    session = await runner_pre.session_service.create_session(
+    session = await runner_planner.session_service.create_session(
         app_name=app_name,
         user_id=user_id,
         session_id=session_id,
@@ -90,12 +83,17 @@ async def run_pre_aggregation(
     logger.info(f"Created session: {session.id}")
 
     json_responses = await run_agent(
-        runner_pre, session.user_id, session.id, new_message
+        runner_planner,
+        session.user_id,
+        session.id,
+        types.Content(
+            parts=[types.Part.from_text(text="Plan the research.")], role="user"
+        ),
     )
 
-    logger.info("Pre-aggregation phase completed")
+    logger.info("Planner phase completed")
 
-    updated_session = await runner_pre.session_service.get_session(
+    updated_session = await runner_planner.session_service.get_session(
         app_name=app_name,
         user_id=user_id,
         session_id=session.id,
@@ -117,18 +115,44 @@ async def run_pre_aggregation(
             }
             if section_state:
                 merge_event = Event(
-                    author="user",
+                    author="system",
                     actions=EventActions(state_delta=section_state),
                 )
-                await runner_pre.session_service.append_event(
+                await runner_planner.session_service.append_event(
                     updated_session, merge_event
                 )
-                updated_session = await runner_pre.session_service.get_session(
+                updated_session = await runner_planner.session_service.get_session(
                     app_name=app_name,
                     user_id=user_id,
                     session_id=session.id,
                 )
                 state = updated_session.state
+
+    collectors_session = await runner_collectors.session_service.create_session(
+        app_name=app_name,
+        user_id=session.user_id,
+        session_id=session.id,
+        state=state.copy(),
+    )
+    collector_responses = await run_agent(
+        runner_collectors,
+        collectors_session.user_id,
+        collectors_session.id,
+        types.Content(
+            parts=[types.Part.from_text(text="Collect evidence for sections.")],
+            role="user",
+        ),
+    )
+    json_responses.extend(collector_responses)
+
+    updated_session = await runner_collectors.session_service.get_session(
+        app_name=app_name,
+        user_id=collectors_session.user_id,
+        session_id=collectors_session.id,
+    )
+    state = updated_session.state
+
+    logger.info("Pre-aggregation phase completed")
 
     evidence_store = state.get("evidence_store")
     if evidence_store:
@@ -233,7 +257,7 @@ async def run_iterative_research_loop(
         )
 
         merge_event = Event(
-            author="user",
+            author="system",
             actions=EventActions(state_delta=updated_targeted_session.state),
         )
         await runner_loop.session_service.append_event(session_loop, merge_event)
@@ -402,8 +426,12 @@ async def run_pipeline_async(
     )
     logger.debug("Generated indication prompt for planner.")
     planner_agent = create_planner_agent(indication_prompt=indication_prompt)
-    runner_pre = build_runner(
-        agent=get_pre_aggregation_agent(planner=planner_agent),
+    runner_planner = build_runner(agent=planner_agent, app_name=app_name)
+    runner_collectors = build_runner(
+        agent=create_collector_agents(
+            [section.value for section in get_common_sections()],
+            after_agent_callback=aggregate_evidence_after_collectors,
+        ),
         app_name=app_name,
     )
     runner_loop = build_runner(agent=research_head_agent, app_name=app_name)
@@ -415,13 +443,12 @@ async def run_pipeline_async(
     # Phase 1: Pre-aggregation
     session, pre_responses = await run_pre_aggregation(
         app_name=app_name,
-        runner_pre=runner_pre,
+        runner_planner=runner_planner,
+        runner_collectors=runner_collectors,
         user_id=user_id,
         session_id=session_id,
         indication=indication,
         drug_name=drug_name,
-        drug_form=drug_form,
-        drug_generic_name=drug_generic_name,
         **kwargs,
     )
 
@@ -467,7 +494,7 @@ async def run_pipeline_async(
                 validation_report["errors"],
             )
             validation_event = Event(
-                author="user",
+                author="system",
                 actions=EventActions(
                     state_delta={"validation_report": validation_report}
                 ),
