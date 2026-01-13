@@ -1,26 +1,24 @@
 # DOD Deep Research
 
-A map-reduce agentic pipeline for comprehensive deep research on disease indications and drug therapy, built with Google ADK.
+A map-reduce agentic pipeline for deep research on disease indications and drug therapies, built with Google ADK.
 
 ## Architecture
 
-The pipeline uses a two-stage map-reduce architecture with a shared evidence store to avoid duplicated retrieval/validation work and produce coherent final narratives.
+The pipeline combines parallel evidence collection with a gap-driven refinement loop. Evidence is deduplicated into a shared store, then the writer produces a single markdown report.
 
 ### Pipeline Flow
 
 ```
-Meta-Planner → Parallel Evidence Collectors → Aggregator → Writer
-     ↓                    ↓                      ↓          ↓
-Research Plan    Section-specific        Merged Store   Final
-              Evidence (parallel)                      Output
+Planner → Parallel Collectors → Evidence Aggregation → Research Head Loop → Writer
 ```
 
 ### Key Components
 
-1. **Meta-Planner**: Creates a structured research outline with sections and required evidence types
-2. **Parallel Evidence Collectors**: Multiple retriever agents run in parallel, each collecting evidence for a specific section
-3. **Aggregator**: Merges parallel collector outputs into a single evidence store with deduplication
-4. **Writer**: Generates the final structured research output using aggregated evidence
+1. **Planner**: Builds a structured research plan and section-specific questions.
+2. **Parallel Evidence Collectors**: Fetch PubMed, ClinicalTrials.gov, and web sources per section.
+3. **Evidence Aggregation**: Deduplicates evidence and builds indexes for use by other agents.
+4. **Research Head**: Detects gaps and triggers targeted collectors to fill missing evidence.
+5. **Writer**: Produces the final markdown report and references from the evidence store.
 
 ## Data Models
 
@@ -50,17 +48,22 @@ Structured research plan containing:
 - `disease`: Disease/indication name
 - `research_areas`: List of research areas to investigate
 - `sections`: List of `ResearchSection` objects with:
-  - `name`: Section name (e.g., "epidemiology", "biomarkers")
+  - `name`: Section name (e.g., "disease_overview", "therapeutic_landscape")
   - `description`: Section description
   - `key_questions`: Section-specific research questions
-- `key_questions`: Overall research questions
-- `scope`: Research scope and boundaries
+  - `scope`: Research scope and boundaries
+
+### ResearchHeadPlan
+
+Gap analysis output containing:
+- `continue_research`: Whether another targeted collection pass is needed
+- `gaps`: List of missing questions per section
 
 ## Pipeline Stages
 
-### Stage 1: Meta-Planning
+### Stage 1: Planning
 
-The meta-planner (powerful model: `GEMINI_25_PRO`) analyzes the indication and creates a structured research outline with:
+The planner analyzes the indication and creates a structured research outline with:
 - Defined sections for parallel processing
 - Evidence type requirements per section
 - Section-specific research questions
@@ -78,11 +81,13 @@ Multiple collector agents run in parallel, each responsible for a specific secti
 **Output**: Multiple `CollectorResponse` objects stored in `evidence_store_section_{section_name}` state keys
 
 **Default Sections**:
-- `epidemiology`
-- `biomarkers`
-- `mechanisms`
-- `trials`
-- `competitive_landscape`
+- `rationale_executive_summary`
+- `disease_overview`
+- `therapeutic_landscape`
+- `current_treatment_guidelines`
+- `competitor_analysis`
+- `clinical_trials_analysis`
+- `market_opportunity_analysis`
 
 ### Stage 3: Aggregation (Reduce)
 
@@ -94,19 +99,28 @@ The aggregator merges all section-specific evidence stores:
 
 **Output**: Single `EvidenceStore` stored in `evidence_store` state key
 
-### Stage 4: Writing
+### Stage 4: Gap-Driven Loop + Writing
+
+The research head evaluates evidence coverage and triggers targeted collectors if gaps remain. Once gaps are resolved, the writer generates the report.
 
 The writer generates the final structured output:
 - Reads aggregated evidence store and research plan
 - Uses section organization for coherent narrative
 - Generates complete markdown report with:
-  - Indication profile
-  - Mechanistic rationales
-  - Competitive landscape
-  - IL-2 specific trials
-  - Evidence citations
+  - Sectioned narrative aligned to the research plan
+  - Evidence citations from the evidence store
+  - Final references list
 
 **Output**: `MarkdownReport` stored in `deep_research_output` state key
+
+## Outputs
+
+Each run writes to `outputs/<indication>-<timestamp>/`:
+- `report.md`: Final markdown report
+- `pipeline_events_<timestamp>.json`: Event log
+- `session_state.json`: Full shared state
+- `pipeline_evals.json`: Evaluation metrics
+- `agent_logs/`: Per-agent callbacks for debugging
 
 ## Benefits
 
@@ -124,7 +138,7 @@ shared_state = run_pipeline(
     indication="cancer",
     drug_name="IL-2",
     drug_form="low-dose IL-2",
-    drug_generic_name="Aldesleukin"
+    drug_generic_name="Aldesleukin",
 )
 
 # Access final output
@@ -134,12 +148,20 @@ output = shared_state.deep_research_output
 ## CLI Usage
 
 ```bash
-dod-deep-research \
+uv run dod-deep-research \
   --indication "cancer" \
   --drug-name "IL-2" \
   --drug-form "low-dose IL-2" \
   --drug-generic-name "Aldesleukin" \
-  --output results.json
+  --drug-alias Aldesleukin \
+  --drug-alias "COYA 301" \
+  --indication-alias "Alzheimer disease"
+
+### Docker Compose
+
+```
+make run INDICATION="cancer" DRUG_NAME="IL-2"
+```
 ```
 
 ## Project Structure
@@ -149,11 +171,10 @@ dod_deep_research/
 ├── agents/
 │   ├── planner/          # Meta-planner agent
 │   ├── collector/        # Parallel evidence collectors
-│   ├── aggregator/       # Evidence aggregator
 │   ├── writer/           # Final report writer
-│   ├── evidence_store.py # Evidence store utilities
-│   └── sequential_agent.py  # Pipeline definition
-├── schemas.py            # Data models
+│   ├── research_head/    # Gap analysis + targeted collectors
+│   └── evidence.py       # Evidence aggregation utilities
+├── prompts/              # Indication prompt templates
 └── deep_research.py      # Entry point
 ```
 
@@ -164,4 +185,9 @@ The pipeline uses the following state keys for inter-agent communication:
 - `research_plan`: `ResearchPlan` (Meta-planner output)
 - `evidence_store_section_{section_name}`: `CollectorResponse` (Collector outputs)
 - `evidence_store`: `EvidenceStore` (Aggregator output)
+- `research_head_plan`: `ResearchHeadPlan` (Research head output)
 - `deep_research_output`: `MarkdownReport` (Writer output)
+
+## Diagrams
+
+See `docs/architecture.md` for a Mermaid pipeline diagram.

@@ -17,7 +17,6 @@ from pathlib import Path
 from datetime import datetime
 from pydantic import BaseModel
 
-from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.models import GeminiModels
 
 
@@ -204,33 +203,28 @@ def prepare_outputs_dir() -> Path:
     return outputs_dir
 
 
-async def persist_research_sections(
+async def persist_state_delta(
     session_service: runners.InMemorySessionService,
     session: runners.Session,
-    research_plan: dict[str, Any],
+    state_delta: dict[str, Any],
 ) -> runners.Session:
     """
-    Persist per-section state derived from the research plan.
+    Persist a state update by appending a system event.
 
     Args:
         session_service: Session service used to append events.
         session: Session to update.
-        research_plan: Research plan dict from state.
+        state_delta: State keys to merge into session state.
 
     Returns:
-        runners.Session: Updated session with research_section_* keys.
+        runners.Session: Updated session with merged state.
     """
-    plan = ResearchPlan(**research_plan)
-    section_state = {
-        f"research_section_{section.name}": section.model_dump()
-        for section in plan.sections
-    }
-    if not section_state:
+    if not state_delta:
         return session
 
     merge_event = Event(
         author="system",
-        actions=EventActions(state_delta=section_state),
+        actions=EventActions(state_delta=state_delta),
     )
     await session_service.append_event(session, merge_event)
     return await session_service.get_session(

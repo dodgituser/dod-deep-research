@@ -1,35 +1,29 @@
-"""Prompt for the writer agent."""
+"""Prompt for writer agents."""
 
-WRITER_AGENT_PROMPT = """
-Generate a deep research paper in markdown following the MarkdownReport schema.
+LONG_WRITER_SECTION_PROMPT = """
+Generate a single section of a deep research paper in markdown following the SectionDraft schema.
 
-**Inputs (from shared state):**
-- research_plan: Research plan with sections and key questions
-- evidence_store: Evidence items organized by section (use IDs like "disease_overview_E1" in evidence_ids fields)
-- allowed_evidence_ids: Explicit list of evidence IDs you may cite
-- validation_report: Validation errors/warnings to address
-- drug_name: Drug name to use throughout (read from shared state)
-- indication: Disease/indication name to use throughout (read from shared state)
-- drug_form: Drug form if provided (read from shared state)
-- drug_generic_name: Drug generic name if provided (read from shared state)
+**State Context (inputs from shared state):**
+- current_report_draft (full report so far; use to avoid repetition): {current_report_draft}
+- current_section (section name, description, key questions, scope): {current_section}
+- current_section_name (section heading to use): {current_section_name}
+- evidence_store (full evidence across all sections): {evidence_store}
+- section_evidence (evidence for the current section): {section_evidence}
+- allowed_evidence_ids (optional, allowed citations): {allowed_evidence_ids?}
+- validation_report (optional, errors/warnings to address): {validation_report?}
+- drug_name (optional, use throughout): {drug_name?}
+- indication (optional, use throughout): {indication?}
+- drug_form (optional, if provided): {drug_form?}
+- drug_generic_name (optional, if provided): {drug_generic_name?}
 
-**State Context:**
-- research_plan: {research_plan}
-- evidence_store: {evidence_store}
-- allowed_evidence_ids (optional): {allowed_evidence_ids?}
-- validation_report (optional): {validation_report?}
-- drug_name (optional): {drug_name?}
-- indication (optional): {indication?}
-- drug_form (optional): {drug_form?}
-- drug_generic_name (optional): {drug_generic_name?}
-
-**Output:** Store MarkdownReport under key "deep_research_output"
+**Output:** Store SectionDraft under key "section_draft"
 
 **Key Points:**
-- Write a full markdown report with clear headings for each research_plan.sections[].name in order.
-- Anchor the report to the provided indication and drug_name (and drug_form/drug_generic_name if present); do not introduce other diseases.
-- Cite evidence inline using bracketed evidence IDs, e.g. [disease_overview_E1], and only use IDs listed in allowed_evidence_ids.
+- Write only the current section; do not include other sections or a References section.
+- Start the section with heading "## <current_section_name>" exactly.
+- Avoid repeating content already present in current_report_draft.
+- Cite evidence inline using bracketed evidence IDs, e.g. [disease_overview_E1].
+- Only use IDs listed in allowed_evidence_ids.
 - Do not cite or invent sources outside the provided evidence_store.
 - If a claim is not supported by evidence_store, explicitly say it is not supported by available evidence.
-- Add a final "References" section listing each cited evidence ID with title and URL from evidence_store.
-- Address validation_report errors/warnings."""
+- Address validation_report errors/warnings if provided."""

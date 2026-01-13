@@ -9,13 +9,12 @@ import typer
 from google.genai import types
 
 from google.adk import runners
-from google.adk.events import Event, EventActions
 
 from dod_deep_research.core import (
     build_runner,
     run_agent,
     get_output_file,
-    persist_research_sections,
+    persist_state_delta,
     prepare_outputs_dir,
     normalize_aliases,
 )
@@ -27,10 +26,12 @@ from dod_deep_research.agents.collector.agent import (
 from dod_deep_research.agents.planner.agent import create_planner_agent
 from dod_deep_research.agents.research_head.agent import research_head_agent
 from dod_deep_research.agents.planner.schemas import get_common_sections
+from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.agents.research_head.schemas import (
     ResearchHeadPlan,
 )
-from dod_deep_research.agents.sequence_agents import get_post_aggregation_agent
+from dod_deep_research.agents.writer.agent import section_writer_agent
+from dod_deep_research.agents.writer.long_writer import write_long_report
 from dod_deep_research.agents.evidence import (
     EvidenceStore,
     aggregate_evidence_after_collectors,
@@ -106,10 +107,15 @@ async def run_pre_aggregation(
     # If research_plan is present, extract sections and update state
     if research_plan:
         try:
-            updated_session = await persist_research_sections(
+            plan = ResearchPlan(**research_plan)
+            section_state = {
+                f"research_section_{section.name}": section.model_dump()
+                for section in plan.sections
+            }
+            updated_session = await persist_state_delta(
                 runner_planner.session_service,
                 updated_session,
-                research_plan,
+                section_state,
             )
         except Exception as exc:
             logger.warning("Failed to persist research section state: %s", exc)
@@ -183,7 +189,11 @@ async def run_iterative_research_loop(
             user_id=session_loop.user_id,
             session_id=session_loop.id,
         )
-        session_loop.state = updated_loop_session.state
+        session_loop = await persist_state_delta(
+            runner_loop.session_service,
+            session_loop,
+            updated_loop_session.state,
+        )
 
         research_head_plan_dict = session_loop.state.get("research_head_plan")
         if not research_head_plan_dict:
@@ -237,16 +247,10 @@ async def run_iterative_research_loop(
             session_id=targeted_session.id,
         )
 
-        merge_event = Event(
-            author="system",
-            actions=EventActions(state_delta=updated_targeted_session.state),
-        )
-        await runner_loop.session_service.append_event(session_loop, merge_event)
-
-        session_loop = await runner_loop.session_service.get_session(
-            app_name=app_name,
-            user_id=session_loop.user_id,
-            session_id=session_loop.id,
+        session_loop = await persist_state_delta(
+            runner_loop.session_service,
+            session_loop,
+            updated_targeted_session.state,
         )
     # If max iterations is reached, run final gap analysis else we have already run the final gap analysis
     if loop_iteration >= max_iterations:
@@ -272,46 +276,38 @@ async def run_iterative_research_loop(
 async def run_post_aggregation(
     app_name: str,
     runner_post: runners.Runner,
-    user_id: str,
     session_loop: runners.Session,
 ) -> tuple[runners.Session, list[dict]]:
     """Run the post-aggregation phase (writer)."""
     logger.info("Starting post-aggregation phase (writer)")
 
-    state_for_post = session_loop.state.copy()
-    evidence_store_dict = state_for_post.get("evidence_store")
-    if evidence_store_dict:
-        evidence_store = EvidenceStore(**evidence_store_dict)
-        state_for_post["allowed_evidence_ids"] = [
-            item.id for item in evidence_store.items
-        ]
-
     session_post = await runner_post.session_service.create_session(
         app_name=app_name,
         user_id=session_loop.user_id,
         session_id=session_loop.id,
-        state=state_for_post,
+        state=session_loop.state.copy(),
+    )
+    evidence_store_dict = session_post.state.get("evidence_store")
+    if evidence_store_dict:
+        evidence_store = EvidenceStore(**evidence_store_dict)
+        session_post = await persist_state_delta(
+            runner_post.session_service,
+            session_post,
+            {"allowed_evidence_ids": [item.id for item in evidence_store.items]},
+        )
+    report, json_responses = await write_long_report(
+        runner=runner_post,
+        app_name=app_name,
+        user_id=session_post.user_id,
+        base_state=session_post.state,
+    )
+    session_post = await persist_state_delta(
+        runner_post.session_service,
+        session_post,
+        {"deep_research_output": report.model_dump()},
     )
     logger.debug(f"Created session in post-aggregation runner: {session_post.id}")
-
-    continuation_message = types.Content(
-        parts=[types.Part.from_text(text="Continue with writing.")],
-        role="user",
-    )
-
-    json_responses = await run_agent(
-        runner_post, session_post.user_id, session_post.id, continuation_message
-    )
-
-    final_session = await runner_post.session_service.get_session(
-        app_name=app_name,
-        user_id=user_id,
-        session_id=session_post.id,
-    )
-    # Fallback to session_post if get_session returns None (though unlikely with InMemoryRunner)
-    final_session = final_session or session_post
-
-    return final_session, json_responses
+    return session_post, json_responses
 
 
 def _extract_citation_ids(report_markdown: str) -> set[str]:
@@ -418,7 +414,7 @@ async def run_pipeline_async(
         app_name=app_name,
     )
     runner_loop = build_runner(agent=research_head_agent, app_name=app_name)
-    runner_post = build_runner(agent=get_post_aggregation_agent(), app_name=app_name)
+    runner_post = build_runner(agent=section_writer_agent, app_name=app_name)
 
     events_file = get_output_file(indication)
     logger.info(f"Events will be saved to: {events_file}")
@@ -450,7 +446,6 @@ async def run_pipeline_async(
     final_session, post_responses = await run_post_aggregation(
         app_name=app_name,
         runner_post=runner_post,
-        user_id=user_id,
         session_loop=session_loop,
     )
 
@@ -480,35 +475,21 @@ async def run_pipeline_async(
                 "Writer output validation failed, requesting rewrite: %s",
                 validation_report["errors"],
             )
-            validation_event = Event(
-                author="system",
-                actions=EventActions(
-                    state_delta={"validation_report": validation_report}
-                ),
+            final_session = await persist_state_delta(
+                runner_post.session_service,
+                final_session,
+                {"validation_report": validation_report},
             )
-            await runner_post.session_service.append_event(
-                final_session, validation_event
-            )
-
-            rewrite_message = types.Content(
-                parts=[
-                    types.Part.from_text(
-                        text="Rewrite the report to address validation_report errors. "
-                        "Use only evidence_store citations."
-                    )
-                ],
-                role="user",
-            )
-            await run_agent(
-                runner_post,
-                final_session.user_id,
-                final_session.id,
-                rewrite_message,
-            )
-            final_session = await runner_post.session_service.get_session(
+            rewrite_report, _ = await write_long_report(
+                runner=runner_post,
                 app_name=app_name,
-                user_id=user_id,
-                session_id=final_session.id,
+                user_id=final_session.user_id,
+                base_state=final_session.state,
+            )
+            final_session = await persist_state_delta(
+                runner_post.session_service,
+                final_session,
+                {"deep_research_output": rewrite_report.model_dump()},
             )
             state = final_session.state
 

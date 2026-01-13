@@ -217,3 +217,24 @@ def aggregate_evidence_after_collectors(
         f"[Callback] Evidence aggregation complete: {len(evidence_store.items)} unique items for agent '{agent_name}'"
     )
     return None
+
+
+def build_section_evidence(
+    evidence_store: EvidenceStore,
+    section_name: str,
+) -> list[dict[str, Any]]:
+    """
+    Build a list of evidence items for a specific section.
+
+    Args:
+        evidence_store (EvidenceStore): Aggregated evidence store.
+        section_name (str): Section name to filter evidence.
+
+    Returns:
+        list[dict[str, Any]]: Serialized evidence items for the section.
+    """
+    return [
+        item.model_dump()
+        for item in evidence_store.items
+        if item.section == section_name
+    ]
