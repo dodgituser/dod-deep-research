@@ -17,6 +17,7 @@ research_head_agent = Agent(
     name="research_head_agent",
     instruction=RESEARCH_HEAD_AGENT_PROMPT,
     model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
+    include_contents="none",
     generate_content_config=types.GenerateContentConfig(
         http_options=get_http_options(),
     ),

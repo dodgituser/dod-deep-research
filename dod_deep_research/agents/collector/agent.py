@@ -107,6 +107,7 @@ def create_collector_agent(
         instruction=prompt,
         tools=_get_tools(),
         model=GeminiModels.GEMINI_FLASH_LATEST.value.replace("models/", ""),
+        include_contents="none",
         output_key=f"evidence_store_section_{section_name}",
         output_schema=CollectorResponse,
         generate_content_config=GenerateContentConfig(

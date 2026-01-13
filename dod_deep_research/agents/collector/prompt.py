@@ -23,6 +23,17 @@ Read the section details from shared state key "research_section_{section_name}"
 - reflect_step(summary): Record a brief reflection between searches.
 Only call tool names exactly as listed above. Never call a tool named "run".
 
+**ClinicalTrials.gov sortBy rules:**
+- Only use sortBy when needed.
+- Allowed format: FieldName:asc or FieldName:desc.
+- Allowed fields: EnrollmentCount, LastUpdateDate, StartDate.
+- Example: sortBy="LastUpdateDate:desc".
+
+**ClinicalTrials.gov fields rules:**
+- Do not pass fields unless you need a specific subset.
+- If you pass fields, avoid "PrimaryPurpose" (it is invalid in this API).
+- Known safe fields: NCTId, BriefTitle, OverallStatus, Condition, InterventionName, Phase, EnrollmentCount, StudyType.
+
 **Task:**
 Use the tools to retrieve relevant evidence for the research plan section "{section_name}".
 
@@ -46,8 +57,7 @@ When assigning EvidenceItem.source, use "pubmed" for PubMed, "clinicaltrials" fo
 6) Prefer high-quality sources aligned to the section's key_questions.
 
 **Stopping Rules (Required):**
-- The moment you have at least 1 qualifying evidence item, STOP searching and return your CollectorResponse.
-- Hard limit: no more than 8 total tool calls and no more than 1 reflect_step call. If you hit a limit, finalize immediately with the best evidence gathered.
+- Hard limit: no more than 8 total tool calls and no more than 1 reflect_step call.
 
 Store your output as a CollectorResponse object with section name "{section_name}" and evidence list containing at least 1 item in the shared state under the key "evidence_store_section_{section_name}".
 When you call set_model_response, you must include the section field: {{"section": "{section_name}", "evidence": [...]}}.

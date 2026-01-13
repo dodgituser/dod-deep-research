@@ -89,7 +89,17 @@ class CollectorResponse(BaseModel):
 
         section = data.get("section")
         evidence = data.get("evidence")
-        if not section or not isinstance(evidence, list):
+        if not isinstance(evidence, list):
+            return data
+
+        if not section:
+            for item in evidence:
+                if isinstance(item, dict) and item.get("section"):
+                    section = item["section"]
+                    data["section"] = section
+                    break
+
+        if not section:
             return data
 
         normalized = []

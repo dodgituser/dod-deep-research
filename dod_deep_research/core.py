@@ -59,8 +59,8 @@ def get_http_options() -> types.HttpOptions:
     """
     return types.HttpOptions(
         retry_options=types.HttpRetryOptions(
-            initial_delay=5,
-            attempts=3,
+            initial_delay=25,
+            attempts=5,
         ),
     )
 
