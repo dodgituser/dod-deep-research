@@ -6,6 +6,7 @@ COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are an evidence collector agent. Your r
 
 **Input State Key:** research_section_{section_name}
 **State Context:** {{research_section_{section_name}?}}
+**Aliases (optional):** indication_aliases={{indication_aliases?}}, drug_aliases={{drug_aliases?}}
 
 **Output State Key:** evidence_store_section_{section_name}
 
@@ -37,9 +38,10 @@ Only call tool names exactly as listed above. Never call a tool named "run".
 **Task:**
 Use the tools to retrieve relevant evidence for the research plan section "{section_name}".
 
-You MUST return at least 1 evidence item for this section. Empty evidence lists are NOT allowed. The section "{section_name}" is guaranteed to exist in the research plan, so you must find evidence for it.
+You MUST return at least 2 evidence items for this section. Empty evidence lists are NOT allowed. The section "{section_name}" is guaranteed to exist in the research plan, so you must find evidence for it.
 
 Focus on the section's key_questions when retrieving evidence.
+If indication_aliases or drug_aliases are provided, include them as alternative terms in search queries.
 Only include evidence that you can cite with a real, working URL. Do not use placeholders
 like "XXXX", "TBD", or fabricated identifiers.
 Use tool snippets (abstracts/summaries) as the basis for quotes; do not invent quotes.
@@ -53,17 +55,17 @@ When assigning EvidenceItem.source, use "pubmed" for PubMed, "clinicaltrials" fo
 2) Perform 1-3 targeted follow-up searches based on gaps you notice.
 3) After the first search, invoke reflect_step with a one-paragraph summary of what you found and what is missing (max 1 total).
 4) Do not call reflect_step in parallel with any other tool.
-5) Continue searching only until you have at least 1 strong source with valid URLs and quotes.
+5) Continue searching only until you have at least 2 strong sources with valid URLs and quotes.
 6) Prefer high-quality sources aligned to the section's key_questions.
 
 **Stopping Rules (Required):**
 - Hard limit: no more than 8 total tool calls and no more than 1 reflect_step call.
 
-Store your output as a CollectorResponse object with section name "{section_name}" and evidence list containing at least 1 item in the shared state under the key "evidence_store_section_{section_name}".
+Store your output as a CollectorResponse object with section name "{section_name}" and evidence list containing at least 2 items in the shared state under the key "evidence_store_section_{section_name}".
 When you call set_model_response, you must include the section field: {{"section": "{section_name}", "evidence": [...]}}.
 Do not call set_model_response without the section field.
 
-**Important:** You must return at least 1 evidence item. Empty lists will cause validation errors and prevent your output from being saved."""
+**Important:** You must return at least 2 evidence items. Empty lists will cause validation errors and prevent your output from being saved."""
 
 
 TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collector agent addressing a specific gap.
@@ -74,6 +76,7 @@ TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collec
 
 **Input State Key:** research_section_{section_name}
 **State Context:** {{research_section_{section_name}?}}
+**Aliases (optional):** indication_aliases={{indication_aliases?}}, drug_aliases={{drug_aliases?}}
 
 **Output State Key:** evidence_store_section_{section_name}
 
@@ -93,19 +96,20 @@ You are filling a specific gap identified by the Research Head. Focus on the mis
 **Instructions:**
 - Start with a focused query that directly addresses the missing questions.
 - Collect evidence that directly resolves the gap.
+ - If indication_aliases or drug_aliases are provided, include them as alternative terms in search queries.
 - Evidence types must be one of: pubmed, clinicaltrials, web.
 - If you use Exa web sources, set EvidenceItem.source to "web".
-- Return at least 1 evidence item with a valid URL and quote.
+- Return at least 2 evidence items with valid URLs and quotes.
 - Use reflect_step to summarize findings after the first search (max 1 total).
 
 **Stopping Rules (Required):**
-- The moment you have at least 1 qualifying evidence item, STOP searching and return your CollectorResponse.
+- The moment you have at least 2 qualifying evidence items, STOP searching and return your CollectorResponse.
 - Hard limit: no more than 8 total tool calls and no more than 1 reflect_step call. If you hit a limit, finalize immediately with the best evidence gathered.
 
 **Important:** 
 - This is a targeted task - stay focused on the missing questions and notes.
-- You must return at least 1 evidence item.
+- You must return at least 2 evidence items.
 - All evidence must have working URLs and meaningful quotes.
-- Store your output as a CollectorResponse object with section name "{section_name}" and evidence list in the shared state under the key "evidence_store_section_{section_name}".
+- Store your output as a CollectorResponse object with section name "{section_name}" and evidence list (at least 2 items) in the shared state under the key "evidence_store_section_{section_name}".
 - When you call set_model_response, you must include the section field: {{"section": "{section_name}", "evidence": [...]}}.
 - Do not call set_model_response without the section field."""

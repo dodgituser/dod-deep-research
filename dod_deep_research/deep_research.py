@@ -17,6 +17,7 @@ from dod_deep_research.core import (
     get_output_file,
     persist_research_sections,
     prepare_outputs_dir,
+    normalize_aliases,
 )
 
 from dod_deep_research.agents.collector.agent import (
@@ -56,6 +57,8 @@ async def run_pre_aggregation(
     drug_name: str,
     drug_form: str | None = None,
     drug_generic_name: str | None = None,
+    indication_aliases: list[str] | None = None,
+    drug_aliases: list[str] | None = None,
     **kwargs,
 ) -> tuple[runners.Session, list[dict]]:
     """Run the pre-aggregation phase (planner + collectors)."""
@@ -70,6 +73,8 @@ async def run_pre_aggregation(
             "drug_name": drug_name,
             "drug_form": drug_form,
             "drug_generic_name": drug_generic_name,
+            "indication_aliases": indication_aliases,
+            "drug_aliases": drug_aliases,
             "common_sections": common_sections,
             **kwargs,
         },
@@ -371,6 +376,8 @@ async def run_pipeline_async(
     drug_name: str,
     drug_form: str | None = None,
     drug_generic_name: str | None = None,
+    indication_aliases: list[str] | None = None,
+    drug_aliases: list[str] | None = None,
     **kwargs,
 ) -> SharedState:
     """
@@ -427,6 +434,8 @@ async def run_pipeline_async(
         drug_name=drug_name,
         drug_form=drug_form,
         drug_generic_name=drug_generic_name,
+        indication_aliases=indication_aliases,
+        drug_aliases=drug_aliases,
         **kwargs,
     )
 
@@ -543,6 +552,8 @@ def run_pipeline(
     drug_name: str,
     drug_form: str | None = None,
     drug_generic_name: str | None = None,
+    indication_aliases: list[str] | None = None,
+    drug_aliases: list[str] | None = None,
     **kwargs,
 ) -> SharedState:
     """
@@ -565,6 +576,8 @@ def run_pipeline(
             drug_name=drug_name,
             drug_form=drug_form,
             drug_generic_name=drug_generic_name,
+            indication_aliases=indication_aliases,
+            drug_aliases=drug_aliases,
             **kwargs,
         )
     )
@@ -588,6 +601,16 @@ def main(
         "--drug-generic-name",
         help="Generic name of the drug (e.g., 'Aldesleukin')",
     ),
+    indication_alias: list[str] = typer.Option(
+        [],
+        "--indication-alias",
+        help='Indication alias (repeatable), e.g. --indication-alias "Alzheimer disease"',
+    ),
+    drug_alias: list[str] = typer.Option(
+        [],
+        "--drug-alias",
+        help="Drug/asset alias (repeatable), e.g. --drug-alias Aldesleukin",
+    ),
 ):
     """
     Run the deep research pipeline for a given disease indication.
@@ -608,11 +631,15 @@ def main(
 
     try:
         prepare_outputs_dir()
+        normalized_indication_aliases = normalize_aliases(indication_alias)
+        normalized_drug_aliases = normalize_aliases(drug_alias)
         run_pipeline(
             indication=indication,
             drug_name=drug_name,
             drug_form=drug_form,
             drug_generic_name=drug_generic_name,
+            indication_aliases=normalized_indication_aliases,
+            drug_aliases=normalized_drug_aliases,
         )
 
         logger.info("Pipeline completed successfully")

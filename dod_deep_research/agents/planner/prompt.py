@@ -22,11 +22,14 @@ Use the disease indication and drug information provided in state, then create a
 - drug_name (optional): {drug_name?}
 - drug_form (optional): {drug_form?}
 - drug_generic_name (optional): {drug_generic_name?}
+- indication_aliases (optional): {indication_aliases?}
+- drug_aliases (optional): {drug_aliases?}
 - common_sections: {common_sections}
 
 **Important Guidelines:**
 - Use indication ({indication?}) as the ResearchPlan disease field.
 - Use drug_name ({drug_name?}) when writing drug-specific section details.
+ - If aliases are provided, you may reference them in key questions to help downstream collectors.
 - Map each predefined section to the corresponding section in the indication prompt template (e.g., "rationale_executive_summary" maps to "A. Rationale/Executive Summary", "disease_overview" maps to "B. Disease Overview: [disease]", "therapeutic_landscape" maps to "C. Therapeutic Landscape for [disease]", "current_treatment_guidelines" maps to "D. Current Treatment Guidelines for [disease]", "competitor_analysis" maps to "E. Competitor Analysis for [disease]", "clinical_trials_analysis" maps to "F. Clinical Trials Analysis for [drug_name] in [disease]", "market_opportunity_analysis" maps to "G. Market & Opportunity Analysis for [drug_name] in [disease]").
 - Ensure each section is scoped so an evidence collector can research it independently.
 - Keep descriptions and key questions concise and specific to the indication and drug.

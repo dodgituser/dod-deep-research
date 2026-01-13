@@ -24,6 +24,34 @@ from dod_deep_research.models import GeminiModels
 logger = logging.getLogger(__name__)
 
 
+def normalize_aliases(values: list[str] | None) -> list[str] | None:
+    """
+    Normalize and deduplicate alias strings.
+
+    Args:
+        values: Alias strings (often from repeatable CLI options).
+
+    Returns:
+        list[str] | None: Deduplicated list of aliases, or None if empty.
+    """
+    if not values:
+        return None
+
+    seen: set[str] = set()
+    aliases: list[str] = []
+    for value in values:
+        alias = value.strip()
+        if not alias:
+            continue
+        key = alias.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        aliases.append(alias)
+
+    return aliases or None
+
+
 def inline_json_schema(model: type[BaseModel]) -> dict[str, Any]:
     """
     Builds an ADK-compatible JSON schema by inlining $ref/$defs.
