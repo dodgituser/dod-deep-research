@@ -34,3 +34,12 @@ class MarkdownReport(BaseModel):
         ...,
         description="Full deep research report in markdown format.",
     )
+
+
+class SectionDraft(BaseModel):
+    """Section writer output schema for long-form reports."""
+
+    section_markdown: str = Field(
+        ...,
+        description="Markdown for a single report section.",
+    )

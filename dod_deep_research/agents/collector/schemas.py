@@ -134,20 +134,14 @@ class CollectorResponse(BaseModel):
             else:
                 evidence_items.append(EvidenceItem(**ev_dict))
 
-        # Validate non-empty evidence
-        if self.section in common_sections and not evidence_items:
-            logger.warning(
-                f"CollectorResponse has no evidence items for section '{self.section}'."
-            )
-            raise ValueError(
-                f"Evidence list cannot be empty for required section '{self.section}'"
-            )
-        if self.section in common_sections and len(evidence_items) < 1:
+        # Validate minimum evidence count
+        if self.section in common_sections and len(evidence_items) < 2:
             logger.warning(
                 f"CollectorResponse has {len(evidence_items)} evidence items for section '{self.section}'."
             )
             raise ValueError(
-                f"Evidence list must include at least 1 item for required section '{self.section}'"
+                "Evidence list must include at least 2 items for required section "
+                f"'{self.section}'"
             )
 
         return self
