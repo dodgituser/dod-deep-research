@@ -6,7 +6,8 @@ import shutil
 from typing import Any
 
 from google.adk import runners
-from google.adk.apps.app import App
+from google.adk.apps.app import App, EventsCompactionConfig
+from google.adk.agents.context_cache_config import ContextCacheConfig
 from google.adk.events import Event, EventActions
 from google.adk.plugins import ReflectAndRetryToolPlugin
 from google.genai import types
@@ -84,6 +85,15 @@ def build_runner(
         name=app_name,
         root_agent=agent,
         plugins=[retry_plugin],
+        events_compaction_config=EventsCompactionConfig(
+            compaction_interval=3,
+            overlap_size=1,
+        ),
+        context_cache_config=ContextCacheConfig(
+            min_tokens=2048,
+            ttl_seconds=600,
+            cache_intervals=5,
+        ),
     )
     return runners.InMemoryRunner(app=app_instance)
 
