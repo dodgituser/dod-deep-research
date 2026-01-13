@@ -53,6 +53,8 @@ async def run_pre_aggregation(
     session_id: str,
     indication: str,
     drug_name: str,
+    drug_form: str | None = None,
+    drug_generic_name: str | None = None,
     **kwargs,
 ) -> tuple[runners.Session, list[dict]]:
     """Run the pre-aggregation phase (planner + collectors)."""
@@ -65,6 +67,8 @@ async def run_pre_aggregation(
         state={
             "indication": indication,
             "drug_name": drug_name,
+            "drug_form": drug_form,
+            "drug_generic_name": drug_generic_name,
             "common_sections": common_sections,
             **kwargs,
         },
@@ -420,6 +424,8 @@ async def run_pipeline_async(
         session_id=session_id,
         indication=indication,
         drug_name=drug_name,
+        drug_form=drug_form,
+        drug_generic_name=drug_generic_name,
         **kwargs,
     )
 

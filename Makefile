@@ -76,26 +76,39 @@ log-print:
 	jq_filter="."; \
 	if [ -n "$(LOG_FIELD)" ]; then \
 		jq_filter=".payload.$(LOG_FIELD)"; \
-	elif [ "$(LOG)" = "after_model" ]; then \
-		jq_filter=".payload.response"; \
+	elif [ -n "$(LOG)" ]; then \
+		case "$(LOG)" in \
+			before_model) jq_filter=".payload.prompt" ;; \
+			after_model) jq_filter=".payload.response" ;; \
+			before_agent|after_agent) jq_filter="try (.payload.state | fromjson) catch .payload.state" ;; \
+			before_tool) jq_filter=".payload.tool_args" ;; \
+			after_tool) jq_filter=".payload.tool_response" ;; \
+		esac; \
 	fi; \
 	if [ "$(LOG_UNESCAPE)" != "0" ] && ( [ -n "$(LOG_FIELD)" ] || [ "$(LOG)" = "after_model" ] ); then \
 		jq_filter="$$jq_filter | gsub(\"\\\\\\\\n\"; \"\\n\")"; \
 	fi; \
 	jq_opts=""; \
-	if [ -n "$(LOG_RAW)" ] || [ "$(LOG)" = "after_model" ] || [ -n "$(LOG_FIELD)" ]; then \
+	jq_color=""; \
+	if [ "$(LOG_COLOR)" != "0" ]; then \
+		jq_color="-C"; \
+	fi; \
+	if [ -n "$(LOG_RAW)" ] || [ -n "$(LOG_FIELD)" ]; then \
 		jq_opts="-r"; \
 	fi; \
-	post_cmd="cat"; \
+	if [ -n "$$jq_color" ]; then \
+		jq_opts="$$jq_opts $$jq_color"; \
+	fi; \
+	unescape_cmd="cat"; \
 	if [ "$(LOG_UNESCAPE)" != "0" ]; then \
-		post_cmd="awk 'BEGIN{RS=\"\"; ORS=\"\"} {gsub(/\\\\\\\\n/,\"\\n\"); print}'"; \
+		unescape_cmd="python3 -c 'import sys;print(sys.stdin.read().replace(\"\\\\n\", \"\\n\"), end=\"\")'"; \
 	fi; \
 	if [ -n "$$log_file" ]; then \
 		if [ ! -f "$$log_file" ]; then \
 			echo "No log file found at $$log_file"; \
 			exit 1; \
 		fi; \
-		sed -E 's/^\\[[^]]+\\] //' "$$log_file" | jq $$jq_opts "$$jq_filter" | $$post_cmd; \
+		sed -E 's/^\\[[^]]+\\] //' "$$log_file" | jq $$jq_opts "$$jq_filter" | eval "$$unescape_cmd"; \
 		exit 0; \
 	fi; \
 	files=$$(ls "$$logs_dir"/* 2>/dev/null); \
@@ -103,4 +116,4 @@ log-print:
 		echo "No logs found for agent: $(AGENT) in $$logs_dir"; \
 		exit 1; \
 	fi; \
-	cat $$files | sed -E 's/^\\[[^]]+\\] //' | jq $$jq_opts "$$jq_filter" | $$post_cmd
+	cat $$files | sed -E 's/^\\[[^]]+\\] //' | jq $$jq_opts "$$jq_filter" | eval "$$unescape_cmd"

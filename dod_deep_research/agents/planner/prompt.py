@@ -20,6 +20,8 @@ Use the disease indication and drug information provided in state, then create a
 **State Context:**
 - indication (optional): {state.indication?}
 - drug_name (optional): {state.drug_name?}
+- drug_form (optional): {state.drug_form?}
+- drug_generic_name (optional): {state.drug_generic_name?}
 - common_sections: {state.common_sections}
 
 **Important Guidelines:**
