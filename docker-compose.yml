@@ -42,6 +42,8 @@ services:
     environment:
       - PUBMED_MCP_URL=http://pubmed-mcp:3017/mcp
       - CLINICAL_TRIALS_MCP_URL=http://clinical-trials-mcp:3018/mcp
+      - EXA_MCP_URL=${EXA_MCP_URL:-}
+      - EXA_API_KEY=${EXA_API_KEY:-}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
     depends_on:
       - pubmed-mcp

@@ -36,6 +36,7 @@ from dod_deep_research.agents.evidence import (
 )
 from dod_deep_research.agents.shared_state import SharedState
 from dod_deep_research.agents.writer.schemas import MarkdownReport
+from dod_deep_research.evals import pipeline_eval
 from dod_deep_research.prompts.indication_prompt import generate_indication_prompt
 from dod_deep_research.loggy import setup_logging
 import logging
@@ -512,6 +513,12 @@ async def run_pipeline_async(
     state_file = events_file.parent / "session_state.json"
     state_file.write_text(json.dumps(state, indent=2, default=str))
     logger.info(f"Session state saved to: {state_file}")
+
+    agent_logs_dir = events_file.parent.parent / "agent_logs"
+    evals = pipeline_eval(agent_logs_dir, evidence_store_dict)
+    evals_file = events_file.parent / "pipeline_evals.json"
+    evals_file.write_text(json.dumps(evals, indent=2, default=str))
+    logger.info(f"Pipeline evals saved to: {evals_file}")
 
     logger.debug("Constructing SharedState from session state")
     shared_state = SharedState(

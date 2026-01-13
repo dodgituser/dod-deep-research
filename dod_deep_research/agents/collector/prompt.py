@@ -5,7 +5,7 @@ COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are an evidence collector agent. Your r
 **Assigned Section:** {section_name}
 
 **Input State Key:** research_section_{section_name}
-**State Context:** {{state.research_section_{section_name}?}}
+**State Context:** {{research_section_{section_name}?}}
 
 **Output State Key:** evidence_store_section_{section_name}
 
@@ -17,6 +17,9 @@ Read the section details from shared state key "research_section_{section_name}"
 - pubmed_fetch_contents(pmids, queryKey, webEnv, detailLevel, includeMeshTerms, includeGrantInfo): PubMed details/abstracts.
 - clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
+- web_search_exa(query, num_results, include_domains, exclude_domains, start_published_date, end_published_date, category, livecrawl, livecrawlTimeout): Exa web search with content extraction.
+- crawling_exa(urls, livecrawl, livecrawlTimeout): Extract content from specific URLs (use when you already have the exact URL).
+- company_research_exa(query, include_domains, exclude_domains): Company research / crawling for pipeline, press releases, etc.
 - reflect_step(summary): Record a brief reflection between searches.
 Only call tool names exactly as listed above. Never call a tool named "run".
 
@@ -31,8 +34,8 @@ like "XXXX", "TBD", or fabricated identifiers.
 Use tool snippets (abstracts/summaries) as the basis for quotes; do not invent quotes.
 Use pubmed_search_articles to find PMIDs and pubmed_fetch_contents to retrieve abstracts/metadata when possible.
 Use clinicaltrials_search_studies to find NCT IDs and clinicaltrials_get_study to retrieve study details when possible.
-Allowed EvidenceItem.source values: pubmed, clinicaltrials.
-When assigning EvidenceItem.source, use "pubmed" for PubMed and "clinicaltrials" for ClinicalTrials.gov.
+Allowed EvidenceItem.source values: pubmed, clinicaltrials, web.
+When assigning EvidenceItem.source, use "pubmed" for PubMed, "clinicaltrials" for ClinicalTrials.gov, and "web" for Exa web sources.
 
 **Iterative Research Loop (Required):**
 1) Perform 1-2 broad searches to scope the section.
@@ -60,7 +63,7 @@ TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collec
 **Gap Notes:** {notes}
 
 **Input State Key:** research_section_{section_name}
-**State Context:** {{state.research_section_{section_name}?}}
+**State Context:** {{research_section_{section_name}?}}
 
 **Output State Key:** evidence_store_section_{section_name}
 
@@ -72,12 +75,16 @@ You are filling a specific gap identified by the Research Head. Focus on the mis
 - pubmed_fetch_contents(pmids, queryKey, webEnv, detailLevel, includeMeshTerms, includeGrantInfo): PubMed details/abstracts.
 - clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
+- web_search_exa(query, num_results, include_domains, exclude_domains, start_published_date, end_published_date, category, livecrawl, livecrawlTimeout): Exa web search with content extraction.
+- crawling_exa(urls, livecrawl, livecrawlTimeout): Extract content from specific URLs (use when you already have the exact URL).
+- company_research_exa(query, include_domains, exclude_domains): Company research / crawling for pipeline, press releases, etc.
 - reflect_step(summary): Record a brief reflection between searches.
 
 **Instructions:**
 - Start with a focused query that directly addresses the missing questions.
 - Collect evidence that directly resolves the gap.
-- Evidence types must be one of: pubmed, clinicaltrials.
+- Evidence types must be one of: pubmed, clinicaltrials, web.
+- If you use Exa web sources, set EvidenceItem.source to "web".
 - Return at least 1 evidence item with a valid URL and quote.
 - Use reflect_step to summarize findings after the first search (max 1 total).
 

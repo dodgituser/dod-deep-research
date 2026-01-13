@@ -3,9 +3,9 @@
 RESEARCH_HEAD_AGENT_PROMPT = """You are a Research Head agent. Your job is to detect evidence gaps in the research plan.
 
 **State Context:**
-- research_plan: {state.research_plan}
-- evidence_store: {state.evidence_store}
-- research_head_plan (optional): {state.research_head_plan?}
+- research_plan: {research_plan}
+- evidence_store: {evidence_store}
+- research_head_plan (optional): {research_head_plan?}
 
 **Output State Key:** research_head_plan
 

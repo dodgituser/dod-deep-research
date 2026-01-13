@@ -28,7 +28,7 @@ Research Plan    Section-specific        Merged Store   Final
 
 Individual evidence citation with:
 - `id`: Unique evidence identifier
-- `source`: Source type (pubmed, clinicaltrials, guideline, press_release, other)
+- `source`: Source type (pubmed, clinicaltrials, web)
 - `title`: Title of the evidence source
 - `url`: Source URL (optional)
 - `quote`: Relevant quote or excerpt (optional)
@@ -72,7 +72,7 @@ The meta-planner (powerful model: `GEMINI_25_PRO`) analyzes the indication and c
 Multiple collector agents run in parallel, each responsible for a specific section:
 - Each collector reads the research plan
 - Focuses on their assigned section's requirements
-- Retrieves evidence from PubMed, clinical trials, guidelines, etc.
+- Retrieves evidence from PubMed, ClinicalTrials.gov, and Exa web search (for guidelines/market/competitor sources)
 - Outputs section-specific evidence
 
 **Output**: Multiple `CollectorResponse` objects stored in `evidence_store_section_{section_name}` state keys

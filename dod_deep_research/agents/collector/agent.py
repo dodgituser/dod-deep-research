@@ -26,6 +26,8 @@ from google.genai.types import GenerateContentConfig
 
 logger = logging.getLogger(__name__)
 
+EXA_DEFAULT_TOOLS = "web_search_exa,crawling_exa,company_research_exa"
+
 
 def _get_tools():
     """Get standard tools for collector agents."""
@@ -49,10 +51,21 @@ def _get_tools():
         ),
         tool_filter=["clinicaltrials_search_studies", "clinicaltrials_get_study"],
     )
+    exa_toolset = McpToolset(
+        connection_params=StreamableHTTPConnectionParams(
+            url=os.getenv("EXA_MCP_URL"),
+            timeout=60,
+            sse_read_timeout=60,
+            headers={"Accept": "application/json, text/event-stream"},
+            terminate_on_close=False,
+        ),
+        tool_filter=["web_search_exa", "crawling_exa", "company_research_exa"],
+    )
     return [
         pubmed_toolset,
         reflect_step,
         clinical_trials_toolset,
+        exa_toolset,
     ]
 
 

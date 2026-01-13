@@ -14,14 +14,14 @@ Generate a deep research paper in markdown following the MarkdownReport schema.
 - drug_generic_name: Drug generic name if provided (read from shared state)
 
 **State Context:**
-- research_plan: {state.research_plan}
-- evidence_store: {state.evidence_store}
-- allowed_evidence_ids (optional): {state.allowed_evidence_ids?}
-- validation_report (optional): {state.validation_report?}
-- drug_name (optional): {state.drug_name?}
-- indication (optional): {state.indication?}
-- drug_form (optional): {state.drug_form?}
-- drug_generic_name (optional): {state.drug_generic_name?}
+- research_plan: {research_plan}
+- evidence_store: {evidence_store}
+- allowed_evidence_ids (optional): {allowed_evidence_ids?}
+- validation_report (optional): {validation_report?}
+- drug_name (optional): {drug_name?}
+- indication (optional): {indication?}
+- drug_form (optional): {drug_form?}
+- drug_generic_name (optional): {drug_generic_name?}
 
 **Output:** Store MarkdownReport under key "deep_research_output"
 

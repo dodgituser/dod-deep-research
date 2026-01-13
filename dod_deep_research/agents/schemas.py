@@ -10,6 +10,7 @@ class EvidenceSource(StrEnum):
 
     PUBMED = "pubmed"
     CLINICALTRIALS = "clinicaltrials"
+    WEB = "web"  # this uses Exa
 
 
 class PreferredTool(StrEnum):

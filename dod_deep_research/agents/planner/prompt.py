@@ -13,20 +13,20 @@ You will receive a comprehensive indication prompt immediately below this instru
 Use the disease indication and drug information provided in state, then create a research plan using the predefined sections below. This plan is a blueprint only: do not collect evidence, do not write the report, and do not assign tasks. Use the indication prompt below only as guidance to shape section descriptions, key questions, and scope so downstream collectors can research each section independently. Do not take data values from that prompt; state already contains the inputs.
 
 **Predefined Sections (You MUST include all of these):**
-{state.common_sections}
+{common_sections}
 
 **Output State Key:** research_plan
 
 **State Context:**
-- indication (optional): {state.indication?}
-- drug_name (optional): {state.drug_name?}
-- drug_form (optional): {state.drug_form?}
-- drug_generic_name (optional): {state.drug_generic_name?}
-- common_sections: {state.common_sections}
+- indication (optional): {indication?}
+- drug_name (optional): {drug_name?}
+- drug_form (optional): {drug_form?}
+- drug_generic_name (optional): {drug_generic_name?}
+- common_sections: {common_sections}
 
 **Important Guidelines:**
-- Use state.indication ({state.indication?}) as the ResearchPlan disease field.
-- Use state.drug_name ({state.drug_name?}) when writing drug-specific section details.
+- Use indication ({indication?}) as the ResearchPlan disease field.
+- Use drug_name ({drug_name?}) when writing drug-specific section details.
 - Map each predefined section to the corresponding section in the indication prompt template (e.g., "rationale_executive_summary" maps to "A. Rationale/Executive Summary", "disease_overview" maps to "B. Disease Overview: [disease]", "therapeutic_landscape" maps to "C. Therapeutic Landscape for [disease]", "current_treatment_guidelines" maps to "D. Current Treatment Guidelines for [disease]", "competitor_analysis" maps to "E. Competitor Analysis for [disease]", "clinical_trials_analysis" maps to "F. Clinical Trials Analysis for [drug_name] in [disease]", "market_opportunity_analysis" maps to "G. Market & Opportunity Analysis for [drug_name] in [disease]").
 - Ensure each section is scoped so an evidence collector can research it independently.
 - Keep descriptions and key questions concise and specific to the indication and drug.
