@@ -5,10 +5,7 @@ from typing import Any
 from google.adk.tools.base_tool import BaseTool
 from google.adk.tools.tool_context import ToolContext
 
-from dod_deep_research.agents.callbacks.utils import (
-    serialize_tool_context,
-    log_agent_event,
-)
+from dod_deep_research.agents.callbacks.utils import log_agent_event
 
 
 def after_tool_callback(
@@ -31,13 +28,11 @@ def after_tool_callback(
     """
     agent_name = tool_context.agent_name or "unknown"
     payload = {
-        "type": "after_tool",
         "payload": {
             "tool_name": tool.name,
-            "tool_context": serialize_tool_context(tool_context),
             "tool_args": args,
             "tool_response": tool_response,
-        },
+        }
     }
     log_agent_event(agent_name, "after_tool", payload)
     return None

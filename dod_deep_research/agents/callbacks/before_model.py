@@ -20,6 +20,6 @@ def before_model_callback(
         types.LlmResponse | None: Returning a response skips the model call.
     """
     agent_name = callback_context.agent_name or "unknown"
-    payload = {"type": "before_model", "payload": {"prompt": llm_request}}
+    payload = {"payload": {"prompt": llm_request}}
     log_agent_event(agent_name, "before_model", payload)
     return None

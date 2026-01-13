@@ -109,8 +109,6 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
         logger.warning("No section stores provided for aggregation")
         return EvidenceStore(items=[], by_section=[], by_source=[], hash_index=[])
 
-    logger.info(f"Aggregating evidence from {len(section_stores)} sections")
-
     all_items: list[EvidenceItem] = []
     seen_hashes: dict[str, str] = {}  # hash -> evidence_id
     item_hashes: dict[str, str] = {}  # evidence_id -> hash
@@ -202,8 +200,6 @@ def aggregate_evidence_after_collectors(
     agent_name = callback_context.agent_name
     state = callback_context.state.to_dict()
 
-    logger.info(f"[Callback] Aggregating evidence after agent: {agent_name}")
-
     # Extract all evidence_store_section_* keys
     section_stores = extract_section_stores(state)
 
@@ -212,13 +208,12 @@ def aggregate_evidence_after_collectors(
         return None
 
     # Aggregate evidence deterministically
-    logger.info(f"[Callback] Aggregating evidence from {len(section_stores)} sections")
     evidence_store = aggregate_evidence(section_stores)
 
     # Update state with aggregated evidence
     callback_context.state["evidence_store"] = evidence_store.model_dump()
 
     logger.info(
-        f"[Callback] Evidence aggregation complete: {len(evidence_store.items)} unique items"
+        f"[Callback] Evidence aggregation complete: {len(evidence_store.items)} unique items for agent '{agent_name}'"
     )
     return None

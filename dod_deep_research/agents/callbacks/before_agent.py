@@ -17,9 +17,6 @@ def before_agent_callback(callback_context: CallbackContext) -> types.Content | 
         types.Content | None: Returning content skips the agent's run; None proceeds.
     """
     agent_name = callback_context.agent_name or "unknown"
-    payload = {
-        "type": "before_agent",
-        "payload": {"state": format_state(callback_context.state)},
-    }
+    payload = {"payload": {"state": format_state(callback_context.state)}}
     log_agent_event(agent_name, "before_agent", payload)
     return None

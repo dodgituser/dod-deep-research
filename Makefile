@@ -73,12 +73,29 @@ log-print:
 		log_suffix=$$(echo "$(LOG)" | tr ' ' '_' ); \
 		log_file="$$logs_dir/$(AGENT)_callback_$${log_suffix}.jsonl"; \
 	fi; \
+	jq_filter="."; \
+	if [ -n "$(LOG_FIELD)" ]; then \
+		jq_filter=".payload.$(LOG_FIELD)"; \
+	elif [ "$(LOG)" = "after_model" ]; then \
+		jq_filter=".payload.response"; \
+	fi; \
+	if [ "$(LOG_UNESCAPE)" != "0" ] && ( [ -n "$(LOG_FIELD)" ] || [ "$(LOG)" = "after_model" ] ); then \
+		jq_filter="$$jq_filter | gsub(\"\\\\\\\\n\"; \"\\n\")"; \
+	fi; \
+	jq_opts=""; \
+	if [ -n "$(LOG_RAW)" ] || [ "$(LOG)" = "after_model" ] || [ -n "$(LOG_FIELD)" ]; then \
+		jq_opts="-r"; \
+	fi; \
+	post_cmd="cat"; \
+	if [ "$(LOG_UNESCAPE)" != "0" ]; then \
+		post_cmd="awk 'BEGIN{RS=\"\"; ORS=\"\"} {gsub(/\\\\\\\\n/,\"\\n\"); print}'"; \
+	fi; \
 	if [ -n "$$log_file" ]; then \
 		if [ ! -f "$$log_file" ]; then \
 			echo "No log file found at $$log_file"; \
 			exit 1; \
 		fi; \
-		sed -E 's/^\\[[^]]+\\] //' "$$log_file" | jq .; \
+		sed -E 's/^\\[[^]]+\\] //' "$$log_file" | jq $$jq_opts "$$jq_filter" | $$post_cmd; \
 		exit 0; \
 	fi; \
 	files=$$(ls "$$logs_dir"/* 2>/dev/null); \
@@ -86,4 +103,4 @@ log-print:
 		echo "No logs found for agent: $(AGENT) in $$logs_dir"; \
 		exit 1; \
 	fi; \
-	cat $$files | sed -E 's/^\\[[^]]+\\] //' | jq .
+	cat $$files | sed -E 's/^\\[[^]]+\\] //' | jq $$jq_opts "$$jq_filter" | $$post_cmd

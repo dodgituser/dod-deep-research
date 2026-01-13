@@ -5,10 +5,7 @@ from typing import Any
 from google.adk.tools.base_tool import BaseTool
 from google.adk.tools.tool_context import ToolContext
 
-from dod_deep_research.agents.callbacks.utils import (
-    serialize_tool_context,
-    log_agent_event,
-)
+from dod_deep_research.agents.callbacks.utils import log_agent_event
 
 
 def before_tool_callback(
@@ -26,13 +23,6 @@ def before_tool_callback(
         dict[str, Any] | None: Returning a dict skips tool execution.
     """
     agent_name = tool_context.agent_name or "unknown"
-    payload = {
-        "type": "before_tool",
-        "payload": {
-            "tool_name": tool.name,
-            "tool_context": serialize_tool_context(tool_context),
-            "tool_args": args,
-        },
-    }
+    payload = {"payload": {"tool_name": tool.name, "tool_args": args}}
     log_agent_event(agent_name, "before_tool", payload)
     return None

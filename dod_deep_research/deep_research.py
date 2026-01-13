@@ -69,7 +69,7 @@ async def run_pre_aggregation(
             **kwargs,
         },
     )
-    logger.info(f"Created session: {session.id}")
+    logger.debug(f"Created session in pre-aggregation: {session.id}")
 
     # run research planner
     json_responses = await run_agent(
@@ -131,13 +131,6 @@ async def run_pre_aggregation(
     state = updated_session.state
 
     logger.info("Pre-aggregation phase completed")
-
-    evidence_store = state.get("evidence_store")
-    if evidence_store:
-        logger.info("Evidence store already aggregated by collectors callback")
-    else:
-        logger.warning("Evidence store missing after collectors")
-
     return updated_session, json_responses
 
 
@@ -155,7 +148,7 @@ async def run_iterative_research_loop(
         session_id=session.id,
         state=session.state.copy(),
     )
-    logger.info(f"Created session in gap-driven loop runner: {session_loop.id}")
+    logger.debug(f"Created session in gap-driven loop runner: {session_loop.id}")
 
     json_responses = []
     loop_iteration = 0
@@ -289,7 +282,7 @@ async def run_post_aggregation(
         session_id=session_loop.id,
         state=state_for_post,
     )
-    logger.info(f"Created session in post-aggregation runner: {session_post.id}")
+    logger.debug(f"Created session in post-aggregation runner: {session_post.id}")
 
     continuation_message = types.Content(
         parts=[types.Part.from_text(text="Continue with writing.")],
@@ -602,17 +595,12 @@ def main(
 
     try:
         prepare_outputs_dir()
-        shared_state = run_pipeline(
+        run_pipeline(
             indication=indication,
             drug_name=drug_name,
             drug_form=drug_form,
             drug_generic_name=drug_generic_name,
         )
-
-        if shared_state.deep_research_output:
-            typer.echo(shared_state.deep_research_output.report_markdown)
-        else:
-            typer.echo(shared_state.model_dump_json(indent=2))
 
         logger.info("Pipeline completed successfully")
     except Exception as e:

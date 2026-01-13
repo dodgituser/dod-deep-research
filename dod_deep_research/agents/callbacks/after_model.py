@@ -22,9 +22,6 @@ def after_model_callback(
         LlmResponse | None: Returning a response replaces the model response.
     """
     agent_name = callback_context.agent_name or "unknown"
-    payload = {
-        "type": "after_model",
-        "payload": {"response": llm_response},
-    }
+    payload = {"payload": {"response": llm_response}}
     log_agent_event(agent_name, "after_model", payload)
     return None
