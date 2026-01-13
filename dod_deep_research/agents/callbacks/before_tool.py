@@ -5,7 +5,10 @@ from typing import Any
 from google.adk.tools.base_tool import BaseTool
 from google.adk.tools.tool_context import ToolContext
 
-from dod_deep_research.agents.callbacks.utils import format_payload, log_agent_event
+from dod_deep_research.agents.callbacks.utils import (
+    serialize_tool_context,
+    log_agent_event,
+)
 
 
 def before_tool_callback(
@@ -27,7 +30,7 @@ def before_tool_callback(
         "type": "before_tool",
         "payload": {
             "tool_name": tool.name,
-            "tool_context": format_payload(tool_context),
+            "tool_context": serialize_tool_context(tool_context),
             "tool_args": args,
         },
     }

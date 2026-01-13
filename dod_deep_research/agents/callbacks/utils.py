@@ -31,6 +31,31 @@ def format_state(state: Any) -> str:
     return text
 
 
+def serialize_tool_context(tool_context: Any) -> Any:
+    """
+    Serialize a tool context object for logging.
+
+    Args:
+        tool_context (Any): Tool context to serialize.
+
+    Returns:
+        Any: Serialized tool context data.
+    """
+    if isinstance(tool_context, dict):
+        return tool_context
+    try:
+        context_dict = {
+            key: value
+            for key, value in vars(tool_context).items()
+            if not key.startswith("_")
+        }
+        if context_dict:
+            return context_dict
+    except TypeError:
+        pass
+    return str(tool_context)
+
+
 def log_agent_event(agent_name: str, callback_type: str, payload: Any) -> None:
     """
     Append a message to the per-agent log file.
