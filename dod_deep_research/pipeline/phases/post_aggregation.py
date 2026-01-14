@@ -1,6 +1,5 @@
 """Post-aggregation (writing) phase helpers."""
 
-import uuid
 from typing import Any
 
 from google.adk import runners
@@ -62,8 +61,14 @@ async def write_long_report(
     json_responses: list[dict] = []
 
     for section in research_plan.sections:
-        section_state = base_state.copy()
-        section_state.update(
+        session = await runner.session_service.create_session(
+            app_name=app_name,
+            user_id=user_id,
+            state=base_state.copy(),
+        )
+        session = await persist_state_delta(
+            runner.session_service,
+            session,
             {
                 "current_report_draft": report_draft,
                 "current_section": section.model_dump(),
@@ -72,13 +77,7 @@ async def write_long_report(
                     evidence_store, str(section.name)
                 ),
                 "allowed_evidence_ids": allowed_evidence_ids,
-            }
-        )
-        session = await runner.session_service.create_session(
-            app_name=app_name,
-            user_id=user_id,
-            session_id=str(uuid.uuid4()),
-            state=section_state,
+            },
         )
         responses = await run_agent(
             runner,

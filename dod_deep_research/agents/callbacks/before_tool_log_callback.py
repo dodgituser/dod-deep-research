@@ -8,7 +8,7 @@ from google.adk.tools.tool_context import ToolContext
 from dod_deep_research.agents.callbacks.utils import log_agent_event
 
 
-def before_tool_callback(
+def before_tool_log_callback(
     tool: BaseTool, args: dict[str, Any], tool_context: ToolContext
 ) -> dict[str, Any] | None:
     """

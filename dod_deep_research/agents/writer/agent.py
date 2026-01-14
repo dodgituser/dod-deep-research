@@ -6,7 +6,6 @@ from google.genai import types
 from dod_deep_research.core import get_http_options
 from dod_deep_research.agents.writer.prompt import LONG_WRITER_SECTION_PROMPT
 from dod_deep_research.agents.writer.schemas import SectionDraft
-from dod_deep_research.agents.callbacks.utils import get_callbacks
 from dod_deep_research.models import GeminiModels
 
 section_writer_agent = Agent(
@@ -19,5 +18,4 @@ section_writer_agent = Agent(
     ),
     output_key="section_draft",
     output_schema=SectionDraft,
-    **get_callbacks(),
 )

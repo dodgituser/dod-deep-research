@@ -3,17 +3,17 @@
 import json
 import logging
 import shutil
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from google.adk import runners
 from google.adk.apps.app import App
-from google.adk.events import Event, EventActions
-from google.adk.plugins import ReflectAndRetryToolPlugin
 from google.genai import types
-
-from pathlib import Path
-from datetime import datetime
 from pydantic import BaseModel
+from google.adk.events import Event, EventActions
+
+from dod_deep_research.agents.plugins import get_default_plugins
 
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ def build_runner(
     app_name: str,
 ) -> runners.InMemoryRunner:
     """
-    Build an in-memory runner with the Reflect-and-Retry plugin.
+    Build an in-memory runner with default plugins.
 
     Args:
         agent: Root agent for the runner.
@@ -107,26 +107,11 @@ def build_runner(
     Returns:
         InMemoryRunner: Configured runner instance.
     """
-    # LLMSummarizer = LlmEventSummarizer(
-    #     llm=GeminiModels.GEMINI_PRO_2_0,
-    # )
-    # events_compaction_config = EventsCompactionConfig(
-    #     compaction_interval=8,
-    #     overlap_size=3,
-    #     summarizer=LLMSummarizer,
-    # )
-    # context_cache_config = ContextCacheConfig(
-    #     min_tokens=2048,
-    #     ttl_seconds=600,
-    #     cache_intervals=5,
-    # )
-    retry_plugin = ReflectAndRetryToolPlugin(max_retries=3)
+    plugins = get_default_plugins()
     app_instance = App(
         name=app_name,
         root_agent=agent,
-        plugins=[retry_plugin],
-        # events_compaction_config=events_compaction_config,
-        # context_cache_config=context_cache_config,
+        plugins=plugins,
     )
     return runners.InMemoryRunner(app=app_instance)
 

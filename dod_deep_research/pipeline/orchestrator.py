@@ -7,13 +7,13 @@ import uuid
 from typing import Any
 
 from dod_deep_research.agents.collector.agent import create_collector_agents
-from dod_deep_research.utils.evidence import (
-    EvidenceStore,
+from dod_deep_research.agents.callbacks.aggregate_evidence_after_collectors import (
     aggregate_evidence_after_collectors,
 )
+from dod_deep_research.utils.evidence import EvidenceStore
 from dod_deep_research.agents.research_head.agent import research_head_agent
 from dod_deep_research.agents.planner.agent import create_planner_agent
-from dod_deep_research.agents.planner.schemas import get_common_sections
+from dod_deep_research.agents.schemas import get_common_sections
 from dod_deep_research.agents.shared_state import SharedState
 from dod_deep_research.agents.writer.agent import section_writer_agent
 from dod_deep_research.utils.writer import build_validation_report

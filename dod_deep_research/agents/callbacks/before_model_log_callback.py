@@ -6,7 +6,7 @@ from google.adk.models import LlmRequest, LlmResponse
 from dod_deep_research.agents.callbacks.utils import log_agent_event
 
 
-def before_model_callback(
+def before_model_log_callback(
     callback_context: CallbackContext, llm_request: LlmRequest
 ) -> LlmResponse | None:
     """

@@ -8,7 +8,7 @@ from dod_deep_research.agents.callbacks.utils import (
 )
 
 
-def after_model_callback(
+def after_model_log_callback(
     callback_context: CallbackContext, llm_response: LlmResponse
 ) -> LlmResponse | None:
     """

@@ -70,27 +70,3 @@ def format_payload(payload: Any) -> str:
         return json.dumps(payload, default=str)
     except TypeError:
         return str(payload)
-
-
-def get_callbacks() -> dict[str, Any]:
-    """
-    Return callbacks keyed by their agent attribute name.
-
-    Returns:
-        dict[str, Any]: Callback name to function mapping.
-    """
-    from dod_deep_research.agents.callbacks.after_agent import after_agent_callback
-    from dod_deep_research.agents.callbacks.after_model import after_model_callback
-    from dod_deep_research.agents.callbacks.after_tool import after_tool_callback
-    from dod_deep_research.agents.callbacks.before_agent import before_agent_callback
-    from dod_deep_research.agents.callbacks.before_model import before_model_callback
-    from dod_deep_research.agents.callbacks.before_tool import before_tool_callback
-
-    return {
-        "before_agent_callback": before_agent_callback,
-        "after_agent_callback": after_agent_callback,
-        "before_model_callback": before_model_callback,
-        "after_model_callback": after_model_callback,
-        "before_tool_callback": before_tool_callback,
-        "after_tool_callback": after_tool_callback,
-    }

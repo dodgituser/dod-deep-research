@@ -6,7 +6,9 @@ from google.adk import runners
 from google.genai import types
 
 from dod_deep_research.agents.collector.agent import create_targeted_collector_agents
-from dod_deep_research.utils.evidence import aggregate_evidence_after_collectors
+from dod_deep_research.agents.callbacks.aggregate_evidence_after_collectors import (
+    aggregate_evidence_after_collectors,
+)
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 from dod_deep_research.core import build_runner, persist_state_delta, run_agent
 
@@ -85,7 +87,7 @@ async def run_iterative_research_loop(
             break
 
         logger.info(
-            "Running targeted collectors for %s gaps", len(research_head_plan.gaps)
+            f"Research Head Plan: {research_head_plan.model_dump_json(indent=2)}"
         )
         targeted_collectors = create_targeted_collector_agents(
             research_head_plan.gaps,
@@ -119,7 +121,9 @@ async def run_iterative_research_loop(
         )
 
     if loop_iteration >= max_iterations:
-        logger.info("Max iterations reached, running final gap analysis")
+        logger.info(
+            "Max iterations reached and research head was not satisfied, running final gap analysis"
+        )
         loop_message = types.Content(
             parts=[types.Part.from_text(text="Continue gap analysis.")],
             role="user",

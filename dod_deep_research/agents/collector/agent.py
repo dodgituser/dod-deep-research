@@ -16,7 +16,6 @@ from dod_deep_research.agents.collector.prompt import (
     TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE,
 )
 from dod_deep_research.agents.collector.schemas import CollectorResponse
-from dod_deep_research.agents.callbacks.utils import get_callbacks
 from dod_deep_research.agents.research_head.schemas import ResearchGap
 from dod_deep_research.core import get_http_options
 from dod_deep_research.models import GeminiModels
@@ -120,7 +119,6 @@ def create_collector_agent(
             temperature=0.1,
             http_options=get_http_options(),
         ),
-        **get_callbacks(),
     )
 
     if before_agent_callback:

@@ -7,9 +7,12 @@ from google.adk.agents import SequentialAgent
 from google.genai import types
 
 from dod_deep_research.agents.collector.agent import create_collector_agents
-from dod_deep_research.utils.evidence import aggregate_evidence_after_collectors
+from dod_deep_research.agents.callbacks.aggregate_evidence_after_collectors import (
+    aggregate_evidence_after_collectors,
+)
 from dod_deep_research.agents.planner.agent import planner_agent
-from dod_deep_research.agents.planner.schemas import ResearchPlan, get_common_sections
+from dod_deep_research.agents.planner.schemas import ResearchPlan
+from dod_deep_research.agents.schemas import get_common_sections
 from dod_deep_research.core import persist_state_delta, run_agent
 
 logger = logging.getLogger(__name__)

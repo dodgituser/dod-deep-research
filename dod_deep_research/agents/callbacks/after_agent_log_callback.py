@@ -6,7 +6,9 @@ from google.genai import types
 from dod_deep_research.agents.callbacks.utils import format_state, log_agent_event
 
 
-def after_agent_callback(callback_context: CallbackContext) -> types.Content | None:
+def after_agent_log_callback(
+    callback_context: CallbackContext,
+) -> types.Content | None:
     """
     Logs session state after an agent run.
 
