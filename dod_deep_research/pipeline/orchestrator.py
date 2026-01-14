@@ -16,7 +16,7 @@ from dod_deep_research.agents.planner.agent import create_planner_agent
 from dod_deep_research.agents.planner.schemas import get_common_sections
 from dod_deep_research.agents.shared_state import SharedState
 from dod_deep_research.agents.writer.agent import section_writer_agent
-from dod_deep_research.agents.writer import build_validation_report
+from dod_deep_research.utils.writer import build_validation_report
 from dod_deep_research.agents.writer.schemas import MarkdownReport
 from dod_deep_research.core import build_runner, get_output_file, persist_state_delta
 from dod_deep_research.evals import pipeline_eval

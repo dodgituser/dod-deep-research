@@ -78,8 +78,10 @@ async def run_iterative_research_loop(
             logger.warning("Failed to parse research_head_plan: %s", exc)
             continue
 
-        if not research_head_plan.gaps:
-            logger.info("ResearchHead determined gaps are resolved")
+        if not research_head_plan.gaps and not research_head_plan.continue_research:
+            logger.info(
+                "ResearchHead determined gaps are resolved and no further research needed"
+            )
             break
 
         logger.info(
