@@ -1,7 +1,7 @@
 """Unit tests for long-writer utilities."""
 
 from dod_deep_research.agents.collector.schemas import EvidenceItem
-from dod_deep_research.agents.evidence import EvidenceStore
+from dod_deep_research.utils.evidence import EvidenceStore
 from dod_deep_research.agents.writer.long_writer import (
     build_references_section,
     extract_citation_ids,

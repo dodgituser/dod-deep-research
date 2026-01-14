@@ -20,7 +20,7 @@ from dod_deep_research.agents.callbacks.utils import get_callbacks
 from dod_deep_research.agents.research_head.schemas import ResearchGap
 from dod_deep_research.core import get_http_options
 from dod_deep_research.models import GeminiModels
-from dod_deep_research.tools import reflect_step
+from dod_deep_research.agents.tooling import reflect_step
 import logging
 from google.genai.types import GenerateContentConfig
 

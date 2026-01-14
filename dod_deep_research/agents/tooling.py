@@ -1,7 +1,5 @@
 """Tooling for deep research agents."""
 
-from google.adk.tools.tool_context import ToolContext
-
 
 def reflect_step(reflection: str) -> str:
     """
@@ -29,21 +27,3 @@ def reflect_step(reflection: str) -> str:
         Confirmation that reflection was recorded for decision-making.
     """
     return f"Reflection recorded: {reflection}"
-
-
-def exit_loop(tool_context: ToolContext) -> dict:
-    """
-    Exit the gap-driven research loop when gaps are resolved.
-
-    Call this function ONLY when the Research Head determines that evidence gaps
-    have been adequately addressed and no further targeted collection is needed.
-    This signals the iterative gap-driven loop should terminate.
-
-    Args:
-        tool_context: Tool context provided by ADK.
-
-    Returns:
-        Empty dict as tools should return JSON-serializable output.
-    """
-    tool_context.actions.escalate = True
-    return {}

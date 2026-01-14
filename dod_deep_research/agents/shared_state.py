@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field
 
-from dod_deep_research.agents.evidence import EvidenceStore
+from dod_deep_research.utils.evidence import EvidenceStore
 from dod_deep_research.agents.writer.schemas import MarkdownReport
 from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan

@@ -1,16 +1,9 @@
-"""Long-form report assembly using section-by-section writing."""
+"""Long-writer utilities (markdown + validation)"""
 
 import re
-import uuid
-from typing import Any
 
-from google.adk import runners
-from google.genai import types
-
-from dod_deep_research.agents.planner.schemas import ResearchPlan, ResearchSection
-from dod_deep_research.agents.writer.schemas import MarkdownReport, SectionDraft
-from dod_deep_research.agents.evidence import EvidenceStore, build_section_evidence
-from dod_deep_research.core import run_agent
+from dod_deep_research.agents.planner.schemas import ResearchSection
+from dod_deep_research.utils.evidence import EvidenceStore
 
 
 def build_report_title(
@@ -152,88 +145,43 @@ def build_references_section(
     return "## References\n\n"
 
 
-async def write_long_report(
-    runner: runners.InMemoryRunner,
-    app_name: str,
-    user_id: str,
-    base_state: dict[str, Any],
-) -> tuple[MarkdownReport, list[dict]]:
+def build_validation_report(
+    report_markdown: str,
+    evidence_store: EvidenceStore,
+    indication: str,
+    drug_name: str,
+) -> dict[str, list[str]]:
     """
-    Write a report by iteratively generating each section.
+    Build validation errors and warnings for the markdown report.
 
     Args:
-        runner (runners.InMemoryRunner): Runner for the section writer agent.
-        app_name (str): Application name for session creation.
-        user_id (str): User ID for the session.
-        base_state (dict[str, Any]): Shared state containing plan and evidence.
+        report_markdown (str): Markdown report text.
+        evidence_store (EvidenceStore): Aggregated evidence store.
+        indication (str): Disease/indication name.
+        drug_name (str): Drug name.
 
     Returns:
-        tuple[MarkdownReport, list[dict]]: Final report and JSON responses.
+        dict[str, list[str]]: Validation report with errors and warnings.
     """
-    research_plan_dict = base_state.get("research_plan")
-    evidence_store_dict = base_state.get("evidence_store")
-    if not research_plan_dict:
-        raise ValueError("Missing research_plan in state for long writer.")
-    if not evidence_store_dict:
-        raise ValueError("Missing evidence_store in state for long writer.")
+    errors: list[str] = []
+    warnings: list[str] = []
 
-    research_plan = ResearchPlan(**research_plan_dict)
-    evidence_store = EvidenceStore(**evidence_store_dict)
-    allowed_evidence_ids = base_state.get("allowed_evidence_ids")
-    if not allowed_evidence_ids:
-        allowed_evidence_ids = [item.id for item in evidence_store.items]
+    report_lower = (report_markdown or "").lower()
+    if indication and indication.lower() not in report_lower:
+        errors.append(f"Report must mention indication '{indication}'.")
+    if drug_name and drug_name.lower() not in report_lower:
+        errors.append(f"Report must mention drug name '{drug_name}'.")
 
-    report_title = build_report_title(
-        indication=base_state.get("indication", ""),
-        drug_name=base_state.get("drug_name", ""),
-        drug_form=base_state.get("drug_form"),
-        drug_generic_name=base_state.get("drug_generic_name"),
-    )
-    report_draft = f"# {report_title}\n\n"
-    report_draft += format_table_of_contents(research_plan.sections)
-
-    json_responses: list[dict] = []
-
-    for section in research_plan.sections:
-        section_state = base_state.copy()
-        section_state.update(
-            {
-                "current_report_draft": report_draft,
-                "current_section": section.model_dump(),
-                "current_section_name": str(section.name),
-                "section_evidence": build_section_evidence(
-                    evidence_store, str(section.name)
-                ),
-                "allowed_evidence_ids": allowed_evidence_ids,
-            }
+    evidence_ids = {item.id for item in evidence_store.items}
+    cited_ids = set(extract_citation_ids(report_markdown))
+    unknown_citations = sorted(cited_ids - evidence_ids)
+    if unknown_citations:
+        errors.append(
+            "Report cites evidence IDs not present in evidence_store: "
+            + ", ".join(unknown_citations)
         )
-        session = await runner.session_service.create_session(
-            app_name=app_name,
-            user_id=user_id,
-            session_id=str(uuid.uuid4()),
-            state=section_state,
-        )
-        responses = await run_agent(
-            runner,
-            session.user_id,
-            session.id,
-            types.Content(
-                parts=[types.Part.from_text(text="Write the section.")],
-                role="user",
-            ),
-        )
-        json_responses.extend(responses)
-        if not responses:
-            raise ValueError(f"No response for section '{section.name}'.")
-        section_draft = SectionDraft(**responses[-1])
-        section_markdown = normalize_section_markdown(
-            section_draft.section_markdown,
-            str(section.name),
-        )
-        report_draft += f"{section_markdown}\n"
 
-    cited_ids = extract_citation_ids(report_draft)
-    references_section = build_references_section(cited_ids, evidence_store)
-    report_markdown = f"{report_draft}\n{references_section}".strip() + "\n"
+    if not cited_ids:
+        warnings.append("Report includes no evidence citations.")
 
-    return MarkdownReport(report_markdown=report_markdown), json_responses
+    return {"errors": errors, "warnings": warnings}

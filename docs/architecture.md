@@ -1,5 +1,3 @@
-# Architecture Diagram
-
 ```mermaid
 flowchart LR
     A[Planner] --> B[Parallel Collectors]

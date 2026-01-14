@@ -6,18 +6,14 @@ import shutil
 from typing import Any
 
 from google.adk import runners
-from google.adk.apps.app import App, EventsCompactionConfig
-from google.adk.agents.context_cache_config import ContextCacheConfig
+from google.adk.apps.app import App
 from google.adk.events import Event, EventActions
 from google.adk.plugins import ReflectAndRetryToolPlugin
 from google.genai import types
-from google.adk.apps.llm_event_summarizer import LlmEventSummarizer
 
 from pathlib import Path
 from datetime import datetime
 from pydantic import BaseModel
-
-from dod_deep_research.models import GeminiModels
 
 
 logger = logging.getLogger(__name__)
@@ -111,26 +107,26 @@ def build_runner(
     Returns:
         InMemoryRunner: Configured runner instance.
     """
-    LLMSummarizer = LlmEventSummarizer(
-        llm=GeminiModels.GEMINI_PRO_2_0,
-    )
-    events_compaction_config = EventsCompactionConfig(
-        compaction_interval=8,
-        overlap_size=3,
-        summarizer=LLMSummarizer,
-    )
-    context_cache_config = ContextCacheConfig(
-        min_tokens=2048,
-        ttl_seconds=600,
-        cache_intervals=5,
-    )
+    # LLMSummarizer = LlmEventSummarizer(
+    #     llm=GeminiModels.GEMINI_PRO_2_0,
+    # )
+    # events_compaction_config = EventsCompactionConfig(
+    #     compaction_interval=8,
+    #     overlap_size=3,
+    #     summarizer=LLMSummarizer,
+    # )
+    # context_cache_config = ContextCacheConfig(
+    #     min_tokens=2048,
+    #     ttl_seconds=600,
+    #     cache_intervals=5,
+    # )
     retry_plugin = ReflectAndRetryToolPlugin(max_retries=3)
     app_instance = App(
         name=app_name,
         root_agent=agent,
         plugins=[retry_plugin],
-        events_compaction_config=events_compaction_config,
-        context_cache_config=context_cache_config,
+        # events_compaction_config=events_compaction_config,
+        # context_cache_config=context_cache_config,
     )
     return runners.InMemoryRunner(app=app_instance)
 

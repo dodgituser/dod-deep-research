@@ -162,6 +162,18 @@ uv run dod-deep-research \
 ```
 make run INDICATION="cancer" DRUG_NAME="IL-2"
 ```
+
+### Alias Flags
+
+```
+uv run dod-deep-research \
+  --indication "Alzheimer's disease" \
+  --drug-name "IL-2" \
+  --drug-alias Aldesleukin \
+  --drug-alias "COYA 301" \
+  --indication-alias "Alzheimer disease" \
+  --indication-alias "Alzheimer dementia"
+```
 ```
 
 ## Project Structure
