@@ -1,8 +1,26 @@
 """Shared schema enums for agent outputs."""
 
 from enum import StrEnum
-from pydantic import BaseModel, Field
 from typing import Any
+
+from pydantic import BaseModel, Field
+
+
+class CommonSection(StrEnum):
+    """Common research sections for evidence collection."""
+
+    RATIONALE_EXECUTIVE_SUMMARY = "rationale_executive_summary"
+    DISEASE_OVERVIEW = "disease_overview"
+    THERAPEUTIC_LANDSCAPE = "therapeutic_landscape"
+    CURRENT_TREATMENT_GUIDELINES = "current_treatment_guidelines"
+    COMPETITOR_ANALYSIS = "competitor_analysis"
+    CLINICAL_TRIALS_ANALYSIS = "clinical_trials_analysis"
+    MARKET_OPPORTUNITY_ANALYSIS = "market_opportunity_analysis"
+
+
+def get_common_sections() -> list[CommonSection]:
+    """Get all common sections."""
+    return list(CommonSection)
 
 
 class EvidenceSource(StrEnum):

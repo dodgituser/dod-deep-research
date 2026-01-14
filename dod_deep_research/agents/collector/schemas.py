@@ -7,8 +7,7 @@ from typing import Any, Annotated, Self
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic.json_schema import WithJsonSchema
 
-from dod_deep_research.agents.planner.schemas import get_common_sections
-from dod_deep_research.agents.schemas import EvidenceSource
+from dod_deep_research.agents.schemas import EvidenceSource, get_common_sections
 from dod_deep_research.core import inline_json_schema
 
 

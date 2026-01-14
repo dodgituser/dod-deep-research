@@ -7,9 +7,40 @@ from typing import Any, Self
 from pydantic import BaseModel, Field, model_validator
 
 from dod_deep_research.agents.collector.schemas import CollectorResponse, EvidenceItem
-from dod_deep_research.agents.schemas import KeyValuePair
+from dod_deep_research.agents.schemas import CommonSection, KeyValuePair
 from google.adk.agents.callback_context import CallbackContext
 from google.genai import types
+
+# Section-specific minimum evidence targets. Tuned to push deeper
+SECTION_MIN_EVIDENCE: dict[CommonSection, int] = {
+    CommonSection.RATIONALE_EXECUTIVE_SUMMARY: 4,
+    CommonSection.DISEASE_OVERVIEW: 4,
+    CommonSection.THERAPEUTIC_LANDSCAPE: 5,
+    CommonSection.CURRENT_TREATMENT_GUIDELINES: 3,
+    CommonSection.COMPETITOR_ANALYSIS: 5,
+    CommonSection.CLINICAL_TRIALS_ANALYSIS: 6,
+    CommonSection.MARKET_OPPORTUNITY_ANALYSIS: 5,
+}
+
+DEFAULT_MIN_EVIDENCE = 2
+
+
+def get_min_evidence(section_name: str) -> int:
+    """
+    Look up the minimum evidence target for a section.
+
+    Args:
+        section_name (str): Section name (CommonSection value as string).
+
+    Returns:
+        int: Minimum evidence items required.
+    """
+    try:
+        section_enum = CommonSection(section_name)
+    except ValueError:
+        return DEFAULT_MIN_EVIDENCE
+    return SECTION_MIN_EVIDENCE.get(section_enum, DEFAULT_MIN_EVIDENCE)
+
 
 logger = logging.getLogger(__name__)
 

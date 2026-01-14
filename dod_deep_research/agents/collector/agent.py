@@ -21,6 +21,7 @@ from dod_deep_research.agents.research_head.schemas import ResearchGap
 from dod_deep_research.core import get_http_options
 from dod_deep_research.models import GeminiModels
 from dod_deep_research.agents.tooling import reflect_step
+from dod_deep_research.utils.evidence import get_min_evidence
 import logging
 from google.genai.types import GenerateContentConfig
 
@@ -91,15 +92,20 @@ def create_collector_agent(
     Returns:
         Agent: Configured collector agent for the section.
     """
+    min_evidence = get_min_evidence(section_name)
+
     if gap_override:
         prompt = TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
             section_name=section_name,
             missing_questions=", ".join(gap_override.missing_questions) or "None",
             notes=gap_override.notes or "None",
+            min_evidence=min_evidence,
         )
         agent_name = f"targeted_collector_{section_name}"
     else:
-        prompt = COLLECTOR_AGENT_PROMPT_TEMPLATE.format(section_name=section_name)
+        prompt = COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
+            section_name=section_name, min_evidence=min_evidence
+        )
         agent_name = f"collector_{section_name}"
 
     agent = Agent(

@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field, model_validator
 
-from dod_deep_research.agents.planner.schemas import CommonSection
+from dod_deep_research.agents.schemas import CommonSection
 from typing import Self
 
 

@@ -9,7 +9,7 @@ from google.adk.models.llm_response import LlmResponse
 
 from dod_deep_research.agents.collector.agent import create_collector_agent
 from dod_deep_research.agents.collector.schemas import CollectorResponse
-from dod_deep_research.agents.planner.schemas import CommonSection
+from dod_deep_research.agents.schemas import CommonSection
 from dod_deep_research.deep_research import build_runner, run_agent
 
 
