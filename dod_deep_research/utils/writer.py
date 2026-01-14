@@ -42,9 +42,25 @@ def format_table_of_contents(sections: list[ResearchSection]) -> str:
     if not sections:
         return "## Table of Contents\n\n"
     items = "\n".join(
-        f"{index + 1}. {str(section.name)}" for index, section in enumerate(sections)
+        f"{index + 1}. {format_section_title(str(section.name))}"
+        for index, section in enumerate(sections)
     )
     return f"## Table of Contents\n\n{items}\n\n"
+
+
+def format_section_title(section_title: str) -> str:
+    """
+    Format a section name for display in report headers.
+
+    Args:
+        section_title (str): Raw section title or name.
+
+    Returns:
+        str: Human-readable section title.
+    """
+    if not section_title:
+        return ""
+    return section_title.replace("_", " ").strip().title()
 
 
 def normalize_section_markdown(section_markdown: str, section_title: str) -> str:
@@ -58,6 +74,7 @@ def normalize_section_markdown(section_markdown: str, section_title: str) -> str
     Returns:
         str: Normalized section markdown.
     """
+    section_title = format_section_title(section_title)
     if not section_markdown.strip():
         return f"## {section_title}\n"
 
