@@ -97,7 +97,7 @@ async def run_pipeline_async(
     events_file = get_output_events_path(indication)
     logger.info("Events will be saved to: %s", events_file)
 
-    session, pre_responses = await run_plan_draft(
+    session = await run_plan_draft(
         app_name=app_name,
         plan_runner=plan_runner,
         draft_runner=draft_runner,
@@ -118,9 +118,9 @@ async def run_pipeline_async(
     research_head_runner = build_runner(
         agent=research_head_agent, app_name=app_name
     )  # target collectors are created dynamically based on plan
-    session_loop, loop_responses = await run_iterative_research(
+    research_head_session = await run_iterative_research(
         app_name=app_name,
-        runner_research_head=research_head_runner,
+        research_head_runner=research_head_runner,
         session=session,
     )  # pass the session downstream to the next phase
 
@@ -131,14 +131,13 @@ async def run_pipeline_async(
         agent=section_writer_agent,
         app_name=app_name,
     )
-    final_session, post_responses = await run_section_writer(
+    final_session = await run_section_writer(
         app_name=app_name,
         section_writer_runner=section_writer_runner,
-        session_loop=session_loop,
+        session_loop=research_head_session,
     )
 
-    all_responses = pre_responses + loop_responses + post_responses
-    events_file.write_text(json.dumps(all_responses, indent=2))
+    events_file.write_text(json.dumps([], indent=2))
     logger.info("Pipeline events saved to: %s", events_file)
 
     state = final_session.state

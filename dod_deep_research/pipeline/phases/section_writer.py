@@ -112,7 +112,7 @@ async def run_section_writer(
     app_name: str,
     section_writer_runner: runners.Runner,
     session_loop: runners.Session,
-) -> tuple[runners.Session, list[dict]]:
+) -> runners.Session:
     """
     Run the post-aggregation phase (writer).
 
@@ -122,7 +122,7 @@ async def run_section_writer(
         session_loop (runners.Session): The loop session containing evidence and plan.
 
     Returns:
-        tuple[runners.Session, list[dict]]: Updated session and JSON responses.
+        runners.Session: Updated session.
     """
     session_post = await section_writer_runner.session_service.create_session(
         app_name=app_name,
@@ -149,4 +149,4 @@ async def run_section_writer(
         session_post,
         {"deep_research_output": report.model_dump()},
     )
-    return session_post, json_responses
+    return session_post

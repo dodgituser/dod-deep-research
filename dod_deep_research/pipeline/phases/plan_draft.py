@@ -23,7 +23,7 @@ async def run_plan_draft(
     drug_aliases: list[str] | None = None,
     common_sections: list[str] | None = None,
     **kwargs,
-) -> tuple[runners.Session, list[dict]]:
+) -> runners.Session:
     """
     Run the pre-aggregation phase (planner + collectors).
 
@@ -42,7 +42,7 @@ async def run_plan_draft(
         **kwargs: Extra state keys.
 
     Returns:
-        tuple[runners.Session, list[dict]]: Updated session and JSON responses.
+        runners.Session: Updated session.
     """
     logger.info("Starting pre-aggregation phase (planner + collectors)")
 
@@ -105,4 +105,4 @@ async def run_plan_draft(
         session_id=collectors_session.id,
     )  # Get the final updated session after draft collectors execution
     logger.info("Pre-aggregation phase completed")
-    return updated_session, []
+    return updated_session
