@@ -62,7 +62,7 @@ async def run_iterative_research(
         question_coverage = research_head_session.state.get("question_coverage") or {}
         gap_tasks = build_gap_tasks(
             question_coverage, min_evidence=1
-        )  # each question must have at least min_evidence piece of evidence AND meet the section min seen in SECTION_MIN_EVIDENCE
+        )  # each question must have at least min_evidence piece of evidence AND meet the section min seen in SECTION_MIN_EVIDENCE (not currently enforced deterministically, only enforced through prompt)
         if not gap_tasks:
             logger.info("No gap tasks remain; ending gap-driven loop")
             break

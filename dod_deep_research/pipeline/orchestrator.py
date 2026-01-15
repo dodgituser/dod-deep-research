@@ -17,7 +17,6 @@ from dod_deep_research.utils.writer import build_validation_report
 from dod_deep_research.agents.writer.schemas import MarkdownReport
 from dod_deep_research.core import (
     build_runner,
-    get_output_events_path,
     get_output_path,
     persist_state_delta,
 )
@@ -94,9 +93,6 @@ async def run_pipeline_async(
         app_name=app_name,
     )  # create target collector agents based on common sections that update the evidence store after running
 
-    events_file = get_output_events_path(indication)
-    logger.info("Events will be saved to: %s", events_file)
-
     session = await run_plan_draft(
         app_name=app_name,
         plan_runner=plan_runner,
@@ -136,9 +132,6 @@ async def run_pipeline_async(
         section_writer_runner=section_writer_runner,
         session_loop=research_head_session,
     )
-
-    events_file.write_text(json.dumps([], indent=2))
-    logger.info("Pipeline events saved to: %s", events_file)
 
     state = final_session.state
 

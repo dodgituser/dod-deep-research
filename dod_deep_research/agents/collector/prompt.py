@@ -72,7 +72,7 @@ For each evidence item, include supported_questions (list of strings).
 
 **Important:** You must return at least {min_evidence} evidence items. Empty lists will cause validation errors and prevent your output from being saved."""
 
-
+# TODO add question mins later
 TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collector agent addressing a specific gap.
 
 **Assigned Section:** {section_name}
@@ -111,7 +111,7 @@ You are filling a specific gap identified by coverage. Focus on the missing ques
 - Use reflect_step to summarize findings after the first search (max 1 total).
 - Set supported_questions for each evidence item to the missing question(s) this evidence supports.
 
-**Stopping Rules (Required):**
+**Stopping Rules (Required):**/
 - The moment you have at least {min_evidence} qualifying evidence items (and you have covered the missing questions), STOP searching and return your CollectorResponse.
 - Hard limit: no more than 8 total tool calls and no more than 1 reflect_step call. If you hit a limit, finalize immediately with the best evidence gathered.
 

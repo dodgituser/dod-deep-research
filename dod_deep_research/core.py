@@ -160,21 +160,6 @@ def get_output_path(indication: str) -> Path:
     return output_dir
 
 
-def get_output_events_path(indication: str) -> Path:
-    """
-    Create and return the pipeline events file path.
-
-    Args:
-        indication (str): Indication name used to namespace outputs.
-
-    Returns:
-        Path: Path to the pipeline events JSON file.
-    """
-    output_dir = get_output_path(indication)
-    timestamp = output_dir.name.removeprefix(f"{indication}-")
-    return output_dir / f"pipeline_events_{timestamp}.json"
-
-
 def get_research_head_guidance(state: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """
     Extract research head guidance per section from state.

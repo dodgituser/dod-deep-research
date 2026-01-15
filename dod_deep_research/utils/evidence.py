@@ -345,6 +345,7 @@ def build_gap_tasks(
     Returns:
         list[dict[str, Any]]: Gap tasks for targeted collection.
     """
+    # TODO: Add section-level gap tasks when section minimums are not met.
     tasks: list[GapTask] = []
     for section, questions in question_coverage.items():
         missing_questions = [
