@@ -75,26 +75,26 @@ async def run_iterative_research(
             guidance_map=guidance_map,
             after_agent_callback=update_evidence,
         )  # create dynamic targeted collector agents based on remaining gap tasks and guidance from research head
-        runner_targeted = build_runner(agent=targeted_collectors, app_name=app_name)
-        targeted_session = await runner_targeted.session_service.create_session(
+        targeted_runner = build_runner(agent=targeted_collectors, app_name=app_name)
+        targeted_session = await targeted_runner.session_service.create_session(
             app_name=app_name,
             user_id=research_head_session.user_id,
             state=research_head_session.state.copy(),
-        )
+        )  # create a new session for the targeted collectors while maintaining state from research head
         await run_agent(
-            runner_targeted,
+            targeted_runner,
             targeted_session.user_id,
             targeted_session.id,
             types.Content(
                 parts=[types.Part.from_text(text="Collect evidence for tasks.")],
                 role="user",
             ),
-        )
+        )  # run the targeted collectors to collect evidence for gap tasks
         research_head_session = await research_head_runner.session_service.get_session(
             app_name=app_name,
             user_id=research_head_session.user_id,
             session_id=research_head_session.id,
-        )
+        )  # update research head session to reflect new evidence collected
 
     if research_iteration >= max_iterations:
         logger.info(
