@@ -7,7 +7,12 @@ from google.genai import types
 
 from dod_deep_research.agents.collector.agent import create_targeted_collector_agents
 from dod_deep_research.agents.callbacks.update_evidence import update_evidence
-from dod_deep_research.core import build_runner, get_research_head_guidance, run_agent
+from dod_deep_research.core import (
+    build_runner,
+    get_research_head_guidance,
+    run_agent,
+    persist_state_delta,
+)
 from dod_deep_research.utils.evidence import build_gap_tasks
 from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.utils.evidence import (
@@ -109,11 +114,32 @@ async def run_iterative_research(
                 role="user",
             ),
         )  # run the targeted collectors to collect evidence for gap tasks
-        research_head_session = await research_head_runner.session_service.get_session(
+
+        targeted_session = await targeted_runner.session_service.get_session(
             app_name=app_name,
-            user_id=research_head_session.user_id,
-            session_id=research_head_session.id,
-        )  # update research head session to reflect new evidence collected
+            user_id=targeted_session.user_id,
+            session_id=targeted_session.id,
+        )  # get updated state from targeted collectors
+
+        # Propagate new evidence back to research head session
+        state_delta = {}
+        if "evidence_store" in targeted_session.state:
+            state_delta["evidence_store"] = targeted_session.state["evidence_store"]
+
+        if state_delta:
+            research_head_session = await persist_state_delta(
+                research_head_runner.session_service,
+                research_head_session,
+                state_delta,
+            )
+        else:
+            research_head_session = (
+                await research_head_runner.session_service.get_session(
+                    app_name=app_name,
+                    user_id=research_head_session.user_id,
+                    session_id=research_head_session.id,
+                )
+            )
 
     if research_iteration >= max_iterations:
         logger.info(
