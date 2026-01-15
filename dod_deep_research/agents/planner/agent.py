@@ -47,6 +47,3 @@ Do not collect evidence, do not write the report, and do not assign tasks.
         output_key="research_plan",
         output_schema=ResearchPlan,
     )
-
-
-planner_agent = create_planner_agent()

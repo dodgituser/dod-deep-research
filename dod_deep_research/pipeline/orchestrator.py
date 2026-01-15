@@ -3,13 +3,8 @@
 import asyncio
 import json
 import logging
-import uuid
 from typing import Any
 
-from dod_deep_research.agents.collector.agent import create_collector_agents
-from dod_deep_research.agents.callbacks.aggregate_evidence_after_collectors import (
-    aggregate_evidence_after_collectors,
-)
 from dod_deep_research.utils.evidence import EvidenceStore
 from dod_deep_research.agents.research_head.agent import research_head_agent
 from dod_deep_research.agents.planner.agent import create_planner_agent
@@ -18,14 +13,20 @@ from dod_deep_research.agents.shared_state import SharedState
 from dod_deep_research.agents.writer.agent import section_writer_agent
 from dod_deep_research.utils.writer import build_validation_report
 from dod_deep_research.agents.writer.schemas import MarkdownReport
-from dod_deep_research.core import build_runner, get_output_file, persist_state_delta
+from dod_deep_research.core import (
+    build_runner,
+    get_output_events_path,
+    get_output_path,
+    persist_state_delta,
+)
 from dod_deep_research.evals import pipeline_eval
 from dod_deep_research.pipeline.phases import (
-    run_iterative_research_loop,
-    run_post_aggregation,
+    run_iterative_loop,
+    run_section_writer,
     run_pre_aggregation,
     write_long_report,
 )
+from dod_deep_research.pipeline.phases.plan_draft import get_plan_draft_agents
 from dod_deep_research.prompts.indication_prompt import generate_indication_prompt
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,6 @@ async def run_pipeline_async(
 
     app_name = "deep_research"
     user_id = "user"
-    session_id = str(uuid.uuid4())
 
     indication_prompt = generate_indication_prompt(
         disease=indication,
@@ -75,28 +75,25 @@ async def run_pipeline_async(
     )
 
     planner_agent = create_planner_agent(indication_prompt=indication_prompt)
-    runner_planner = build_runner(agent=planner_agent, app_name=app_name)
-    runner_collectors = build_runner(
-        agent=create_collector_agents(
-            [section.value for section in get_common_sections()],
-            after_agent_callback=aggregate_evidence_after_collectors,
-        ),
+    plan_draft_runner = build_runner(
+        agent=get_plan_draft_agents(planner=planner_agent),
         app_name=app_name,
     )
-    runner_loop = build_runner(agent=research_head_agent, app_name=app_name)
-    runner_post = build_runner(agent=section_writer_agent, app_name=app_name)
+    research_head_runner = build_runner(agent=research_head_agent, app_name=app_name)
+    section_writer_runner = build_runner(
+        agent=section_writer_agent,
+        app_name=app_name,
+    )
 
-    events_file = get_output_file(indication)
+    events_file = get_output_events_path(indication)
     logger.info("Events will be saved to: %s", events_file)
 
     common_sections = [section.value for section in get_common_sections()]
 
     session, pre_responses = await run_pre_aggregation(
         app_name=app_name,
-        runner_planner=runner_planner,
-        runner_collectors=runner_collectors,
+        plan_draft_runner=plan_draft_runner,
         user_id=user_id,
-        session_id=session_id,
         indication=indication,
         drug_name=drug_name,
         drug_form=drug_form,
@@ -107,15 +104,15 @@ async def run_pipeline_async(
         **kwargs,
     )
 
-    session_loop, loop_responses = await run_iterative_research_loop(
+    session_loop, loop_responses = await run_iterative_loop(
         app_name=app_name,
-        runner_loop=runner_loop,
+        runner_research_head=research_head_runner,
         session=session,
     )
 
-    final_session, post_responses = await run_post_aggregation(
+    final_session, post_responses = await run_section_writer(
         app_name=app_name,
-        runner_post=runner_post,
+        section_writer_runner=section_writer_runner,
         session_loop=session_loop,
     )
 
@@ -144,37 +141,38 @@ async def run_pipeline_async(
                 validation_report["errors"],
             )
             final_session = await persist_state_delta(
-                runner_post.session_service,
+                section_writer_runner.session_service,
                 final_session,
                 {"validation_report": validation_report},
             )
             rewrite_report, _ = await write_long_report(
-                runner=runner_post,
+                runner=section_writer_runner,
                 app_name=app_name,
                 user_id=final_session.user_id,
                 base_state=final_session.state,
             )
             final_session = await persist_state_delta(
-                runner_post.session_service,
+                section_writer_runner.session_service,
                 final_session,
                 {"deep_research_output": rewrite_report.model_dump()},
             )
             state = final_session.state
 
     writer_output_dict = state.get("deep_research_output")
+    output_dir = get_output_path(indication)
     if writer_output_dict:
         writer_output = MarkdownReport(**writer_output_dict)
-        report_path = events_file.parent / "report.md"
+        report_path = output_dir / "report.md"
         report_path.write_text(writer_output.report_markdown)
         logger.info("Markdown report saved to: %s", report_path)
 
-    state_file = events_file.parent / "session_state.json"
+    state_file = output_dir / "session_state.json"
     state_file.write_text(json.dumps(state, indent=2, default=str))
     logger.info("Session state saved to: %s", state_file)
 
-    agent_logs_dir = events_file.parent.parent / "agent_logs"
+    agent_logs_dir = output_dir.parent / "agent_logs"
     evals = pipeline_eval(agent_logs_dir, evidence_store_dict)
-    evals_file = events_file.parent / "pipeline_evals.json"
+    evals_file = output_dir / "pipeline_evals.json"
     evals_file.write_text(json.dumps(evals, indent=2, default=str))
     logger.info("Pipeline evals saved to: %s", evals_file)
 

@@ -6,18 +6,19 @@ from google.adk import runners
 from google.genai import types
 
 from dod_deep_research.agents.collector.agent import create_targeted_collector_agents
-from dod_deep_research.agents.callbacks.aggregate_evidence_after_collectors import (
-    aggregate_evidence_after_collectors,
+from dod_deep_research.agents.callbacks.update_evidence_and_gaps import (
+    update_evidence_and_gaps,
 )
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
-from dod_deep_research.core import build_runner, persist_state_delta, run_agent
+from dod_deep_research.core import build_runner, get_research_head_guidance, run_agent
+from dod_deep_research.utils.evidence import GapTask
 
 logger = logging.getLogger(__name__)
 
 
-async def run_iterative_research_loop(
+async def run_iterative_loop(
     app_name: str,
-    runner_loop: runners.Runner,
+    runner_research_head: runners.Runner,
     session: runners.Session,
     max_iterations: int = 5,
 ) -> tuple[runners.Session, list[dict]]:
@@ -26,7 +27,7 @@ async def run_iterative_research_loop(
 
     Args:
         app_name (str): App name for sessions.
-        runner_loop (runners.Runner): Research head runner.
+        runner_research_head (runners.Runner): Research head runner.
         session (runners.Session): Session from pre-aggregation.
         max_iterations (int): Max loop iterations.
 
@@ -35,18 +36,14 @@ async def run_iterative_research_loop(
     """
     logger.info("Starting gap-driven loop phase")
 
-    session_loop = await runner_loop.session_service.create_session(
+    session_loop = await runner_research_head.session_service.create_session(
         app_name=app_name,
         user_id=session.user_id,
-        session_id=session.id,
         state=session.state.copy(),
     )
 
     json_responses: list[dict] = []
-    loop_iteration = 0
-
-    while loop_iteration < max_iterations:
-        loop_iteration += 1
+    for loop_iteration in range(1, max_iterations + 1):
         logger.info("Gap-driven loop iteration %s", loop_iteration)
 
         loop_message = types.Content(
@@ -54,50 +51,41 @@ async def run_iterative_research_loop(
             role="user",
         )
         loop_responses = await run_agent(
-            runner_loop, session_loop.user_id, session_loop.id, loop_message
+            runner_research_head, session_loop.user_id, session_loop.id, loop_message
         )
         json_responses.extend(loop_responses)
 
-        updated_loop_session = await runner_loop.session_service.get_session(
+        session_loop = await runner_research_head.session_service.get_session(
             app_name=app_name,
             user_id=session_loop.user_id,
             session_id=session_loop.id,
-        )
-        session_loop = await persist_state_delta(
-            runner_loop.session_service,
-            session_loop,
-            updated_loop_session.state,
-        )
+        )  # update session after agent runs to get latest state
 
-        research_head_plan_dict = session_loop.state.get("research_head_plan")
-        if not research_head_plan_dict:
-            logger.info("No research_head_plan found after analysis")
-            continue
-
-        try:
-            research_head_plan = ResearchHeadPlan(**research_head_plan_dict)
-        except Exception as exc:
-            logger.warning("Failed to parse research_head_plan: %s", exc)
-            continue
-
-        if not research_head_plan.gaps and not research_head_plan.continue_research:
-            logger.info(
-                "ResearchHead determined gaps are resolved and no further research needed"
-            )
+        gap_tasks_raw = (
+            session_loop.state.get("gap_tasks") or []
+        )  # get gap tasks from research head output in state
+        gap_tasks: list[GapTask] = []
+        for task in gap_tasks_raw:
+            gap_tasks.append(GapTask(**task))
+        if not gap_tasks:
+            logger.info("No gap tasks remain; ending gap-driven loop")
             break
 
-        logger.info(
-            f"Research Head Plan: {research_head_plan.model_dump_json(indent=2)}"
-        )
+        guidance_map = {}
+        research_head_plan_dict = session_loop.state.get("research_head_plan")
+        if research_head_plan_dict:
+            ResearchHeadPlan(**research_head_plan_dict)
+            guidance_map = get_research_head_guidance(session_loop.state)
+
         targeted_collectors = create_targeted_collector_agents(
-            research_head_plan.gaps,
-            after_agent_callback=aggregate_evidence_after_collectors,
+            gap_tasks,
+            guidance_map=guidance_map,
+            after_agent_callback=update_evidence_and_gaps,
         )
         runner_targeted = build_runner(agent=targeted_collectors, app_name=app_name)
         targeted_session = await runner_targeted.session_service.create_session(
             app_name=app_name,
             user_id=session_loop.user_id,
-            session_id=f"{session_loop.id}_targeted_{loop_iteration}",
             state=session_loop.state.copy(),
         )
         await run_agent(
@@ -109,15 +97,10 @@ async def run_iterative_research_loop(
                 role="user",
             ),
         )
-        updated_targeted_session = await runner_targeted.session_service.get_session(
+        session_loop = await runner_research_head.session_service.get_session(
             app_name=app_name,
-            user_id=targeted_session.user_id,
-            session_id=targeted_session.id,
-        )
-        session_loop = await persist_state_delta(
-            runner_loop.session_service,
-            session_loop,
-            updated_targeted_session.state,
+            user_id=session_loop.user_id,
+            session_id=session_loop.id,
         )
 
     if loop_iteration >= max_iterations:
@@ -129,10 +112,10 @@ async def run_iterative_research_loop(
             role="user",
         )
         loop_responses = await run_agent(
-            runner_loop, session_loop.user_id, session_loop.id, loop_message
+            runner_research_head, session_loop.user_id, session_loop.id, loop_message
         )
         json_responses.extend(loop_responses)
-        session_loop = await runner_loop.session_service.get_session(
+        session_loop = await runner_research_head.session_service.get_session(
             app_name=app_name,
             user_id=session_loop.user_id,
             session_id=session_loop.id,

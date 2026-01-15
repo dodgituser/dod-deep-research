@@ -51,6 +51,8 @@ Use pubmed_search_articles to find PMIDs and pubmed_fetch_contents to retrieve a
 Use clinicaltrials_search_studies to find NCT IDs and clinicaltrials_get_study to retrieve study details when possible.
 Allowed EvidenceItem.source values: pubmed, clinicaltrials, web.
 When assigning EvidenceItem.source, use "pubmed" for PubMed, "clinicaltrials" for ClinicalTrials.gov, and "web" for Exa web sources.
+Each EvidenceItem must include supported_questions: a list of exact key questions from the section that this evidence supports.
+Copy the question text exactly from the key_questions in the state context above.
 
 **Iterative Research Loop (Required):**
 1) Perform 1-2 broad searches to scope the section.
@@ -66,6 +68,7 @@ When assigning EvidenceItem.source, use "pubmed" for PubMed, "clinicaltrials" fo
 Store your output as a CollectorResponse object with section name "{section_name}" and evidence list containing at least {min_evidence} items in the shared state under the key "evidence_store_section_{section_name}".
 When you call set_model_response, you must include the section field: {{"section": "{section_name}", "evidence": [...]}}.
 Do not call set_model_response without the section field.
+For each evidence item, include supported_questions (list of strings).
 
 **Important:** You must return at least {min_evidence} evidence items. Empty lists will cause validation errors and prevent your output from being saved."""
 
@@ -74,7 +77,8 @@ TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collec
 
 **Assigned Section:** {section_name}
 **Missing Questions:** {missing_questions}
-**Gap Notes:** {notes}
+**Guidance Notes (optional):** {guidance_notes}
+**Suggested Queries (optional):** {suggested_queries}
 
 **Input State Key:** research_section_{section_name}
 **State Context:** {{research_section_{section_name}?}}
@@ -85,7 +89,7 @@ TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are a targeted evidence collec
 **Minimum Evidence Target:** Collect at least {min_evidence} evidence items for this section. Focus on the missing questions; cover each missing question with at least one item when possible.
 
 **Task Context:**
-You are filling a specific gap identified by the Research Head. Focus on the missing questions and notes above.
+You are filling a specific gap identified by coverage. Focus on the missing questions above.
 
 **Available Tools:**
 - pubmed_search_articles(queryTerm, maxResults, sortBy, dateRange, filterByPublicationTypes, fetchBriefSummaries): PubMed search.
@@ -105,6 +109,7 @@ You are filling a specific gap identified by the Research Head. Focus on the mis
 - If you use Exa web sources, set EvidenceItem.source to "web".
 - Return at least {min_evidence} evidence items with valid URLs and quotes.
 - Use reflect_step to summarize findings after the first search (max 1 total).
+- Set supported_questions for each evidence item to the missing question(s) this evidence supports.
 
 **Stopping Rules (Required):**
 - The moment you have at least {min_evidence} qualifying evidence items (and you have covered the missing questions), STOP searching and return your CollectorResponse.

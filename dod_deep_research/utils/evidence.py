@@ -2,12 +2,14 @@
 
 import hashlib
 import logging
+from collections import defaultdict
 from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
 
 from dod_deep_research.agents.collector.schemas import CollectorResponse, EvidenceItem
 from dod_deep_research.agents.schemas import CommonSection, KeyValuePair
+from dod_deep_research.agents.planner.schemas import ResearchPlan
 
 # Section-specific minimum evidence targets. Tuned to push deeper
 SECTION_MIN_EVIDENCE: dict[CommonSection, int] = {
@@ -80,6 +82,22 @@ class EvidenceStore(BaseModel):
                 "All evidence IDs must be unique across the EvidenceStore."
             )
         return self
+
+
+class GapTask(BaseModel):
+    """Question-level gap task for targeted collection."""
+
+    section: CommonSection = Field(
+        ...,
+        description="Section that contains missing questions.",
+    )
+    missing_questions: list[str] = Field(
+        default_factory=list,
+        description="Missing research questions to address.",
+    )
+    min_evidence: int = Field(
+        description="Minimum evidence required per question.",
+    )
 
 
 def extract_section_stores(state: dict[str, Any]) -> dict[str, CollectorResponse]:
@@ -228,3 +246,109 @@ def build_section_evidence(
         for item in evidence_store.items
         if item.section == section_name
     ]
+
+
+def build_question_coverage(
+    research_plan: ResearchPlan,
+    evidence_store: EvidenceStore,
+) -> dict[str, dict[str, list[str]]]:
+    """
+    Build a per-question evidence coverage map.
+    Section -> question -> list of evidence IDs that support the question.
+
+    Args:
+        research_plan (ResearchPlan): Structured research plan with key questions.
+        evidence_store (EvidenceStore): Aggregated evidence store.
+
+    Returns:
+        dict[str, dict[str, list[str]]]: Section -> question -> evidence IDs coverage map.
+    """
+    coverage: dict[str, dict[str, list[str]]] = {}
+    for section in research_plan.sections:
+        section_name = str(section.name)
+        coverage[section_name] = defaultdict(list)
+        for question in section.key_questions:
+            coverage[section_name][question]  # create question key empty list
+
+    # go through each evidence item and questions it supports then tie to the section name and question
+    for item in evidence_store.items:
+        section_coverage = coverage.get(item.section)
+        if not section_coverage:
+            continue
+        for question in item.supported_questions:
+            if question not in section_coverage:
+                continue
+            if item.id not in section_coverage[question]:
+                section_coverage[question].append(item.id)
+
+    return {section: dict(questions) for section, questions in coverage.items()}
+
+
+def is_question_covered(evidence_ids: list[str], min_evidence: int) -> bool:
+    """
+    Check whether a question meets the minimum evidence threshold.
+
+    Args:
+        evidence_ids (list[str]): Evidence IDs supporting the question.
+        min_evidence (int): Minimum evidence required.
+
+    Returns:
+        bool: True if the question meets the threshold.
+    """
+    return len(evidence_ids) >= min_evidence
+
+
+def is_section_covered(
+    section_coverage: dict[str, list[str]],
+    min_evidence: int,
+) -> bool:
+    """
+    Check whether all questions in a section meet the minimum evidence threshold.
+
+    Args:
+        section_coverage (dict[str, list[str]]): Question -> evidence IDs map.
+        min_evidence (int): Minimum evidence required per question.
+
+    Returns:
+        bool: True if all questions meet the threshold.
+    """
+    return all(
+        is_question_covered(evidence_ids, min_evidence)
+        for evidence_ids in section_coverage.values()
+    )
+
+
+def build_gap_tasks(
+    question_coverage: dict[str, dict[str, list[str]]],
+    min_evidence: int,
+) -> list[GapTask]:
+    """
+    Build question-level gap tasks from coverage. If the question does not meet the minimum evidence,
+    it is added to the gap tasks for targeted collectors.
+
+    Args:
+        question_coverage (dict[str, dict[str, list[str]]]): Coverage map.
+        min_evidence (int): Minimum evidence required per question.
+
+    Returns:
+        list[dict[str, Any]]: Gap tasks for targeted collection.
+    """
+    tasks: list[GapTask] = []
+    for section, questions in question_coverage.items():
+        missing_questions = [
+            question
+            for question, evidence_ids in questions.items()
+            if not is_question_covered(
+                evidence_ids, min_evidence
+            )  # this is the min evidence required per question
+        ]
+        if not missing_questions:
+            continue
+        tasks.append(
+            GapTask(
+                section=CommonSection(section),
+                missing_questions=missing_questions,
+                min_evidence=min_evidence,
+            )
+        )
+    return tasks

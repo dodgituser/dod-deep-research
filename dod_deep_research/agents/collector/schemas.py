@@ -40,6 +40,10 @@ class EvidenceItem(BaseModel):
         default_factory=list,
         description="Short topical tags to help retrieval and grouping.",
     )
+    supported_questions: list[str] = Field(
+        default_factory=list,
+        description="Exact key questions this evidence supports.",
+    )
     section: str = Field(
         ...,
         description="Section name this evidence supports (must match plan sections).",
@@ -114,6 +118,12 @@ class CollectorResponse(BaseModel):
             normalized_item.setdefault("id", f"E{index}")
             if not normalized_item.get("url") and normalized_item.get("source_url"):
                 normalized_item["url"] = normalized_item["source_url"]
+            if not normalized_item.get("supported_questions"):
+                supported_question = normalized_item.pop("supported_question", None)
+                question = normalized_item.pop("question", None)
+                chosen = supported_question or question
+                if chosen:
+                    normalized_item["supported_questions"] = [chosen]
             normalized.append(normalized_item)
 
         data["evidence"] = normalized

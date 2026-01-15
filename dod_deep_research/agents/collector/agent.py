@@ -2,7 +2,7 @@
 
 import os
 
-from typing import Callable
+from typing import Any, Callable
 
 from google.adk import Agent
 from google.adk.agents import ParallelAgent
@@ -16,7 +16,7 @@ from dod_deep_research.agents.collector.prompt import (
     TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE,
 )
 from dod_deep_research.agents.collector.schemas import CollectorResponse
-from dod_deep_research.agents.research_head.schemas import ResearchGap
+from dod_deep_research.utils.evidence import GapTask
 from dod_deep_research.core import get_http_options
 from dod_deep_research.models import GeminiModels
 from dod_deep_research.agents.tooling import reflect_step
@@ -76,7 +76,8 @@ def get_collector_tools():
 
 def create_collector_agent(
     section_name: str,
-    gap_override: ResearchGap | None = None,
+    gap_override: GapTask | None = None,
+    guidance: dict[str, Any] | None = None,
     before_agent_callback: Callable[[CallbackContext], types.Content | None]
     | None = None,
 ) -> Agent:
@@ -85,7 +86,7 @@ def create_collector_agent(
 
     Args:
         section_name: Name of the section to collect evidence for.
-        gap_override: Optional research gap override for targeted collection.
+        gap_override: Optional gap task override for targeted collection.
         before_agent_callback: Callback to run before the agent executes.
 
     Returns:
@@ -94,10 +95,16 @@ def create_collector_agent(
     min_evidence = get_min_evidence(section_name)
 
     if gap_override:
+        guidance_notes = ""
+        suggested_queries = ""
+        if guidance:
+            guidance_notes = str(guidance.get("notes", "")).strip()
+            suggested_queries = ", ".join(guidance.get("suggested_queries", []) or [])
         prompt = TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
             section_name=section_name,
             missing_questions=", ".join(gap_override.missing_questions) or "None",
-            notes=gap_override.notes or "None",
+            guidance_notes=guidance_notes or "None",
+            suggested_queries=suggested_queries or "None",
             min_evidence=min_evidence,
         )
         agent_name = f"targeted_collector_{section_name}"
@@ -146,21 +153,29 @@ def create_collector_agents(
     return parallel_agent
 
 
-def create_targeted_collector_agent(gap: ResearchGap) -> Agent:
+def create_targeted_collector_agent(
+    gap: GapTask,
+    guidance: dict[str, Any] | None = None,
+) -> Agent:
     """
-    Create a targeted collector agent for a specific research gap.
+    Create a targeted collector agent for a specific gap task.
 
     Args:
-        gap: ResearchGap specifying the targeted collection parameters.
+        gap: GapTask specifying the targeted collection parameters.
 
     Returns:
         Agent: Configured targeted collector agent.
     """
-    return create_collector_agent(section_name=gap.section, gap_override=gap)
+    return create_collector_agent(
+        section_name=gap.section,
+        gap_override=gap,
+        guidance=guidance,
+    )
 
 
 def create_targeted_collector_agents(
-    gaps: list[ResearchGap],
+    gaps: list[GapTask],
+    guidance_map: dict[str, dict[str, Any]] | None = None,
     after_agent_callback: Callable[[CallbackContext], types.Content | None]
     | None = None,
 ) -> ParallelAgent:
@@ -168,7 +183,7 @@ def create_targeted_collector_agents(
     Create a parallel agent with targeted collectors for the given tasks.
 
     Args:
-        gaps: List of ResearchGap objects.
+        gaps: List of GapTask objects.
         after_agent_callback: Optional callback to run after collectors complete.
 
     Returns:
@@ -180,7 +195,13 @@ def create_targeted_collector_agents(
             sub_agents=[],
         )
 
-    collector_agents = [create_targeted_collector_agent(gap) for gap in gaps]
+    collector_agents = [
+        create_targeted_collector_agent(
+            gap,
+            guidance=guidance_map.get(str(gap.section)) if guidance_map else None,
+        )
+        for gap in gaps
+    ]
 
     parallel_agent = ParallelAgent(
         name="targeted_collectors",

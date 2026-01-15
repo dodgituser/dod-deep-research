@@ -1,48 +1,31 @@
 """Schemas for research head agent."""
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from dod_deep_research.agents.schemas import CommonSection
-from typing import Self
 
 
-class ResearchGap(BaseModel):
-    """Identified gap in evidence coverage for a section."""
+class ResearchHeadGuidance(BaseModel):
+    """Guidance for targeted collection in a section."""
 
     section: CommonSection = Field(
         ...,
-        description="Section name with identified gaps.",
-    )
-    missing_questions: list[str] = Field(
-        default_factory=list,
-        description="Key questions from the research plan that are not yet answered.",
+        description="Section name to guide targeted collection.",
     )
     notes: str = Field(
         default="",
-        description="Additional context about the gap and why it matters.",
+        description="Short guidance on what to look for in this section.",
+    )
+    suggested_queries: list[str] = Field(
+        default_factory=list,
+        description="Suggested search queries for targeted collection.",
     )
 
 
 class ResearchHeadPlan(BaseModel):
-    """Research Head output plan with gaps only."""
+    """Research Head output plan with guidance only."""
 
-    continue_research: bool = Field(
-        ...,
-        description="Whether to continue with targeted collection. Set to False when gaps are resolved.",
-    )
-    gaps: list[ResearchGap] = Field(
+    guidance: list[ResearchHeadGuidance] = Field(
         default_factory=list,
-        description="List of identified gaps in evidence coverage.",
+        description="Guidance for targeted collection by section.",
     )
-
-    @model_validator(mode="after")
-    def _ensure_continue_research(self) -> Self:
-        """
-        Ensures continue_research is true when gaps are present.
-
-        Returns:
-            ResearchHeadPlan: Updated model instance.
-        """
-        if self.gaps:
-            self.continue_research = True
-        return self

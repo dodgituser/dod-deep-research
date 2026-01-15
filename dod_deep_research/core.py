@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from google.adk.events import Event, EventActions
 
 from dod_deep_research.agents.plugins import get_default_plugins
+from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 
 
 logger = logging.getLogger(__name__)
@@ -159,14 +160,63 @@ async def run_agent(
     return json_responses
 
 
-def get_output_file(indication: str):
+def get_output_path(indication: str) -> Path:
+    """
+    Create and return the output directory for a pipeline run.
+
+    Args:
+        indication (str): Indication name used to namespace outputs.
+
+    Returns:
+        Path: Path to the output directory for this run.
+    """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     outputs_dir = Path(__file__).parent / "outputs"
     outputs_dir.mkdir(exist_ok=True)
     output_dir = outputs_dir / f"{indication}-{timestamp}"
     output_dir.mkdir(exist_ok=True)
-    output_file = output_dir / f"pipeline_events_{timestamp}.json"
-    return output_file
+    return output_dir
+
+
+def get_output_events_path(indication: str) -> Path:
+    """
+    Create and return the pipeline events file path.
+
+    Args:
+        indication (str): Indication name used to namespace outputs.
+
+    Returns:
+        Path: Path to the pipeline events JSON file.
+    """
+    output_dir = get_output_path(indication)
+    timestamp = output_dir.name.removeprefix(f"{indication}-")
+    return output_dir / f"pipeline_events_{timestamp}.json"
+
+
+def get_research_head_guidance(state: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """
+    Extract research head guidance per section from state.
+
+    Args:
+        state (dict[str, Any]): Pipeline state containing research_head_plan.
+
+    Returns:
+        dict[str, dict[str, Any]]: Section -> guidance payload.
+    """
+    plan_raw = state.get("research_head_plan")
+    if not plan_raw:
+        return {}
+
+    plan = (
+        plan_raw
+        if isinstance(plan_raw, ResearchHeadPlan)
+        else ResearchHeadPlan(**plan_raw)
+    )
+
+    guidance_map: dict[str, dict[str, Any]] = {}
+    for guidance in plan.guidance:
+        guidance_map[str(guidance.section)] = guidance.model_dump(exclude={"section"})
+    return guidance_map
 
 
 def prepare_outputs_dir() -> Path:
