@@ -11,7 +11,7 @@ from dod_deep_research.core import (
 from dod_deep_research.loggy import setup_logging
 from dod_deep_research.pipeline.orchestrator import run_pipeline
 
-setup_logging(level=logging.DEBUG)
+setup_logging(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = typer.Typer()
 

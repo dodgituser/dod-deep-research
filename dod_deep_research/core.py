@@ -205,6 +205,7 @@ def get_research_head_guidance(state: dict[str, Any]) -> dict[str, dict[str, Any
         if isinstance(plan_raw, ResearchHeadPlan)
         else ResearchHeadPlan(**plan_raw)
     )
+    logger.info("Sections with guidance: %s", [g.section for g in plan.guidance])
 
     guidance_map: dict[str, dict[str, Any]] = {}
     for guidance in plan.guidance:

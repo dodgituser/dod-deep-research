@@ -12,13 +12,10 @@ COLLECTOR_AGENT_PROMPT_TEMPLATE = """You are an evidence collector agent. Your r
 
 **Minimum Evidence Target:** Collect at least {min_evidence} evidence items for this section. If key_questions are present, cover each question with at least one item when possible.
 
-**Input Format:**
-Read the section details from shared state key "research_section_{section_name}". Use the section's description, key_questions, and scope to guide evidence collection.
-
 **Available Tools:**
 - pubmed_search_articles(queryTerm, maxResults, sortBy, dateRange, filterByPublicationTypes, fetchBriefSummaries): PubMed search.
 - pubmed_fetch_contents(pmids, queryKey, webEnv, detailLevel, includeMeshTerms, includeGrantInfo): PubMed details/abstracts.
-- clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
+- clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search (set pageSize to 10 or less).
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
 - web_search_exa(query, num_results, include_domains, exclude_domains, start_published_date, end_published_date, category, livecrawl, livecrawlTimeout): Exa web search with content extraction.
 - crawling_exa(urls, livecrawl, livecrawlTimeout): Extract content from specific URLs (use when you already have the exact URL).
@@ -94,7 +91,7 @@ You are filling a specific gap identified by coverage. Focus on the missing ques
 **Available Tools:**
 - pubmed_search_articles(queryTerm, maxResults, sortBy, dateRange, filterByPublicationTypes, fetchBriefSummaries): PubMed search.
 - pubmed_fetch_contents(pmids, queryKey, webEnv, detailLevel, includeMeshTerms, includeGrantInfo): PubMed details/abstracts.
-- clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search.
+- clinicaltrials_search_studies(query, pageSize, sortBy, filters): ClinicalTrials.gov search (set pageSize to 10 or less).
 - clinicaltrials_get_study(nctIds, detailLevel): ClinicalTrials.gov study details.
 - web_search_exa(query, num_results, include_domains, exclude_domains, start_published_date, end_published_date, category, livecrawl, livecrawlTimeout): Exa web search with content extraction.
 - crawling_exa(urls, livecrawl, livecrawlTimeout): Extract content from specific URLs (use when you already have the exact URL).

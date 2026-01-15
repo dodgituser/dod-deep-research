@@ -9,6 +9,11 @@ from dod_deep_research.agents.collector.agent import create_targeted_collector_a
 from dod_deep_research.agents.callbacks.update_evidence import update_evidence
 from dod_deep_research.core import build_runner, get_research_head_guidance, run_agent
 from dod_deep_research.utils.evidence import build_gap_tasks
+from dod_deep_research.agents.planner.schemas import ResearchPlan
+from dod_deep_research.utils.evidence import (
+    EvidenceStore,
+    build_question_coverage,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,17 +64,30 @@ async def run_iterative_research(
             session_id=research_head_session.id,
         )  # update session after research head runs to get latest state
 
+        # Rebuild question coverage to ensure quantitative gaps are detected correctly
+        plan_data = research_head_session.state.get("research_plan")
+        store_data = research_head_session.state.get("evidence_store")
+
+        if plan_data and store_data:
+            question_coverage = build_question_coverage(
+                ResearchPlan(**plan_data), EvidenceStore(**store_data)
+            )
+            logger.info(
+                "Analyzing evidence coverage for %d sections", len(question_coverage)
+            )
+
         guidance_map = get_research_head_guidance(
             research_head_session.state
         )  # section -> notes + suggested queries
 
-        question_coverage = research_head_session.state.get("question_coverage") or {}
         gap_tasks = build_gap_tasks(
             question_coverage, min_evidence=1, guidance_map=guidance_map
         )  # each question must have at least min_evidence piece of evidence AND meet the section min seen in SECTION_MIN_EVIDENCE (not currently enforced deterministically, only enforced through prompt)
         if not gap_tasks:
             logger.info("No gap tasks remain; ending gap-driven loop")
             break
+        else:
+            logger.info("Identified %d gap tasks to address", len(gap_tasks))
 
         targeted_collectors = create_targeted_collector_agents(
             gap_tasks,
