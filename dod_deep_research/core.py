@@ -133,13 +133,39 @@ async def run_agent(
         new_message: The message to send to the agent.
     """
     logger.debug("Running agent for session %s", session_id)
-    async for _event in runner.run_async(
-        user_id=user_id,
-        session_id=session_id,
-        new_message=new_message,
-    ):
-        pass
-    logger.debug("Agent run complete for session %s", session_id)
+    step_count = 0
+    try:
+        async for event in runner.run_async(
+            user_id=user_id,
+            session_id=session_id,
+            new_message=new_message,
+        ):
+            step_count += 1
+
+            # Log turn information
+            calls = event.get_function_calls()
+            responses = event.get_function_responses()
+
+            log_msg = f"[Step {step_count}] Agent: {event.author}"
+            if calls:
+                log_msg += f" | Calls: {[c.name for c in calls]}"
+            if responses:
+                log_msg += f" | Responses: {[r.name for r in responses]}"
+            if event.error_code:
+                log_msg += f" | Error: {event.error_code}: {event.error_message}"
+
+            logger.debug(log_msg)
+
+    except Exception as e:
+        logger.error(
+            f"Agent execution failed in session {session_id} at step {step_count}: {str(e)}",
+            exc_info=True,
+        )
+        raise e
+
+    logger.debug(
+        "Agent run complete for session %s after %d steps", session_id, step_count
+    )
 
 
 def get_output_path(indication: str) -> Path:

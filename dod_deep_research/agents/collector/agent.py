@@ -177,10 +177,6 @@ def create_targeted_collector_agent(
             http_options=get_http_options(),
         ),
     )
-
-    logger.debug(
-        f"""Collector agent {agent_name} created with tools: {agent.tools} and prompt: {agent.instruction}"""
-    )
     return agent
 
 

@@ -59,17 +59,18 @@ async def run_iterative_research(
             session_id=research_head_session.id,
         )  # update session after research head runs to get latest state
 
+        guidance_map = get_research_head_guidance(
+            research_head_session.state
+        )  # section -> notes + suggested queries
+
         question_coverage = research_head_session.state.get("question_coverage") or {}
         gap_tasks = build_gap_tasks(
-            question_coverage, min_evidence=1
+            question_coverage, min_evidence=1, guidance_map=guidance_map
         )  # each question must have at least min_evidence piece of evidence AND meet the section min seen in SECTION_MIN_EVIDENCE (not currently enforced deterministically, only enforced through prompt)
         if not gap_tasks:
             logger.info("No gap tasks remain; ending gap-driven loop")
             break
 
-        guidance_map = get_research_head_guidance(
-            research_head_session.state
-        )  # section -> notes + suggested queries
         targeted_collectors = create_targeted_collector_agents(
             gap_tasks,
             guidance_map=guidance_map,

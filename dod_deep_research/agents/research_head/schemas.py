@@ -20,6 +20,10 @@ class ResearchHeadGuidance(BaseModel):
         default_factory=list,
         description="Suggested search queries for targeted collection.",
     )  # TODO how will the research head know how to suggest queries?
+    needs_more_research: bool = Field(
+        default=False,
+        description="True if the section needs more evidence despite meeting minimum counts (e.g. poor quality, outdated).",
+    )
 
 
 class ResearchHeadPlan(BaseModel):

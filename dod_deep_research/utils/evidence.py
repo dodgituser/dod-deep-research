@@ -8,7 +8,7 @@ from typing import Any, Self
 from pydantic import BaseModel, Field, model_validator
 
 from dod_deep_research.agents.collector.schemas import CollectorResponse, EvidenceItem
-from dod_deep_research.agents.schemas import CommonSection, KeyValuePair
+from dod_deep_research.agents.schemas import CommonSection, EvidenceSource, KeyValuePair
 from dod_deep_research.agents.planner.schemas import ResearchPlan
 
 # Section-specific minimum evidence targets. Tuned to push deeper
@@ -126,6 +126,35 @@ def extract_section_stores(state: dict[str, Any]) -> dict[str, CollectorResponse
     return section_stores
 
 
+def construct_missing_url(item: EvidenceItem) -> str | None:
+    """
+    Attempt to construct a missing URL based on the source and ID.
+
+    Args:
+        item: The evidence item with missing URL.
+
+    Returns:
+        str | None: Constructed URL or None if not possible.
+    """
+    if not item.id:
+        return None
+
+    # Handle PubMed
+    # IDs usually look like "E1", "E2" or direct PMIDs.
+    # If the ID is numeric (PMID), we can build it.
+    if item.source == EvidenceSource.PUBMED and item.id.isdigit():
+        return f"https://pubmed.ncbi.nlm.nih.gov/{item.id}/"
+
+    # Handle ClinicalTrials.gov
+    # IDs should be NCT numbers (e.g. NCT01234567)
+    if item.source == EvidenceSource.CLINICALTRIALS and item.id.upper().startswith(
+        "NCT"
+    ):
+        return f"https://clinicaltrials.gov/study/{item.id}"
+
+    return None
+
+
 def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> EvidenceStore:
     """
     Deterministically merge evidence from parallel collectors into a single evidence store.
@@ -163,21 +192,38 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
     duplicate_count = 0
     total_items = 0
 
-    def is_valid_evidence(item: EvidenceItem) -> bool:
+    def is_valid_evidence(item: EvidenceItem) -> tuple[bool, str]:
         """Check if an evidence item meets minimum quality requirements."""
         if not item.url or not item.url.strip():
-            return False
+            return False, "Missing URL (could not be reconstructed)"
+
         if not item.quote or not item.quote.strip():
-            return False
-        return True
+            if not item.title:
+                return False, "Missing both quote and title"
+            return False, "Missing quote"
+
+        return True, ""
 
     # Merge all evidence items and deduplicate
-    for _, collector_response in section_stores.items():
+    for section_name, collector_response in section_stores.items():
         for item in collector_response.evidence_items:
             total_items += 1
-            if not is_valid_evidence(item):
+
+            # 1. Attempt to fix missing URL before validation
+            if not item.url:
+                fixed_url = construct_missing_url(item)
+                if fixed_url:
+                    item.url = fixed_url
+
+            # 2. Validate
+            is_valid, reason = is_valid_evidence(item)
+            if not is_valid:
+                logger.warning(
+                    f"Dropping evidence {item.id} from {section_name}: {reason}"
+                )
                 filtered_count += 1
                 continue
+
             # Compute content hash for deduplication
             content_str = f"{item.title}|{item.url or ''}|{item.quote}"
             content_hash = hashlib.sha256(content_str.encode()).hexdigest()
@@ -333,6 +379,7 @@ def is_section_covered(
 def build_gap_tasks(
     question_coverage: dict[str, dict[str, list[str]]],
     min_evidence: int,
+    guidance_map: dict[str, Any] | None = None,
 ) -> list[GapTask]:
     """
     Build question-level gap tasks from coverage. If the question does not meet the minimum evidence,
@@ -341,22 +388,44 @@ def build_gap_tasks(
     Args:
         question_coverage (dict[str, dict[str, list[str]]]): Coverage map.
         min_evidence (int): Minimum evidence required per question.
+        guidance_map (dict[str, Any] | None): Guidance from Research Head.
 
     Returns:
         list[dict[str, Any]]: Gap tasks for targeted collection.
     """
-    # TODO: Add section-level gap tasks when section minimums are not met.
     tasks: list[GapTask] = []
+
     for section, questions in question_coverage.items():
+        # Factor 1: Question Coverage (Quantitative)
+        # Check if individual questions meet the minimum evidence count
         missing_questions = [
             question
             for question, evidence_ids in questions.items()
-            if not is_question_covered(
-                evidence_ids, min_evidence
-            )  # this is the min evidence required per question
+            if not is_question_covered(evidence_ids, min_evidence)
         ]
+
+        # Factor 2: Qualitative Guidance (needs_more_research)
+        # Check if Research Head explicitly flagged the section
+        needs_more = False
+        if guidance_map:
+            section_guidance = guidance_map.get(section)
+            if section_guidance and isinstance(section_guidance, dict):
+                needs_more = section_guidance.get("needs_more_research", False)
+
+        if not missing_questions and needs_more:
+            # Force task for this section, include all questions to drive broad search
+            missing_questions = list(questions.keys())
+
+        # Factor 3: Section Coverage (Total Count)
+        # Check if the section as a whole meets the SECTION_MIN_EVIDENCE target
+        if not missing_questions:
+            if not is_section_covered(section, questions, min_evidence):
+                # Section total too low, force all questions to collect more volume
+                missing_questions = list(questions.keys())
+
         if not missing_questions:
             continue
+
         tasks.append(
             GapTask(
                 section=CommonSection(section),
