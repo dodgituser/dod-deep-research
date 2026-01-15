@@ -23,7 +23,7 @@ async def write_long_report(
     app_name: str,
     user_id: str,
     base_state: dict[str, Any],
-) -> tuple[MarkdownReport, list[dict]]:
+) -> MarkdownReport:
     """
     Write a report by iteratively generating each section.
 
@@ -34,14 +34,10 @@ async def write_long_report(
         base_state (dict[str, Any]): Shared state containing plan and evidence.
 
     Returns:
-        tuple[MarkdownReport, list[dict]]: Final report and response list.
+        MarkdownReport: Final report.
     """
     research_plan_dict = base_state.get("research_plan")
     evidence_store_dict = base_state.get("evidence_store")
-    if not research_plan_dict:
-        raise ValueError("Missing research_plan in state for long writer.")
-    if not evidence_store_dict:
-        raise ValueError("Missing evidence_store in state for long writer.")
 
     research_plan = ResearchPlan(**research_plan_dict)
     evidence_store = EvidenceStore(**evidence_store_dict)
@@ -92,8 +88,6 @@ async def write_long_report(
             session_id=session.id,
         )
         section_draft_raw = session.state.get("section_draft")
-        if not section_draft_raw:
-            raise ValueError(f"No response for section '{section.name}'.")
         section_draft = SectionDraft(**section_draft_raw)
         section_markdown = normalize_section_markdown(
             section_draft.section_markdown,
@@ -105,7 +99,7 @@ async def write_long_report(
     references_section = build_references_section(cited_ids, evidence_store)
     report_markdown = f"{report_draft}\n{references_section}".strip() + "\n"
 
-    return MarkdownReport(report_markdown=report_markdown), []
+    return MarkdownReport(report_markdown=report_markdown)
 
 
 async def run_section_writer(
@@ -138,7 +132,7 @@ async def run_section_writer(
             {"allowed_evidence_ids": [item.id for item in evidence_store.items]},
         )
 
-    report, json_responses = await write_long_report(
+    report = await write_long_report(
         runner=section_writer_runner,
         app_name=app_name,
         user_id=session_post.user_id,

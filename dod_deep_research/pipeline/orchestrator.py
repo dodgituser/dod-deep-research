@@ -158,7 +158,7 @@ async def run_pipeline_async(
                 final_session,
                 {"validation_report": validation_report},
             )
-            rewrite_report, _ = await write_long_report(
+            rewrite_report = await write_long_report(
                 runner=section_writer_runner,
                 app_name=app_name,
                 user_id=final_session.user_id,
