@@ -10,9 +10,7 @@ from dod_deep_research.agents.research_head.agent import research_head_agent
 from dod_deep_research.agents.planner.agent import create_planner_agent
 from dod_deep_research.agents.schemas import get_common_sections
 from dod_deep_research.agents.collector.agent import create_collector_agents
-from dod_deep_research.agents.callbacks.update_evidence_and_gaps import (
-    update_evidence_and_gaps,
-)
+from dod_deep_research.agents.callbacks.update_evidence import update_evidence
 from dod_deep_research.agents.shared_state import SharedState
 from dod_deep_research.agents.writer.agent import section_writer_agent
 from dod_deep_research.utils.writer import build_validation_report
@@ -91,7 +89,7 @@ async def run_pipeline_async(
     draft_runner = build_runner(
         agent=create_collector_agents(
             common_sections,
-            after_agent_callback=update_evidence_and_gaps,
+            after_agent_callback=update_evidence,
         ),
         app_name=app_name,
     )  # create target collector agents based on common sections that update the evidence store after running

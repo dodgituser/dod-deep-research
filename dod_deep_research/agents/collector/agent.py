@@ -76,8 +76,6 @@ def get_collector_tools():
 
 def create_collector_agent(
     section_name: str,
-    gap_override: GapTask | None = None,
-    guidance: dict[str, Any] | None = None,
     before_agent_callback: Callable[[CallbackContext], types.Content | None]
     | None = None,
 ) -> Agent:
@@ -86,33 +84,17 @@ def create_collector_agent(
 
     Args:
         section_name: Name of the section to collect evidence for.
-        gap_override: Optional gap task override for targeted collection.
         before_agent_callback: Callback to run before the agent executes.
 
     Returns:
         Agent: Configured collector agent for the section.
     """
     min_evidence = get_min_evidence(section_name)
-
-    if gap_override:
-        guidance_notes = ""
-        suggested_queries = ""
-        if guidance:
-            guidance_notes = str(guidance.get("notes", "")).strip()
-            suggested_queries = ", ".join(guidance.get("suggested_queries", []) or [])
-        prompt = TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
-            section_name=section_name,
-            missing_questions=", ".join(gap_override.missing_questions) or "None",
-            guidance_notes=guidance_notes or "None",
-            suggested_queries=suggested_queries or "None",
-            min_evidence=min_evidence,
-        )
-        agent_name = f"targeted_collector_{section_name}"
-    else:
-        prompt = COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
-            section_name=section_name, min_evidence=min_evidence
-        )
-        agent_name = f"collector_{section_name}"
+    prompt = COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
+        section_name=section_name,
+        min_evidence=min_evidence,
+    )
+    agent_name = f"collector_{section_name}"
 
     agent = Agent(
         name=agent_name,
@@ -162,19 +144,48 @@ def create_targeted_collector_agent(
 
     Args:
         gap: GapTask specifying the targeted collection parameters.
+        guidance: Suggestions for the section. notes + suggested queries
 
     Returns:
         Agent: Configured targeted collector agent.
     """
-    return create_collector_agent(
+    min_evidence = get_min_evidence(str(gap.section))
+    guidance_notes = ""
+    suggested_queries = ""
+    if guidance:
+        guidance_notes = str(guidance["notes"]).strip()
+        suggested_queries = ", ".join(guidance["suggested_queries"])
+    prompt = TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
         section_name=gap.section,
-        gap_override=gap,
-        guidance=guidance,
+        missing_questions=", ".join(gap.missing_questions) or "None",
+        guidance_notes=guidance_notes or "None",
+        suggested_queries=suggested_queries or "None",
+        min_evidence=min_evidence,
     )
+    agent_name = f"targeted_collector_{gap.section}"
+
+    agent = Agent(
+        name=agent_name,
+        instruction=prompt,
+        tools=_get_tools(),
+        model=GeminiModels.GEMINI_FLASH_LATEST.value.replace("models/", ""),
+        include_contents="none",
+        output_key=f"evidence_store_section_{gap.section}",
+        output_schema=CollectorResponse,
+        generate_content_config=GenerateContentConfig(
+            temperature=0.1,
+            http_options=get_http_options(),
+        ),
+    )
+
+    logger.debug(
+        f"""Collector agent {agent_name} created with tools: {agent.tools} and prompt: {agent.instruction}"""
+    )
+    return agent
 
 
 def create_targeted_collector_agents(
-    gaps: list[GapTask],
+    gap_tasks: list[GapTask],
     guidance_map: dict[str, dict[str, Any]] | None = None,
     after_agent_callback: Callable[[CallbackContext], types.Content | None]
     | None = None,
@@ -183,13 +194,14 @@ def create_targeted_collector_agents(
     Create a parallel agent with targeted collectors for the given tasks.
 
     Args:
-        gaps: List of GapTask objects.
+        gap_tasks: List of GapTask objects.
+        guidance_map: Suggestions for each section. section -> notes + suggested queries
         after_agent_callback: Optional callback to run after collectors complete.
 
     Returns:
         ParallelAgent with targeted collector agents.
     """
-    if not gaps:
+    if not gap_tasks:
         return ParallelAgent(
             name="targeted_collectors_empty",
             sub_agents=[],
@@ -200,16 +212,13 @@ def create_targeted_collector_agents(
             gap,
             guidance=guidance_map.get(str(gap.section)) if guidance_map else None,
         )
-        for gap in gaps
+        for gap in gap_tasks
     ]
 
     parallel_agent = ParallelAgent(
         name="targeted_collectors",
         sub_agents=collector_agents,
+        after_agent_callback=after_agent_callback,
     )
-
-    # Apply callback if provided
-    if after_agent_callback:
-        parallel_agent.after_agent_callback = after_agent_callback
 
     return parallel_agent

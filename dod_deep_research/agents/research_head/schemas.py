@@ -19,7 +19,7 @@ class ResearchHeadGuidance(BaseModel):
     suggested_queries: list[str] = Field(
         default_factory=list,
         description="Suggested search queries for targeted collection.",
-    )
+    )  # TODO how will the research head know how to suggest queries?
 
 
 class ResearchHeadPlan(BaseModel):

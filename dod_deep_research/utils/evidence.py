@@ -299,6 +299,7 @@ def is_question_covered(evidence_ids: list[str], min_evidence: int) -> bool:
 
 
 def is_section_covered(
+    section_name: str,
     section_coverage: dict[str, list[str]],
     min_evidence: int,
 ) -> bool:
@@ -306,16 +307,27 @@ def is_section_covered(
     Check whether all questions in a section meet the minimum evidence threshold.
 
     Args:
+        section_name (str): Section name (CommonSection value as string).
         section_coverage (dict[str, list[str]]): Question -> evidence IDs map.
         min_evidence (int): Minimum evidence required per question.
 
     Returns:
-        bool: True if all questions meet the threshold.
+        bool: True if all questions meet the threshold and section target is met.
     """
-    return all(
+    question_covered = all(
         is_question_covered(evidence_ids, min_evidence)
         for evidence_ids in section_coverage.values()
     )
+    if not question_covered:
+        return False
+
+    section_min = get_min_evidence(section_name)
+    unique_evidence_ids = {
+        evidence_id
+        for evidence_ids in section_coverage.values()
+        for evidence_id in evidence_ids
+    }
+    return len(unique_evidence_ids) >= section_min
 
 
 def build_gap_tasks(

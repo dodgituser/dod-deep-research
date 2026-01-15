@@ -1,4 +1,4 @@
-"""Callback for aggregating evidence and updating gap tasks after collectors run."""
+"""Callback for aggregating evidence after collectors run."""
 
 import logging
 
@@ -9,7 +9,6 @@ from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.utils.evidence import (
     EvidenceStore,
     aggregate_evidence,
-    build_gap_tasks,
     build_question_coverage,
     extract_section_stores,
 )
@@ -17,11 +16,11 @@ from dod_deep_research.utils.evidence import (
 logger = logging.getLogger(__name__)
 
 
-def update_evidence_and_gaps(
+def update_evidence(
     callback_context: CallbackContext,
 ) -> types.Content | None:
     """
-    Aggregate evidence and update coverage/gap tasks after collectors complete.
+    Aggregate evidence and update coverage after collectors complete.
 
     Args:
         callback_context (CallbackContext): Callback context with agent info and state.
@@ -45,9 +44,7 @@ def update_evidence_and_gaps(
         plan = ResearchPlan(**research_plan)
         store = EvidenceStore(**callback_context.state.get("evidence_store"))
         question_coverage = build_question_coverage(plan, store)
-        gap_tasks = build_gap_tasks(question_coverage, min_evidence=1)
         callback_context.state["question_coverage"] = question_coverage
-        callback_context.state["gap_tasks"] = gap_tasks
 
     logger.info(
         "[Callback] Evidence aggregation complete: %s unique items for agent '%s'",
