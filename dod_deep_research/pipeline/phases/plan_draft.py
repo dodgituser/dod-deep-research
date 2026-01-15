@@ -2,46 +2,18 @@
 
 import logging
 
-from google.adk import Agent, runners
-from google.adk.agents import SequentialAgent
+from google.adk import runners
 from google.genai import types
 
-from dod_deep_research.agents.collector.agent import create_collector_agents
-from dod_deep_research.agents.callbacks.update_evidence_and_gaps import (
-    update_evidence_and_gaps,
-)
-from dod_deep_research.agents.planner.schemas import ResearchPlan
-from dod_deep_research.agents.schemas import get_common_sections
-from dod_deep_research.core import persist_state_delta, run_agent
+from dod_deep_research.core import persist_section_plan_to_state, run_agent
 
 logger = logging.getLogger(__name__)
 
 
-def get_plan_draft_agents(planner: Agent) -> SequentialAgent:
-    """
-    Build the pre-aggregation pipeline (planner + collectors).
-
-    Args:
-        planner (Agent): Planner agent to use.
-
-    Returns:
-        SequentialAgent: Configured pre-aggregation agent.
-    """
-    return SequentialAgent(
-        name="plan_draft_pipeline",
-        sub_agents=[
-            planner,
-            create_collector_agents(
-                [section.value for section in get_common_sections()],
-                after_agent_callback=update_evidence_and_gaps,
-            ),
-        ],
-    )
-
-
-async def run_pre_aggregation(
+async def run_plan_draft(
     app_name: str,
-    plan_draft_runner: runners.Runner,
+    plan_runner: runners.Runner,
+    draft_runner: runners.Runner,
     user_id: str,
     indication: str,
     drug_name: str,
@@ -57,7 +29,8 @@ async def run_pre_aggregation(
 
     Args:
         app_name (str): App name for session creation.
-        plan_draft_runner (runners.Runner): Pre-aggregation runner.
+        plan_runner (runners.Runner): Planner runner.
+        draft_runner (runners.Runner): Draft collectors runner.
         user_id (str): User ID.
         indication (str): Indication name.
         drug_name (str): Drug name.
@@ -73,7 +46,7 @@ async def run_pre_aggregation(
     """
     logger.info("Starting pre-aggregation phase (planner + collectors)")
 
-    session = await plan_draft_runner.session_service.create_session(
+    session = await plan_runner.session_service.create_session(
         app_name=app_name,
         user_id=user_id,
         state={
@@ -88,8 +61,8 @@ async def run_pre_aggregation(
         },
     )
 
-    json_responses = await run_agent(
-        plan_draft_runner,
+    await run_agent(
+        plan_runner,
         session.user_id,
         session.id,
         types.Content(
@@ -98,37 +71,26 @@ async def run_pre_aggregation(
         ),
     )
 
-    updated_session = await plan_draft_runner.session_service.get_session(
+    updated_session = await plan_runner.session_service.get_session(
         app_name=app_name,
         user_id=user_id,
         session_id=session.id,
     )
+    state = updated_session.state  # Get the updated state after planner agent execution
+
+    updated_session = await persist_section_plan_to_state(
+        plan_runner.session_service,
+        updated_session,
+    )  # Persist the research plan into sections into the session state base on planner output (this could be a callback)
     state = updated_session.state
 
-    research_plan = state.get("research_plan")
-    if research_plan:
-        try:
-            plan = ResearchPlan(**research_plan)
-            section_state = {
-                f"research_section_{section.name}": section.model_dump()
-                for section in plan.sections
-            }
-            updated_session = await persist_state_delta(
-                plan_draft_runner.session_service,
-                updated_session,
-                section_state,
-            )
-            state = updated_session.state
-        except Exception as exc:
-            logger.warning("Failed to persist research section state: %s", exc)
-
-    collectors_session = await plan_draft_runner.session_service.create_session(
+    collectors_session = await draft_runner.session_service.create_session(
         app_name=app_name,
         user_id=session.user_id,
-        state=state.copy(),
-    )
-    collector_responses = await run_agent(
-        plan_draft_runner,
+        state=state,
+    )  # Run the draft collectors based on the updated state from the planner
+    await run_agent(
+        draft_runner,
         collectors_session.user_id,
         collectors_session.id,
         types.Content(
@@ -136,13 +98,11 @@ async def run_pre_aggregation(
             role="user",
         ),
     )
-    json_responses.extend(collector_responses)
 
-    updated_session = await plan_draft_runner.session_service.get_session(
+    updated_session = await draft_runner.session_service.get_session(
         app_name=app_name,
         user_id=collectors_session.user_id,
         session_id=collectors_session.id,
-    )
-    research_plan = updated_session.state.get("research_plan")
+    )  # Get the final updated session after draft collectors execution
     logger.info("Pre-aggregation phase completed")
-    return updated_session, json_responses
+    return updated_session, []

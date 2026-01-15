@@ -34,7 +34,7 @@ async def write_long_report(
         base_state (dict[str, Any]): Shared state containing plan and evidence.
 
     Returns:
-        tuple[MarkdownReport, list[dict]]: Final report and JSON responses.
+        tuple[MarkdownReport, list[dict]]: Final report and response list.
     """
     research_plan_dict = base_state.get("research_plan")
     evidence_store_dict = base_state.get("evidence_store")
@@ -58,8 +58,6 @@ async def write_long_report(
     report_draft = f"# {report_title}\n\n"
     report_draft += format_table_of_contents(research_plan.sections)
 
-    json_responses: list[dict] = []
-
     for section in research_plan.sections:
         session = await runner.session_service.create_session(
             app_name=app_name,
@@ -79,7 +77,7 @@ async def write_long_report(
                 "allowed_evidence_ids": allowed_evidence_ids,
             },
         )
-        responses = await run_agent(
+        await run_agent(
             runner,
             session.user_id,
             session.id,
@@ -88,10 +86,15 @@ async def write_long_report(
                 role="user",
             ),
         )
-        json_responses.extend(responses)
-        if not responses:
+        session = await runner.session_service.get_session(
+            app_name=app_name,
+            user_id=session.user_id,
+            session_id=session.id,
+        )
+        section_draft_raw = session.state.get("section_draft")
+        if not section_draft_raw:
             raise ValueError(f"No response for section '{section.name}'.")
-        section_draft = SectionDraft(**responses[-1])
+        section_draft = SectionDraft(**section_draft_raw)
         section_markdown = normalize_section_markdown(
             section_draft.section_markdown,
             str(section.name),
@@ -102,7 +105,7 @@ async def write_long_report(
     references_section = build_references_section(cited_ids, evidence_store)
     report_markdown = f"{report_draft}\n{references_section}".strip() + "\n"
 
-    return MarkdownReport(report_markdown=report_markdown), json_responses
+    return MarkdownReport(report_markdown=report_markdown), []
 
 
 async def run_section_writer(

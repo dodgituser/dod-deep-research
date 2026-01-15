@@ -1,6 +1,5 @@
 """Core utilities for deep research agent pipeline."""
 
-import json
 import logging
 import shutil
 from datetime import datetime
@@ -14,6 +13,7 @@ from pydantic import BaseModel
 from google.adk.events import Event, EventActions
 
 from dod_deep_research.agents.plugins import get_default_plugins
+from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 
 
@@ -122,42 +122,24 @@ async def run_agent(
     user_id: str,
     session_id: str,
     new_message: types.Content,
-) -> list[dict]:
+) -> None:
     """
-    Run an agent and collect JSON responses from events.
+    Run an agent for a new message.
 
     Args:
         runner: The InMemoryRunner instance to use.
         user_id: User ID for the session.
         session_id: Session ID to run the agent in.
         new_message: The message to send to the agent.
-
-    Returns:
-        List of parsed JSON objects from final responses.
     """
-    json_responses = []
-
-    async for event in runner.run_async(
+    logger.debug("Running agent for session %s", session_id)
+    async for _event in runner.run_async(
         user_id=user_id,
         session_id=session_id,
         new_message=new_message,
     ):
-        if not event.is_final_response():
-            continue
-
-        if not (event.content and event.content.parts):
-            continue
-
-        for part in event.content.parts:
-            if not part.text:
-                continue
-            try:
-                parsed_json = json.loads(part.text)
-            except json.JSONDecodeError:
-                continue
-            json_responses.append(parsed_json)
-
-    return json_responses
+        pass
+    logger.debug("Agent run complete for session %s", session_id)
 
 
 def get_output_path(indication: str) -> Path:
@@ -219,6 +201,32 @@ def get_research_head_guidance(state: dict[str, Any]) -> dict[str, dict[str, Any
     return guidance_map
 
 
+async def persist_section_plan_to_state(
+    session_service: runners.InMemorySessionService,
+    session: runners.Session,
+) -> runners.Session:
+    """
+    Persist per-section research plan state to the session.
+
+    Args:
+        session_service (runners.InMemorySessionService): Session service for persistence.
+        session (runners.Session): Session containing research plan state.
+
+    Returns:
+        runners.Session: Updated session after persisting section state.
+    """
+    research_plan = session.state.get("research_plan")
+    if not research_plan:
+        return session
+
+    plan = ResearchPlan(**research_plan)
+    section_state = {
+        f"research_section_{section.name}": section.model_dump()
+        for section in plan.sections
+    }
+    return await persist_state_delta(session_service, session, section_state)
+
+
 def prepare_outputs_dir() -> Path:
     """
     Create the outputs directory and clear any existing run subdirectories.
@@ -240,7 +248,8 @@ async def persist_state_delta(
     state_delta: dict[str, Any],
 ) -> runners.Session:
     """
-    Persist a state update by appending a system event.
+    Persist a state update by appending a system event. For a given session service we
+    have a session in which we want to merge in a state delta.
 
     Args:
         session_service: Session service used to append events.
@@ -262,4 +271,4 @@ async def persist_state_delta(
         app_name=session.app_name,
         user_id=session.user_id,
         session_id=session.id,
-    )
+    )  # gets updated state

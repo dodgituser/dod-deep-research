@@ -9,6 +9,10 @@ from dod_deep_research.utils.evidence import EvidenceStore
 from dod_deep_research.agents.research_head.agent import research_head_agent
 from dod_deep_research.agents.planner.agent import create_planner_agent
 from dod_deep_research.agents.schemas import get_common_sections
+from dod_deep_research.agents.collector.agent import create_collector_agents
+from dod_deep_research.agents.callbacks.update_evidence_and_gaps import (
+    update_evidence_and_gaps,
+)
 from dod_deep_research.agents.shared_state import SharedState
 from dod_deep_research.agents.writer.agent import section_writer_agent
 from dod_deep_research.utils.writer import build_validation_report
@@ -21,12 +25,11 @@ from dod_deep_research.core import (
 )
 from dod_deep_research.evals import pipeline_eval
 from dod_deep_research.pipeline.phases import (
-    run_iterative_loop,
+    run_iterative_research,
     run_section_writer,
-    run_pre_aggregation,
+    run_plan_draft,
     write_long_report,
 )
-from dod_deep_research.pipeline.phases.plan_draft import get_plan_draft_agents
 from dod_deep_research.prompts.indication_prompt import generate_indication_prompt
 
 logger = logging.getLogger(__name__)
@@ -72,27 +75,34 @@ async def run_pipeline_async(
         drug_name=drug_name,
         drug_form=drug_form,
         drug_generic_name=drug_generic_name,
-    )
+    )  # generate prompt for the planner agent based on cli arguments
 
-    planner_agent = create_planner_agent(indication_prompt=indication_prompt)
-    plan_draft_runner = build_runner(
-        agent=get_plan_draft_agents(planner=planner_agent),
+    ######################
+    # Plan Draft
+    ######################
+    planner_agent = create_planner_agent(
+        indication_prompt=indication_prompt
+    )  # dynamically create planner agent
+    common_sections = [section.value for section in get_common_sections()]
+    plan_runner = build_runner(
+        agent=planner_agent,
         app_name=app_name,
     )
-    research_head_runner = build_runner(agent=research_head_agent, app_name=app_name)
-    section_writer_runner = build_runner(
-        agent=section_writer_agent,
+    draft_runner = build_runner(
+        agent=create_collector_agents(
+            common_sections,
+            after_agent_callback=update_evidence_and_gaps,
+        ),
         app_name=app_name,
-    )
+    )  # create target collector agents based on common sections that update the evidence store after running
 
     events_file = get_output_events_path(indication)
     logger.info("Events will be saved to: %s", events_file)
 
-    common_sections = [section.value for section in get_common_sections()]
-
-    session, pre_responses = await run_pre_aggregation(
+    session, pre_responses = await run_plan_draft(
         app_name=app_name,
-        plan_draft_runner=plan_draft_runner,
+        plan_runner=plan_runner,
+        draft_runner=draft_runner,
         user_id=user_id,
         indication=indication,
         drug_name=drug_name,
@@ -102,14 +112,27 @@ async def run_pipeline_async(
         drug_aliases=drug_aliases,
         common_sections=common_sections,
         **kwargs,
-    )
+    )  # pass the session downstream to the next phases
 
-    session_loop, loop_responses = await run_iterative_loop(
+    ######################
+    # Iterative Research
+    ######################
+    research_head_runner = build_runner(
+        agent=research_head_agent, app_name=app_name
+    )  # target collectors are created dynamically based on plan
+    session_loop, loop_responses = await run_iterative_research(
         app_name=app_name,
         runner_research_head=research_head_runner,
         session=session,
-    )
+    )  # pass the session downstream to the next phase
 
+    ######################
+    # Section Writer
+    ######################
+    section_writer_runner = build_runner(
+        agent=section_writer_agent,
+        app_name=app_name,
+    )
     final_session, post_responses = await run_section_writer(
         app_name=app_name,
         section_writer_runner=section_writer_runner,

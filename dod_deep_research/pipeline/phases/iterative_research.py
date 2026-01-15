@@ -16,7 +16,7 @@ from dod_deep_research.utils.evidence import GapTask
 logger = logging.getLogger(__name__)
 
 
-async def run_iterative_loop(
+async def run_iterative_research(
     app_name: str,
     runner_research_head: runners.Runner,
     session: runners.Session,
@@ -40,20 +40,21 @@ async def run_iterative_loop(
         app_name=app_name,
         user_id=session.user_id,
         state=session.state.copy(),
-    )
+    )  # create new session for loop phase while maintaining state from previous phase
 
-    json_responses: list[dict] = []
-    for loop_iteration in range(1, max_iterations + 1):
-        logger.info("Gap-driven loop iteration %s", loop_iteration)
+    for research_iteration in range(1, max_iterations + 1):
+        logger.info("Gap-driven loop iteration %s", research_iteration)
 
-        loop_message = types.Content(
+        continue_research_message = types.Content(
             parts=[types.Part.from_text(text="Continue gap analysis.")],
             role="user",
         )
-        loop_responses = await run_agent(
-            runner_research_head, session_loop.user_id, session_loop.id, loop_message
+        await run_agent(
+            runner_research_head,
+            session_loop.user_id,
+            session_loop.id,
+            continue_research_message,
         )
-        json_responses.extend(loop_responses)
 
         session_loop = await runner_research_head.session_service.get_session(
             app_name=app_name,
@@ -103,18 +104,20 @@ async def run_iterative_loop(
             session_id=session_loop.id,
         )
 
-    if loop_iteration >= max_iterations:
+    if research_iteration >= max_iterations:
         logger.info(
             "Max iterations reached and research head was not satisfied, running final gap analysis"
         )
-        loop_message = types.Content(
+        continue_research_message = types.Content(
             parts=[types.Part.from_text(text="Continue gap analysis.")],
             role="user",
         )
-        loop_responses = await run_agent(
-            runner_research_head, session_loop.user_id, session_loop.id, loop_message
+        await run_agent(
+            runner_research_head,
+            session_loop.user_id,
+            session_loop.id,
+            continue_research_message,
         )
-        json_responses.extend(loop_responses)
         session_loop = await runner_research_head.session_service.get_session(
             app_name=app_name,
             user_id=session_loop.user_id,
@@ -122,4 +125,4 @@ async def run_iterative_loop(
         )
 
     logger.info("Gap-driven loop phase completed")
-    return session_loop, json_responses
+    return session_loop, []
