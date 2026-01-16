@@ -47,7 +47,7 @@ async def run_iterative_research(
         app_name=app_name,
         user_id=session.user_id,
         state=session.state.copy(),
-    )  # create new session for loop phase while maintaining state from previous phase
+    )  # create new session for loop phase while maintaining state from previous phase this will be the same session throughout the loop
 
     for research_iteration in range(1, max_iterations + 1):
         logger.info("Gap-driven loop iteration %s", research_iteration)
@@ -104,7 +104,7 @@ async def run_iterative_research(
             app_name=app_name,
             user_id=research_head_session.user_id,
             state=research_head_session.state.copy(),
-        )  # create a new session for the targeted collectors while maintaining state from research head
+        )  # create a new session each loop for the targeted collectors while maintaining state from research head
         await run_agent(
             targeted_runner,
             targeted_session.user_id,
@@ -131,7 +131,7 @@ async def run_iterative_research(
                 research_head_runner.session_service,
                 research_head_session,
                 state_delta,
-            )
+            )  # reuse the same research head session but with updated evidence store
         else:
             research_head_session = (
                 await research_head_runner.session_service.get_session(
