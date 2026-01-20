@@ -19,6 +19,10 @@ from dod_deep_research.agents.callbacks.after_model_log_callback import (
 from dod_deep_research.agents.callbacks.after_tool_log_callback import (
     after_tool_log_callback,
 )
+from dod_deep_research.agents.callbacks.clinical_trials_tool_callback import (
+    after_clinical_trials_tool_callback,
+    before_clinical_trials_tool_callback,
+)
 from dod_deep_research.agents.callbacks.before_agent_log_callback import (
     before_agent_log_callback,
 )
@@ -128,6 +132,11 @@ class AgentLoggingPlugin(BasePlugin):
         Returns:
             dict[str, Any] | None: Returning a dict skips tool execution.
         """
+        modifier_response = before_clinical_trials_tool_callback(
+            tool, tool_args, tool_context
+        )
+        if modifier_response is not None:
+            return modifier_response
         return before_tool_log_callback(tool, tool_args, tool_context)
 
     async def after_tool_callback(
@@ -150,6 +159,11 @@ class AgentLoggingPlugin(BasePlugin):
         Returns:
             dict | None: Returning a dict replaces the tool response.
         """
+        modified_response = after_clinical_trials_tool_callback(
+            tool, result, tool_context
+        )
+        if modified_response is not None:
+            result = modified_response
         return after_tool_log_callback(
             tool=tool,
             tool_response=result,

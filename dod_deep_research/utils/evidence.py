@@ -231,7 +231,7 @@ def aggregate_evidence(
             continue
 
         # Compute content hash for deduplication
-        content_str = f"{item.title}|{item.url or ''}|{item.quote}"
+        content_str = f"{item.section}|{item.title}|{item.url or ''}|{item.quote}"
         content_hash = hashlib.sha256(content_str.encode()).hexdigest()
 
         # Keep first occurrence if duplicate
