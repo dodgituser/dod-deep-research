@@ -27,7 +27,7 @@ async def run_iterative_research(
     app_name: str,
     research_head_runner: runners.Runner,
     session: runners.Session,
-    max_iterations: int = 5,
+    max_iterations: int = 2,
 ) -> runners.Session:
     """
     Run the gap-driven research loop.
