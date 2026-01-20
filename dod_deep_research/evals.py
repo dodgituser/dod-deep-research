@@ -67,8 +67,13 @@ def _compute_agent_iterations(agent_logs_dir: Path) -> dict[str, int]:
         if not agent_dir.name.startswith("targeted_collector_"):
             continue
         count = 0
-        for log_path in agent_dir.glob("*_callback_after_agent.jsonl"):
-            count += sum(1 for _ in log_path.read_text().splitlines())
+        after_agent_logs = list(agent_dir.glob("*_callback_after_agent.jsonl"))
+        if after_agent_logs:
+            for log_path in after_agent_logs:
+                count += sum(1 for _ in log_path.read_text().splitlines())
+        else:
+            for log_path in agent_dir.glob("*_callback_before_agent.jsonl"):
+                count += sum(1 for _ in log_path.read_text().splitlines())
         if count:
             results[agent_dir.name] = count
     return results

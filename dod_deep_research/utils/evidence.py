@@ -155,7 +155,10 @@ def construct_missing_url(item: EvidenceItem) -> str | None:
     return None
 
 
-def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> EvidenceStore:
+def aggregate_evidence(
+    section_stores: dict[str, CollectorResponse],
+    existing_store: EvidenceStore | None = None,
+) -> EvidenceStore:
     """
     Deterministically merge evidence from parallel collectors into a single evidence store.
 
@@ -181,7 +184,7 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
         (preserving order from collectors). Evidence IDs are preserved as-is since
         they're already prefixed with section names.
     """
-    if not section_stores:
+    if not section_stores and not existing_store:
         logger.warning("No section stores provided for aggregation")
         return EvidenceStore(items=[], by_section=[], by_source=[], hash_index=[])
 
@@ -204,37 +207,40 @@ def aggregate_evidence(section_stores: dict[str, CollectorResponse]) -> Evidence
 
         return True, ""
 
-    # Merge all evidence items and deduplicate
-    for section_name, collector_response in section_stores.items():
-        for item in collector_response.evidence_items:
-            total_items += 1
+    # Merge all evidence items (existing store + current section stores) and deduplicate
+    merged_items: list[EvidenceItem] = []
+    if existing_store:
+        merged_items.extend(existing_store.items)
+    for _section_name, collector_response in section_stores.items():
+        merged_items.extend(collector_response.evidence_items)
 
-            # 1. Attempt to fix missing URL before validation
-            if not item.url:
-                fixed_url = construct_missing_url(item)
-                if fixed_url:
-                    item.url = fixed_url
+    for item in merged_items:
+        total_items += 1
 
-            # 2. Validate
-            is_valid, reason = is_valid_evidence(item)
-            if not is_valid:
-                logger.warning(
-                    f"Dropping evidence {item.id} from {section_name}: {reason}"
-                )
-                filtered_count += 1
-                continue
+        # 1. Attempt to fix missing URL before validation
+        if not item.url:
+            fixed_url = construct_missing_url(item)
+            if fixed_url:
+                item.url = fixed_url
 
-            # Compute content hash for deduplication
-            content_str = f"{item.title}|{item.url or ''}|{item.quote}"
-            content_hash = hashlib.sha256(content_str.encode()).hexdigest()
+        # 2. Validate
+        is_valid, reason = is_valid_evidence(item)
+        if not is_valid:
+            logger.warning(f"Dropping evidence {item.id} from {item.section}: {reason}")
+            filtered_count += 1
+            continue
 
-            # Keep first occurrence if duplicate
-            if content_hash not in seen_hashes:
-                seen_hashes[content_hash] = item.id
-                item_hashes[item.id] = content_hash
-                all_items.append(item)
-            else:
-                duplicate_count += 1
+        # Compute content hash for deduplication
+        content_str = f"{item.title}|{item.url or ''}|{item.quote}"
+        content_hash = hashlib.sha256(content_str.encode()).hexdigest()
+
+        # Keep first occurrence if duplicate
+        if content_hash not in seen_hashes:
+            seen_hashes[content_hash] = item.id
+            item_hashes[item.id] = content_hash
+            all_items.append(item)
+        else:
+            duplicate_count += 1
 
     # Build indexes
     by_section: dict[str, list[str]] = {}

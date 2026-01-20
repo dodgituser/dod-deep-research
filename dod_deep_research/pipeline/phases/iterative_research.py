@@ -52,10 +52,44 @@ async def run_iterative_research(
     for research_iteration in range(1, max_iterations + 1):
         logger.info("Gap-driven loop iteration %s", research_iteration)
 
+        # Rebuild question coverage to ensure quantitative gaps are detected correctly
+        plan_data = research_head_session.state.get("research_plan")
+        store_data = research_head_session.state.get("evidence_store")
+
+        if not plan_data or not store_data:
+            logger.warning(
+                "Missing research_plan or evidence_store; ending gap-driven loop"
+            )
+            break
+
+        question_coverage = build_question_coverage(
+            ResearchPlan(**plan_data), EvidenceStore(**store_data)
+        )
+        logger.info(
+            "Analyzing evidence coverage for %d sections", len(question_coverage)
+        )
+
+        gap_tasks = build_gap_tasks(question_coverage, min_evidence=1)
+
+        research_head_session = await persist_state_delta(
+            research_head_runner.session_service,
+            research_head_session,
+            {
+                "gap_tasks": [task.model_dump() for task in gap_tasks],
+                "question_coverage": question_coverage,
+            },
+        )
+
+        if not gap_tasks:
+            logger.info("No gap tasks remain; ending gap-driven loop")
+            break
+        else:
+            logger.info("Identified %d gap tasks to address", len(gap_tasks))
+
         continue_research_message = types.Content(
-            parts=[types.Part.from_text(text="Continue gap analysis.")],
+            parts=[types.Part.from_text(text="Provide guidance for the gap tasks.")],
             role="user",
-        )  # Base message to prompt research head to execeute
+        )
         await run_agent(
             research_head_runner,
             research_head_session.user_id,
@@ -67,32 +101,16 @@ async def run_iterative_research(
             app_name=app_name,
             user_id=research_head_session.user_id,
             session_id=research_head_session.id,
-        )  # update session after research head runs to get latest state
+        )
 
-        # Rebuild question coverage to ensure quantitative gaps are detected correctly
-        plan_data = research_head_session.state.get("research_plan")
-        store_data = research_head_session.state.get("evidence_store")
-
-        if plan_data and store_data:
-            question_coverage = build_question_coverage(
-                ResearchPlan(**plan_data), EvidenceStore(**store_data)
-            )
-            logger.info(
-                "Analyzing evidence coverage for %d sections", len(question_coverage)
-            )
-
-        guidance_map = get_research_head_guidance(
-            research_head_session.state
-        )  # section -> notes + suggested queries
-
-        gap_tasks = build_gap_tasks(
-            question_coverage, min_evidence=1, guidance_map=guidance_map
-        )  # each question must have at least min_evidence piece of evidence AND meet the section min seen in SECTION_MIN_EVIDENCE (not currently enforced deterministically, only enforced through prompt)
-        if not gap_tasks:
-            logger.info("No gap tasks remain; ending gap-driven loop")
-            break
-        else:
-            logger.info("Identified %d gap tasks to address", len(gap_tasks))
+        allowed_sections = {str(task.section) for task in gap_tasks}
+        guidance_map = {
+            section: guidance
+            for section, guidance in get_research_head_guidance(
+                research_head_session.state
+            ).items()
+            if section in allowed_sections
+        }
 
         targeted_collectors = create_targeted_collector_agents(
             gap_tasks,
@@ -125,6 +143,10 @@ async def run_iterative_research(
         state_delta = {}
         if "evidence_store" in targeted_session.state:
             state_delta["evidence_store"] = targeted_session.state["evidence_store"]
+        if "question_coverage" in targeted_session.state:
+            state_delta["question_coverage"] = targeted_session.state[
+                "question_coverage"
+            ]
 
         if state_delta:
             research_head_session = await persist_state_delta(
@@ -140,26 +162,6 @@ async def run_iterative_research(
                     session_id=research_head_session.id,
                 )
             )
-
-    if research_iteration >= max_iterations:
-        logger.info(
-            "Max iterations reached and research head was not satisfied, running final gap analysis"
-        )
-        continue_research_message = types.Content(
-            parts=[types.Part.from_text(text="Continue gap analysis.")],
-            role="user",
-        )
-        await run_agent(
-            research_head_runner,
-            research_head_session.user_id,
-            research_head_session.id,
-            continue_research_message,
-        )
-        research_head_session = await research_head_runner.session_service.get_session(
-            app_name=app_name,
-            user_id=research_head_session.user_id,
-            session_id=research_head_session.id,
-        )
 
     logger.info("Gap-driven loop phase completed")
     return research_head_session

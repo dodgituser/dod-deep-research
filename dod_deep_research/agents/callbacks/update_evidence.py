@@ -36,7 +36,12 @@ def update_evidence(
         logger.info("[Callback] No section stores found to aggregate")
         return None
 
-    evidence_store = aggregate_evidence(section_stores)
+    existing_store = None
+    existing_store_raw = state.get("evidence_store")
+    if isinstance(existing_store_raw, dict):
+        existing_store = EvidenceStore(**existing_store_raw)
+
+    evidence_store = aggregate_evidence(section_stores, existing_store=existing_store)
     callback_context.state["evidence_store"] = evidence_store.model_dump()
 
     research_plan = callback_context.state.get("research_plan")
