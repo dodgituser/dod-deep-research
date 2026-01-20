@@ -78,7 +78,7 @@ async def run_iterative_research(
                 "gap_tasks": [task.model_dump() for task in gap_tasks],
                 "question_coverage": question_coverage,
             },
-        )
+        )  # update session with new gap tasks and question coverage (from drafters or targeted collectors)
 
         if not gap_tasks:
             logger.info("No gap tasks remain; ending gap-driven loop")
