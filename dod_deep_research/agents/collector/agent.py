@@ -11,6 +11,9 @@ from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 from google.genai import types
 
+from dod_deep_research.agents.callbacks.after_agent_log_callback import (
+    after_agent_log_callback,
+)
 from dod_deep_research.agents.collector.prompt import (
     COLLECTOR_AGENT_PROMPT_TEMPLATE,
     TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE,
@@ -34,8 +37,8 @@ def _get_tools():
     pubmed_toolset = McpToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=os.getenv("PUBMED_MCP_URL", "http://127.0.0.1:3017/mcp"),
-            timeout=60,
-            sse_read_timeout=60,
+            timeout=180,
+            sse_read_timeout=180,
             headers={"Accept": "application/json, text/event-stream"},
             terminate_on_close=False,
         ),
@@ -44,8 +47,8 @@ def _get_tools():
     clinical_trials_toolset = McpToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=os.getenv("CLINICAL_TRIALS_MCP_URL", "http://127.0.0.1:3018/mcp"),
-            timeout=60,
-            sse_read_timeout=60,
+            timeout=180,
+            sse_read_timeout=180,
             headers={"Accept": "application/json, text/event-stream"},
             terminate_on_close=False,
         ),
@@ -53,9 +56,9 @@ def _get_tools():
     )
     exa_toolset = McpToolset(
         connection_params=StreamableHTTPConnectionParams(
-            url=os.getenv("EXA_MCP_URL"),
-            timeout=60,
-            sse_read_timeout=60,
+            url=os.getenv("EXA_MCP_URL", "http://127.0.0.1:3019/mcp"),
+            timeout=10,
+            sse_read_timeout=10,
             headers={"Accept": "application/json, text/event-stream"},
             terminate_on_close=False,
         ),
@@ -63,7 +66,7 @@ def _get_tools():
     )
     return [
         pubmed_toolset,
-        # reflect_step,
+        reflect_step,
         clinical_trials_toolset,
         exa_toolset,
     ]
@@ -163,8 +166,9 @@ def create_targeted_collector_agent(
     agent = Agent(
         name=agent_name,
         instruction=prompt,
-        tools=_get_tools(),
-        model=GeminiModels.GEMINI_FLASH_LATEST.value.replace("models/", ""),
+        tools=[t for t in _get_tools() if t != reflect_step],
+        model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
+        after_agent_callback=after_agent_log_callback,
         include_contents="none",
         output_key=f"evidence_store_section_{gap.section}",
         output_schema=CollectorResponse,

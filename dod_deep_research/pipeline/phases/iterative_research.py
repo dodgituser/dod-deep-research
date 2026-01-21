@@ -69,7 +69,7 @@ async def run_iterative_research(
             "Analyzing evidence coverage for %d sections", len(question_coverage)
         )
 
-        gap_tasks = build_gap_tasks(question_coverage, min_evidence=1)
+        gap_tasks = build_gap_tasks(question_coverage, min_evidence=2)
 
         research_head_session = await persist_state_delta(
             research_head_runner.session_service,
@@ -147,6 +147,11 @@ async def run_iterative_research(
             state_delta["question_coverage"] = targeted_session.state[
                 "question_coverage"
             ]
+
+        # Propagate tool payloads to avoid redundant searches in next iteration
+        for key, value in targeted_session.state.items():
+            if key.startswith("tool_payloads_"):
+                state_delta[key] = value
 
         if state_delta:
             research_head_session = await persist_state_delta(

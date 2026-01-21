@@ -65,7 +65,21 @@ class EvidenceItem(BaseModel):
         url = data.get("url") or ""
         quote = data.get("quote") or ""
         content_sig = f"{url}|{quote}"
-        data["id"] = hashlib.sha256(content_sig.encode()).hexdigest()[:8]
+        generated_hash = hashlib.sha256(content_sig.encode()).hexdigest()[:8]
+
+        # If section is available, use it to form the definitive ID immediately
+        section = data.get("section")
+        existing_id = data.get("id")
+        if section:
+            data["id"] = f"{section}_{generated_hash}"
+        else:
+            # Fallback: Use existing ID if it matches the hash (to preserve prefixes), otherwise overwrite with short hash
+            if (
+                not existing_id
+                or not isinstance(existing_id, str)
+                or not existing_id.endswith(generated_hash)
+            ):
+                data["id"] = generated_hash
 
         return data
 

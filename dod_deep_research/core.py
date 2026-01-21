@@ -134,6 +134,7 @@ async def run_agent(
     """
     logger.debug("Running agent for session %s", session_id)
     step_count = 0
+    agent_step_counts: dict[str, int] = {}
     try:
         async for event in runner.run_async(
             user_id=user_id,
@@ -141,12 +142,14 @@ async def run_agent(
             new_message=new_message,
         ):
             step_count += 1
+            agent_step_counts[event.author] = agent_step_counts.get(event.author, 0) + 1
 
             # Log turn information
             calls = event.get_function_calls()
             responses = event.get_function_responses()
 
-            log_msg = f"[Step {step_count}] Agent: {event.author}"
+            agent_step = agent_step_counts[event.author]
+            log_msg = f"[Step {agent_step}] Agent: {event.author}"
             if calls:
                 log_msg += f" | Calls: {[c.name for c in calls]}"
             if responses:
@@ -154,7 +157,7 @@ async def run_agent(
             if event.error_code:
                 log_msg += f" | Error: {event.error_code}: {event.error_message}"
 
-            logger.debug(log_msg)
+            logger.info(log_msg)
 
     except Exception as e:
         logger.error(

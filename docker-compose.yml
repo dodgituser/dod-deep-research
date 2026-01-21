@@ -31,6 +31,22 @@ services:
       - mcp-network
     restart: unless-stopped
 
+  exa-mcp:
+    build:
+      context: ../exa-mcp-server
+      dockerfile: Dockerfile
+    image: exa-mcp:local
+    container_name: exa-mcp-server
+    ports:
+      - "3019:3000"
+    environment:
+      - PORT=3000
+      - EXA_API_KEY=${EXA_API_KEY:-}
+    entrypoint: ["node", ".smithery/shttp/index.cjs"]
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
   pipeline:
     build:
       context: .
@@ -42,12 +58,13 @@ services:
     environment:
       - PUBMED_MCP_URL=http://pubmed-mcp:3017/mcp
       - CLINICAL_TRIALS_MCP_URL=http://clinical-trials-mcp:3018/mcp
-      - EXA_MCP_URL=${EXA_MCP_URL:-}
+      - EXA_MCP_URL=http://exa-mcp:3000/mcp
       - EXA_API_KEY=${EXA_API_KEY:-}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
     depends_on:
       - pubmed-mcp
       - clinical-trials-mcp
+      - exa-mcp
     networks:
       - mcp-network
     profiles:

@@ -1,0 +1,64 @@
+{
+  "indication": "Alzheimer's disease",
+  "drug_name": "IL-2",
+  "drug_form": "low-dose IL-2",
+  "drug_generic_name": "Aldesleukin",
+  "indication_aliases": [
+    "Alzheimer disease",
+    "Alzheimer dementia"
+  ],
+  "drug_aliases": [
+    "Aldesleukin",
+    "COYA 301"
+  ],
+  "common_sections": [
+    "rationale_executive_summary",
+    "disease_overview",
+    "therapeutic_landscape",
+    "current_treatment_guidelines",
+    "competitor_analysis",
+    "clinical_trials_analysis",
+    "market_opportunity_analysis"
+  ],
+  "research_plan": {
+    "disease": "Alzheimer's disease",
+    "research_areas": [
+      "disease_overview",
+      "clinical_trials_analysis"
+    ],
+    "sections": [
+      {
+        "name": "disease_overview",
+        "description": "Provide a concise overview of Alzheimer's disease with focus on diagnosis and screening.",
+        "key_questions": [
+          "How is Alzheimer's disease diagnosed, and what are the commonly used screening procedures and tests?"
+        ],
+        "scope": "Focus on diagnostic criteria and screening procedures."
+      },
+      {
+        "name": "clinical_trials_analysis",
+        "description": "Identify clinical trials of IL-2 or Aldesleukin in Alzheimer's disease.",
+        "key_questions": [
+          "What completed clinical trials have evaluated IL-2 in Alzheimer's disease?"
+        ],
+        "scope": "Search ClinicalTrials.gov and associated publications."
+      }
+    ]
+  },
+  "research_section_disease_overview": {
+    "name": "disease_overview",
+    "description": "Provide a concise overview of Alzheimer's disease with focus on diagnosis and screening.",
+    "key_questions": [
+      "How is Alzheimer's disease diagnosed, and what are the commonly used screening procedures and tests?"
+    ],
+    "scope": "Focus on diagnostic criteria and screening procedures."
+  },
+  "research_section_clinical_trials_analysis": {
+    "name": "clinical_trials_analysis",
+    "description": "Identify clinical trials of IL-2 or Aldesleukin in Alzheimer's disease.",
+    "key_questions": [
+      "What completed clinical trials have evaluated IL-2 in Alzheimer's disease?"
+    ],
+    "scope": "Search ClinicalTrials.gov and associated publications."
+  }
+}

@@ -13,13 +13,13 @@ from dod_deep_research.agents.planner.schemas import ResearchPlan
 
 # Section-specific minimum evidence targets. Tuned to push deeper
 SECTION_MIN_EVIDENCE: dict[CommonSection, int] = {
-    CommonSection.RATIONALE_EXECUTIVE_SUMMARY: 4,
-    CommonSection.DISEASE_OVERVIEW: 4,
-    CommonSection.THERAPEUTIC_LANDSCAPE: 5,
-    CommonSection.CURRENT_TREATMENT_GUIDELINES: 3,
-    CommonSection.COMPETITOR_ANALYSIS: 5,
-    CommonSection.CLINICAL_TRIALS_ANALYSIS: 6,
-    CommonSection.MARKET_OPPORTUNITY_ANALYSIS: 5,
+    CommonSection.RATIONALE_EXECUTIVE_SUMMARY: 5,
+    CommonSection.DISEASE_OVERVIEW: 5,
+    CommonSection.THERAPEUTIC_LANDSCAPE: 6,
+    CommonSection.CURRENT_TREATMENT_GUIDELINES: 4,
+    CommonSection.COMPETITOR_ANALYSIS: 6,
+    CommonSection.CLINICAL_TRIALS_ANALYSIS: 7,
+    CommonSection.MARKET_OPPORTUNITY_ANALYSIS: 6,
 }
 
 DEFAULT_MIN_EVIDENCE = 2
