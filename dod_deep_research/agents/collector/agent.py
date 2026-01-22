@@ -9,6 +9,7 @@
 # ADK temporarily removes output_schema to allow function calling and injects a prompt,
 # so this works only due to that hack, not because the model supports it natively.
 
+import asyncio
 import os
 import json
 
@@ -42,9 +43,28 @@ logger = logging.getLogger(__name__)
 EXA_DEFAULT_TOOLS = "web_search_exa,crawling_exa,company_research_exa"
 
 
+class CachedMcpToolset(McpToolset):
+    """Cache MCP tools to avoid repeated list_tools calls under concurrency."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._cached_tools = None
+        self._tools_lock = asyncio.Lock()
+
+    async def get_tools(self, readonly_context=None):  # type: ignore[override]
+        if self._cached_tools is not None:
+            return self._cached_tools
+
+        async with self._tools_lock:
+            if self._cached_tools is None:
+                self._cached_tools = await super().get_tools(readonly_context)
+
+        return self._cached_tools
+
+
 def _get_tools():
     """Get standard tools for collector agents."""
-    pubmed_toolset = McpToolset(
+    pubmed_toolset = CachedMcpToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=os.getenv("PUBMED_MCP_URL", "http://127.0.0.1:3017/mcp"),
             timeout=180,
@@ -54,7 +74,7 @@ def _get_tools():
         ),
         tool_filter=["pubmed_search_articles", "pubmed_fetch_contents"],
     )
-    clinical_trials_toolset = McpToolset(
+    clinical_trials_toolset = CachedMcpToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=os.getenv("CLINICAL_TRIALS_MCP_URL", "http://127.0.0.1:3018/mcp"),
             timeout=180,
@@ -64,7 +84,7 @@ def _get_tools():
         ),
         tool_filter=["clinicaltrials_search_studies", "clinicaltrials_get_study"],
     )
-    exa_toolset = McpToolset(
+    exa_toolset = CachedMcpToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=os.getenv("EXA_MCP_URL", "http://127.0.0.1:3019/mcp"),
             timeout=10,

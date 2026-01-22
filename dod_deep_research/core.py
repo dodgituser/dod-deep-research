@@ -210,7 +210,9 @@ async def run_agent(
                 responses = event.get_function_responses()
 
                 agent_step = agent_step_counts[event.author]
-                log_msg = f"[Step {agent_step}] Agent: {event.author}"
+                log_msg = (
+                    f"[Attempt {attempt + 1}][Step {agent_step}] Agent: {event.author}"
+                )
                 if calls:
                     log_msg += f" | Calls: {[c.name for c in calls]}"
                 if responses:
@@ -222,13 +224,16 @@ async def run_agent(
 
         except Exception as e:
             logger.error(
-                f"Agent execution failed in session {session_id} at step {step_count}: {str(e)}",
+                f"Agent execution failed in session {session_id} on attempt {attempt + 1} at step {step_count}: {str(e)}",
                 exc_info=True,
             )
             raise e
 
         logger.debug(
-            "Agent run complete for session %s after %d steps", session_id, step_count
+            "Agent run complete for session %s (attempt %d) after %d steps",
+            session_id,
+            attempt + 1,
+            step_count,
         )
 
         if not keys:
