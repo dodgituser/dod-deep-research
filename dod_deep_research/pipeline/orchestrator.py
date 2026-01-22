@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 from dod_deep_research.utils.evidence import EvidenceStore
+
 from dod_deep_research.agents.research_head.agent import research_head_agent
 from dod_deep_research.agents.planner.agent import create_planner_agent
 from dod_deep_research.agents.schemas import get_common_sections

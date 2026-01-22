@@ -1,5 +1,6 @@
 """Core utilities for deep research agent pipeline."""
 
+import json
 import logging
 import shutil
 from datetime import datetime
@@ -18,6 +19,39 @@ from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_validated_model(
+    state: dict[str, Any], model_class: type[BaseModel], state_key: str
+) -> BaseModel:
+    """
+    Extract and validate a Pydantic model from session state.
+    Handles raw JSON strings (with optional markdown fences) or existing dicts/models.
+
+    Args:
+        state: The session state dictionary.
+        model_class: The Pydantic model class to validate against.
+        state_key: The key in the state to retrieve.
+
+    Returns:
+        BaseModel: An instance of the model_class.
+
+    Raises:
+        ValueError: If the key is missing or the payload is invalid.
+    """
+    raw_value = state.get(state_key)
+    if not raw_value:
+        raise ValueError(f"Missing structured output in state key: {state_key}")
+
+    if isinstance(raw_value, model_class):
+        return raw_value
+
+    payload = raw_value
+    if isinstance(payload, str):
+        payload = extract_json_payload(payload)
+        payload = json.loads(payload)
+
+    return model_class.model_validate(payload)
 
 
 def normalize_aliases(values: list[str] | None) -> list[str] | None:
@@ -88,8 +122,8 @@ def get_http_options() -> types.HttpOptions:
     """
     return types.HttpOptions(
         retry_options=types.HttpRetryOptions(
-            initial_delay=25,
-            attempts=5,
+            initial_delay=5,
+            attempts=3,
         ),
     )
 
@@ -122,6 +156,8 @@ async def run_agent(
     user_id: str,
     session_id: str,
     new_message: types.Content,
+    output_keys: str | list[str] | None = None,
+    max_retries: int = 1,
 ) -> None:
     """
     Run an agent for a new message.
@@ -133,42 +169,92 @@ async def run_agent(
         new_message: The message to send to the agent.
     """
     logger.debug("Running agent for session %s", session_id)
-    step_count = 0
-    agent_step_counts: dict[str, int] = {}
-    try:
-        async for event in runner.run_async(
+    keys = [output_keys] if isinstance(output_keys, str) else (output_keys or [])
+
+    def _has_outputs(state: dict[str, Any]) -> bool:
+        for key in keys:
+            value = state.get(key)
+            if value is None:
+                return False
+            if isinstance(value, str):
+                if not value.strip():
+                    return False
+            elif isinstance(value, (list, dict)):
+                if not value:
+                    return False
+            else:
+                if not value:
+                    return False
+        return True
+
+    # NOTE: ADK does not provide a supported way to force an agent to continue
+    # after a tool call; see https://github.com/google/adk-python/discussions/2508.
+    # We use a lightweight retry with a generic "finalize" nudge when required
+    # outputs are missing.
+    attempt = 0
+    while True:
+        step_count = 0
+        agent_step_counts: dict[str, int] = {}
+        try:
+            async for event in runner.run_async(
+                user_id=user_id,
+                session_id=session_id,
+                new_message=new_message,
+            ):
+                step_count += 1
+                agent_step_counts[event.author] = (
+                    agent_step_counts.get(event.author, 0) + 1
+                )
+
+                calls = event.get_function_calls()
+                responses = event.get_function_responses()
+
+                agent_step = agent_step_counts[event.author]
+                log_msg = f"[Step {agent_step}] Agent: {event.author}"
+                if calls:
+                    log_msg += f" | Calls: {[c.name for c in calls]}"
+                if responses:
+                    log_msg += f" | Responses: {[r.name for r in responses]}"
+                if event.error_code:
+                    log_msg += f" | Error: {event.error_code}: {event.error_message}"
+
+                logger.info(log_msg)
+
+        except Exception as e:
+            logger.error(
+                f"Agent execution failed in session {session_id} at step {step_count}: {str(e)}",
+                exc_info=True,
+            )
+            raise e
+
+        logger.debug(
+            "Agent run complete for session %s after %d steps", session_id, step_count
+        )
+
+        if not keys:
+            break
+
+        session = await runner.session_service.get_session(
+            app_name=runner.app_name,
             user_id=user_id,
             session_id=session_id,
-            new_message=new_message,
-        ):
-            step_count += 1
-            agent_step_counts[event.author] = agent_step_counts.get(event.author, 0) + 1
-
-            # Log turn information
-            calls = event.get_function_calls()
-            responses = event.get_function_responses()
-
-            agent_step = agent_step_counts[event.author]
-            log_msg = f"[Step {agent_step}] Agent: {event.author}"
-            if calls:
-                log_msg += f" | Calls: {[c.name for c in calls]}"
-            if responses:
-                log_msg += f" | Responses: {[r.name for r in responses]}"
-            if event.error_code:
-                log_msg += f" | Error: {event.error_code}: {event.error_message}"
-
-            logger.info(log_msg)
-
-    except Exception as e:
-        logger.error(
-            f"Agent execution failed in session {session_id} at step {step_count}: {str(e)}",
-            exc_info=True,
         )
-        raise e
+        if session and _has_outputs(session.state):
+            break
 
-    logger.debug(
-        "Agent run complete for session %s after %d steps", session_id, step_count
-    )
+        attempt += 1
+        if attempt > max_retries:
+            logger.error("Agent execution failed after %d attempts", max_retries)
+            break
+
+        new_message = types.Content(
+            parts=[
+                types.Part.from_text(
+                    text="Finalize by outputting only the required JSON.",
+                )
+            ],
+            role="user",
+        )
 
 
 def get_output_path(indication: str) -> Path:
@@ -187,6 +273,30 @@ def get_output_path(indication: str) -> Path:
     output_dir = outputs_dir / f"{indication}-{timestamp}"
     output_dir.mkdir(exist_ok=True)
     return output_dir
+
+
+def extract_json_payload(raw_text: str) -> str:
+    """
+    Extract a JSON payload from text that may include prose or fenced code.
+
+    Args:
+        raw_text (str): Raw text possibly containing a JSON block.
+
+    Returns:
+        str: Extracted JSON payload as a string.
+    """
+    text = raw_text.strip()
+    if not text:
+        return text
+
+    fence_start = text.find("```")
+    if fence_start != -1:
+        fence_end = text.find("```", fence_start + 3)
+        if fence_end != -1:
+            fenced = text[fence_start + 3 : fence_end]
+            return fenced.strip().removeprefix("json").strip()
+
+    return text
 
 
 def get_research_head_guidance(state: dict[str, Any]) -> dict[str, dict[str, Any]]:

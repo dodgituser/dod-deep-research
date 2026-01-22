@@ -8,6 +8,7 @@ dependencies = [
     "google-adk>=1.21.0",
     "google-genai>=1.56.0",
     "openai>=2.14.0",
+    "openai-agents>=0.6.9",
     "pydantic>=2.12.5",
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",

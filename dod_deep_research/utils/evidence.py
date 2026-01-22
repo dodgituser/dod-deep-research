@@ -1,6 +1,7 @@
 """Evidence store models and aggregation utilities."""
 
 import hashlib
+import json
 import logging
 from collections import defaultdict
 from typing import Any, Self
@@ -10,6 +11,7 @@ from pydantic import BaseModel, Field, model_validator
 from dod_deep_research.agents.collector.schemas import CollectorResponse, EvidenceItem
 from dod_deep_research.agents.schemas import CommonSection, EvidenceSource, KeyValuePair
 from dod_deep_research.agents.planner.schemas import ResearchPlan
+from dod_deep_research.core import extract_json_payload
 
 # Section-specific minimum evidence targets. Tuned to push deeper
 SECTION_MIN_EVIDENCE: dict[CommonSection, int] = {
@@ -115,13 +117,24 @@ def extract_section_stores(state: dict[str, Any]) -> dict[str, CollectorResponse
         if key.startswith("evidence_store_section_"):
             section_name = key.replace("evidence_store_section_", "")
             try:
-                if isinstance(value, dict):
-                    section_stores[section_name] = CollectorResponse(**value)
-                else:
-                    section_stores[section_name] = value
+                payload = value
+                if isinstance(payload, str):
+                    payload = json.loads(extract_json_payload(payload))
+                if isinstance(payload, dict) and section_name in payload:
+                    payload = payload[section_name]
+                if isinstance(payload, dict) and key in payload:
+                    payload = payload[key]
+                if isinstance(payload, list):
+                    payload = {"section": section_name, "evidence": payload}
+                if isinstance(payload, dict) and "evidence" in payload:
+                    payload.setdefault("section", section_name)
+                if isinstance(payload, dict):
+                    section_stores[section_name] = CollectorResponse(**payload)
+                elif isinstance(payload, CollectorResponse):
+                    section_stores[section_name] = payload
             except Exception as e:
                 logger.warning(
-                    f"Failed to parse CollectorResponse for section '{section_name}': {e}"
+                    f"Failed to parse CollectorResponse for section '{section_name}': {e} with payload: {payload}"
                 )
     return section_stores
 

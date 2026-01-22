@@ -76,7 +76,6 @@ _TARGETED_AGENTS = [
     create_targeted_collector_agent(
         gap,
         guidance=_GUIDANCE_MAP.get(str(gap.section)),
-        test_local=False,
     )
     for gap in _GAP_TASKS
 ]

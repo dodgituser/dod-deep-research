@@ -1,6 +1,16 @@
 """Evidence collector agent factory for section-specific evidence retrieval."""
 
+# NOTE: We avoid ADK output_schema here because EvidenceItem schema definitions and $refs
+# have been tripping up model/ADK structured outputs. See
+# https://github.com/cline/cline/issues/7897. We handle structured output parsing ourselves.
+# Tool calling and structured outputs don't work well together in ADK. See
+# https://github.com/openai/openai-agents-python/issues/1778 and the ADK hack in
+# google/adk-python@af63567 https://github.com/google/adk-python/commit/af635674b5d3c128cf21737056e091646283aeb7.
+# ADK temporarily removes output_schema to allow function calling and injects a prompt,
+# so this works only due to that hack, not because the model supports it natively.
+
 import os
+import json
 
 from typing import Any, Callable
 
@@ -18,12 +28,12 @@ from dod_deep_research.agents.collector.prompt import (
     COLLECTOR_AGENT_PROMPT_TEMPLATE,
     TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE,
 )
-from dod_deep_research.agents.collector.schemas import CollectorResponse
 from dod_deep_research.utils.evidence import GapTask
-from dod_deep_research.core import get_http_options
+from dod_deep_research.core import get_http_options, inline_json_schema
 from dod_deep_research.models import GeminiModels
 from dod_deep_research.agents.tooling import reflect_step
 from dod_deep_research.utils.evidence import get_min_evidence
+from dod_deep_research.agents.collector.schemas import EvidenceItem
 import logging
 from google.genai.types import GenerateContentConfig
 
@@ -93,9 +103,16 @@ def create_collector_agent(
         Agent: Configured collector agent for the section.
     """
     min_evidence = get_min_evidence(section_name)
+    evidence_item_schema = json.dumps(
+        inline_json_schema(EvidenceItem),
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=True,
+    )
     prompt = COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
         section_name=section_name,
         min_evidence=min_evidence,
+        evidence_item_schema=evidence_item_schema,
     )
     agent_name = f"collector_{section_name}"
 
@@ -103,10 +120,9 @@ def create_collector_agent(
         name=agent_name,
         instruction=prompt,
         tools=_get_tools(),
-        model=GeminiModels.GEMINI_FLASH_LATEST.value.replace("models/", ""),
+        model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
         include_contents="none",
         output_key=f"evidence_store_section_{section_name}",
-        output_schema=CollectorResponse,
         generate_content_config=GenerateContentConfig(
             temperature=0.1,
             http_options=get_http_options(),
@@ -154,12 +170,19 @@ def create_targeted_collector_agent(
     if guidance:
         guidance_notes = str(guidance["notes"]).strip()
         suggested_queries = ", ".join(guidance["suggested_queries"])
+    evidence_item_schema = json.dumps(
+        inline_json_schema(EvidenceItem),
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=True,
+    )
     prompt = TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
         section_name=gap.section,
         missing_questions=", ".join(gap.missing_questions) or "None",
         guidance_notes=guidance_notes or "None",
         suggested_queries=suggested_queries or "None",
         min_evidence=min_evidence,
+        evidence_item_schema=evidence_item_schema,
     )
     agent_name = f"targeted_collector_{gap.section}"
 
@@ -167,11 +190,10 @@ def create_targeted_collector_agent(
         name=agent_name,
         instruction=prompt,
         tools=[t for t in _get_tools() if t != reflect_step],
-        model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
+        model=GeminiModels.GEMINI_3_PRO.value.replace("models/", ""),
         after_agent_callback=after_agent_log_callback,
         include_contents="none",
         output_key=f"evidence_store_section_{gap.section}",
-        output_schema=CollectorResponse,
         generate_content_config=GenerateContentConfig(
             temperature=0.1,
             http_options=get_http_options(),

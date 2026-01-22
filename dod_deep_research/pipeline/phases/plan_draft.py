@@ -5,7 +5,13 @@ import logging
 from google.adk import runners
 from google.genai import types
 
-from dod_deep_research.core import persist_section_plan_to_state, run_agent
+from dod_deep_research.agents.planner.schemas import ResearchPlan
+from dod_deep_research.core import (
+    persist_section_plan_to_state,
+    persist_state_delta,
+    run_agent,
+    get_validated_model,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +75,7 @@ async def run_plan_draft(
             parts=[types.Part.from_text(text="Plan the research.")],
             role="user",
         ),
+        output_keys="research_plan_raw",
     )
 
     updated_session = await plan_runner.session_service.get_session(
@@ -76,7 +83,14 @@ async def run_plan_draft(
         user_id=user_id,
         session_id=session.id,
     )
-    state = updated_session.state  # Get the updated state after planner agent execution
+    research_plan = get_validated_model(
+        updated_session.state, ResearchPlan, "research_plan_raw"
+    )
+    updated_session = await persist_state_delta(
+        plan_runner.session_service,
+        updated_session,
+        {"research_plan": research_plan.model_dump()},
+    )
 
     updated_session = await persist_section_plan_to_state(
         plan_runner.session_service,
@@ -97,6 +111,9 @@ async def run_plan_draft(
             parts=[types.Part.from_text(text="Collect evidence for sections.")],
             role="user",
         ),
+        output_keys=[
+            f"evidence_store_section_{section}" for section in (common_sections or [])
+        ],
     )
 
     updated_session = await draft_runner.session_service.get_session(

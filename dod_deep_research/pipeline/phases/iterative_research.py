@@ -27,7 +27,7 @@ async def run_iterative_research(
     app_name: str,
     research_head_runner: runners.Runner,
     session: runners.Session,
-    max_iterations: int = 2,
+    max_iterations: int = 3,
 ) -> runners.Session:
     """
     Run the gap-driven research loop.
@@ -95,6 +95,7 @@ async def run_iterative_research(
             research_head_session.user_id,
             research_head_session.id,
             continue_research_message,
+            output_keys="research_head_plan",
         )
 
         research_head_session = await research_head_runner.session_service.get_session(
@@ -128,9 +129,16 @@ async def run_iterative_research(
             targeted_session.user_id,
             targeted_session.id,
             types.Content(
-                parts=[types.Part.from_text(text="Collect evidence for tasks.")],
+                parts=[
+                    types.Part.from_text(
+                        text="Collect evidence for gap tasks that were identified."
+                    )
+                ],
                 role="user",
             ),
+            output_keys=[
+                f"evidence_store_section_{task.section}" for task in gap_tasks
+            ],
         )  # run the targeted collectors to collect evidence for gap tasks
 
         targeted_session = await targeted_runner.session_service.get_session(

@@ -1,12 +1,18 @@
 """Planner agent for research strategy."""
 
+# NOTE: We avoid ADK output_schema here because the ResearchPlan schema is too large/complex
+# and can hit the "too many states" limitation in Gemini/ADK. See
+# https://github.com/cline/cline/issues/7897. We handle structured output parsing ourselves.
+
+import json
+
 from google.adk import Agent
 from google.genai import types
 
-from dod_deep_research.core import get_http_options
+from dod_deep_research.core import get_http_options, inline_json_schema
 from dod_deep_research.agents.planner.prompt import PLANNER_AGENT_PROMPT
-from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.models import GeminiModels
+from dod_deep_research.agents.planner.schemas import ResearchPlan
 
 
 def create_planner_agent(indication_prompt: str | None = None) -> Agent:
@@ -19,7 +25,15 @@ def create_planner_agent(indication_prompt: str | None = None) -> Agent:
     Returns:
         Agent: Configured planner agent.
     """
-    instruction = PLANNER_AGENT_PROMPT
+    research_plan_schema = json.dumps(
+        inline_json_schema(ResearchPlan),
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=True,
+    )
+    instruction = PLANNER_AGENT_PROMPT.replace(
+        "{research_plan_schema}", research_plan_schema
+    )
     if indication_prompt:
         indication_block = (
             "--- BEGIN INDICATION PROMPT ---\n"
@@ -40,10 +54,9 @@ Do not collect evidence, do not write the report, and do not assign tasks.
         name="planner_agent",
         instruction=instruction,
         tools=[],
-        model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
+        model=GeminiModels.GEMINI_3_PRO.value.replace("models/", ""),
         generate_content_config=types.GenerateContentConfig(
             http_options=get_http_options(),
         ),
-        output_key="research_plan",
-        output_schema=ResearchPlan,
+        output_key="research_plan_raw",
     )

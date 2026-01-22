@@ -81,6 +81,7 @@ async def write_long_report(
                 parts=[types.Part.from_text(text="Write the section.")],
                 role="user",
             ),
+            output_keys="section_draft",
         )
         session = await runner.session_service.get_session(
             app_name=app_name,
