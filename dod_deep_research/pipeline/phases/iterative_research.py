@@ -10,6 +10,7 @@ from dod_deep_research.agents.callbacks.update_evidence import update_evidence
 from dod_deep_research.core import (
     build_runner,
     get_research_head_guidance,
+    retry_missing_outputs,
     run_agent,
     persist_state_delta,
 )
@@ -112,6 +113,32 @@ async def run_iterative_research(
             ).items()
             if section in allowed_sections
         }
+        guidance_keys = set(guidance_map.keys())
+
+        all_output_keys = [
+            f"evidence_store_section_{task.section}" for task in gap_tasks
+        ]
+        gap_tasks_by_section = {str(task.section): task for task in gap_tasks}
+
+        def build_targeted_collectors_for_missing(missing_keys: list[str]) -> object:
+            missing_sections = {
+                key.removeprefix("evidence_store_section_") for key in missing_keys
+            }
+            missing_tasks = [
+                gap_tasks_by_section[section]
+                for section in missing_sections
+                if section in gap_tasks_by_section
+            ]
+            guidance_subset = {
+                section: guidance_map[section]
+                for section in missing_sections
+                if section in guidance_keys
+            }
+            return create_targeted_collector_agents(
+                missing_tasks,
+                guidance_map=guidance_subset,
+                after_agent_callback=update_evidence,
+            )
 
         targeted_collectors = create_targeted_collector_agents(
             gap_tasks,
@@ -136,9 +163,9 @@ async def run_iterative_research(
                 ],
                 role="user",
             ),
-            output_keys=[
-                f"evidence_store_section_{task.section}" for task in gap_tasks
-            ],
+            output_keys=all_output_keys,
+            max_retries=0,
+            log_attempts=False,
         )  # run the targeted collectors to collect evidence for gap tasks
 
         targeted_session = await targeted_runner.session_service.get_session(
@@ -146,6 +173,16 @@ async def run_iterative_research(
             user_id=targeted_session.user_id,
             session_id=targeted_session.id,
         )  # get updated state from targeted collectors
+        targeted_session = await retry_missing_outputs(
+            app_name=app_name,
+            user_id=research_head_session.user_id,
+            session=targeted_session,
+            output_keys=all_output_keys,
+            build_agent=build_targeted_collectors_for_missing,
+            run_message="Collect evidence for gap tasks that were identified.",
+            log_label="targeted collectors",
+            agent_prefix="targeted_collector_",
+        )
 
         # Propagate new evidence back to research head session
         state_delta = {}

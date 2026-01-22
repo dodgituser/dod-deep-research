@@ -5,7 +5,7 @@ import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from google.adk import runners
 from google.adk.apps.app import App
@@ -122,8 +122,8 @@ def get_http_options() -> types.HttpOptions:
     """
     return types.HttpOptions(
         retry_options=types.HttpRetryOptions(
-            initial_delay=5,
-            attempts=3,
+            initial_delay=10,
+            attempts=5,
         ),
     )
 
@@ -151,6 +151,154 @@ def build_runner(
     return runners.InMemoryRunner(app=app_instance)
 
 
+def get_missing_output_keys(state: dict[str, Any], output_keys: list[str]) -> list[str]:
+    """
+    Return output keys that are missing or empty in state.
+
+    Args:
+        state: Session state dictionary.
+        output_keys: Output keys expected to be populated.
+
+    Returns:
+        list[str]: Keys that are missing or empty.
+    """
+    missing: list[str] = []
+    for key in output_keys:
+        value = state.get(key)
+        if value is None:
+            missing.append(key)
+            continue
+        if isinstance(value, str):
+            if not value.strip():
+                missing.append(key)
+        elif isinstance(value, (list, dict)):
+            if not value:
+                missing.append(key)
+        else:
+            if not value:
+                missing.append(key)
+    return missing
+
+
+async def retry_missing_outputs(
+    *,
+    app_name: str,
+    user_id: str,
+    session: runners.Session,
+    output_keys: list[str],
+    build_agent: Callable[[list[str]], object],
+    run_message: str,
+    max_attempts: int = 2,
+    log_label: str | None = None,
+    agent_prefix: str | None = None,
+) -> runners.Session:
+    """
+    Retry only the missing outputs by rebuilding an agent for the remaining keys.
+
+    Args:
+        app_name: App name for sessions.
+        user_id: User ID for the session.
+        session: The session after the initial run.
+        output_keys: Expected output keys to check.
+        build_agent: Callback that builds an agent for the missing keys.
+        run_message: Prompt text for retries.
+        max_attempts: Maximum retry attempts.
+
+    Returns:
+        runners.Session: Updated session after retries.
+    """
+
+    def _format_agent_names(keys: list[str]) -> list[str]:
+        sections = [key.removeprefix("evidence_store_section_") for key in keys]
+        if agent_prefix:
+            return [f"{agent_prefix}{section}" for section in sections]
+        return sections
+
+    updated_session = session
+    missing_keys = get_missing_output_keys(updated_session.state, output_keys)
+    retry_attempts = 0
+    if log_label:
+        success_count = len(output_keys) - len(missing_keys)
+        logger.info(
+            "[%s] Attempt 0: %d/%d collectors succeeded",
+            log_label,
+            success_count,
+            len(output_keys),
+        )
+    if missing_keys and log_label:
+        logger.info(
+            "[%s] Missing outputs: %s", log_label, _format_agent_names(missing_keys)
+        )
+
+    while missing_keys and retry_attempts < max_attempts:
+        if log_label:
+            logger.info(
+                "[%s] Retry %d for: %s",
+                log_label,
+                retry_attempts + 1,
+                _format_agent_names(missing_keys),
+            )
+        retry_agent = build_agent(missing_keys)
+        retry_runner = build_runner(agent=retry_agent, app_name=app_name)
+        retry_session = await retry_runner.session_service.create_session(
+            app_name=app_name,
+            user_id=user_id,
+            state=updated_session.state.copy(),
+        )
+        await run_agent(
+            retry_runner,
+            retry_session.user_id,
+            retry_session.id,
+            types.Content(
+                parts=[types.Part.from_text(text=run_message)],
+                role="user",
+            ),
+            output_keys=missing_keys,
+            max_retries=0,  # collector agents are not retried as that is done here
+            log_attempts=False,
+        )
+        updated_session = await retry_runner.session_service.get_session(
+            app_name=app_name,
+            user_id=retry_session.user_id,
+            session_id=retry_session.id,
+        )
+        previous_missing = set(missing_keys)
+        missing_keys = get_missing_output_keys(updated_session.state, output_keys)
+        recovered = previous_missing - set(missing_keys)
+        if log_label:
+            success_count = len(output_keys) - len(missing_keys)
+            logger.info(
+                "[%s] Attempt %d: %d/%d collectors succeeded",
+                log_label,
+                retry_attempts + 1,
+                success_count,
+                len(output_keys),
+            )
+        if recovered and log_label:
+            logger.info(
+                "[%s] Recovered outputs: %s",
+                log_label,
+                _format_agent_names(sorted(recovered)),
+            )
+        retry_attempts += 1
+        if missing_keys and log_label:
+            logger.info(
+                "[%s] Still missing: %s",
+                log_label,
+                _format_agent_names(missing_keys),
+            )
+
+    if missing_keys and log_label:
+        logger.warning(
+            "[%s] Missing outputs after %d attempts: %s",
+            log_label,
+            retry_attempts,
+            _format_agent_names(missing_keys),
+        )
+
+    return updated_session
+
+
 async def run_agent(
     runner: runners.InMemoryRunner,
     user_id: str,
@@ -158,6 +306,7 @@ async def run_agent(
     new_message: types.Content,
     output_keys: str | list[str] | None = None,
     max_retries: int = 1,
+    log_attempts: bool = True,
 ) -> None:
     """
     Run an agent for a new message.
@@ -170,22 +319,6 @@ async def run_agent(
     """
     logger.debug("Running agent for session %s", session_id)
     keys = [output_keys] if isinstance(output_keys, str) else (output_keys or [])
-
-    def _has_outputs(state: dict[str, Any]) -> bool:
-        for key in keys:
-            value = state.get(key)
-            if value is None:
-                return False
-            if isinstance(value, str):
-                if not value.strip():
-                    return False
-            elif isinstance(value, (list, dict)):
-                if not value:
-                    return False
-            else:
-                if not value:
-                    return False
-        return True
 
     # NOTE: ADK does not provide a supported way to force an agent to continue
     # after a tool call; see https://github.com/google/adk-python/discussions/2508.
@@ -210,9 +343,10 @@ async def run_agent(
                 responses = event.get_function_responses()
 
                 agent_step = agent_step_counts[event.author]
-                log_msg = (
-                    f"[Attempt {attempt + 1}][Step {agent_step}] Agent: {event.author}"
-                )
+                if log_attempts:
+                    log_msg = f"[Attempt {attempt + 1}][Step {agent_step}] Agent: {event.author}"
+                else:
+                    log_msg = f"[Step {agent_step}] Agent: {event.author}"
                 if calls:
                     log_msg += f" | Calls: {[c.name for c in calls]}"
                 if responses:
@@ -223,18 +357,12 @@ async def run_agent(
                 logger.info(log_msg)
 
         except Exception as e:
+            attempt_label = attempt + 1 if log_attempts else attempt + 1
             logger.error(
-                f"Agent execution failed in session {session_id} on attempt {attempt + 1} at step {step_count}: {str(e)}",
+                f"Agent execution failed in session {session_id} on attempt {attempt_label} at step {step_count}: {str(e)}",
                 exc_info=True,
             )
             raise e
-
-        logger.debug(
-            "Agent run complete for session %s (attempt %d) after %d steps",
-            session_id,
-            attempt + 1,
-            step_count,
-        )
 
         if not keys:
             break
@@ -244,11 +372,18 @@ async def run_agent(
             user_id=user_id,
             session_id=session_id,
         )
-        if session and _has_outputs(session.state):
+        if session and not get_missing_output_keys(session.state, list(keys)):
+            if log_attempts:
+                logger.info(
+                    "Agent run complete for session %s (attempt %d) after %d steps",
+                    session_id,
+                    attempt + 1,
+                    step_count,
+                )
             break
 
         attempt += 1
-        if attempt > max_retries:
+        if attempt > max_retries and max_retries > 0:
             logger.error("Agent execution failed after %d attempts", max_retries)
             break
 
@@ -300,6 +435,18 @@ def extract_json_payload(raw_text: str) -> str:
         if fence_end != -1:
             fenced = text[fence_start + 3 : fence_end]
             return fenced.strip().removeprefix("json").strip()
+
+    first_brace = -1
+    brace_candidates = [text.find("{"), text.find("[")]
+    brace_candidates = [pos for pos in brace_candidates if pos != -1]
+    if brace_candidates:
+        first_brace = min(brace_candidates)
+
+    if first_brace != -1:
+        last_brace = max(text.rfind("}"), text.rfind("]"))
+        if last_brace != -1 and last_brace >= first_brace:
+            return text[first_brace : last_brace + 1].strip()
+        return text[first_brace:].strip()
 
     return text
 

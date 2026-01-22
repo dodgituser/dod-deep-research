@@ -140,7 +140,7 @@ def create_collector_agent(
         name=agent_name,
         instruction=prompt,
         tools=_get_tools(),
-        model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
+        model=GeminiModels.GEMINI_3_PRO.value.replace("models/", ""),
         include_contents="none",
         output_key=f"evidence_store_section_{section_name}",
         generate_content_config=GenerateContentConfig(
@@ -210,7 +210,7 @@ def create_targeted_collector_agent(
         name=agent_name,
         instruction=prompt,
         tools=[t for t in _get_tools() if t != reflect_step],
-        model=GeminiModels.GEMINI_3_PRO.value.replace("models/", ""),
+        model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
         after_agent_callback=after_agent_log_callback,
         include_contents="none",
         output_key=f"evidence_store_section_{gap.section}",

@@ -54,7 +54,7 @@ Do not collect evidence, do not write the report, and do not assign tasks.
         name="planner_agent",
         instruction=instruction,
         tools=[],
-        model=GeminiModels.GEMINI_3_PRO.value.replace("models/", ""),
+        model=GeminiModels.GEMINI_FLASH_LATEST.value.replace("models/", ""),
         generate_content_config=types.GenerateContentConfig(
             http_options=get_http_options(),
         ),
