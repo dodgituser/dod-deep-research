@@ -15,7 +15,7 @@ Use the disease indication and drug information provided in state, then create a
 **Predefined Sections (You MUST include all of these):**
 {common_sections}
 
-**Output State Key:** research_plan
+**Output State Key:** research_plan_raw
 
 **State Context:**
 - indication (optional): {indication?}
@@ -26,14 +26,18 @@ Use the disease indication and drug information provided in state, then create a
 - drug_aliases (optional): {drug_aliases?}
 - common_sections: {common_sections}
 
+**ResearchPlan Schema (JSON Schema):**
+{research_plan_schema}
+
 **Important Guidelines:**
 - Use indication ({indication?}) as the ResearchPlan disease field.
 - Use drug_name ({drug_name?}) when writing drug-specific section details.
  - If aliases are provided, you may reference them in key questions to help downstream collectors.
 - Map each predefined section to the corresponding section in the indication prompt template (e.g., "rationale_executive_summary" maps to "A. Rationale/Executive Summary", "disease_overview" maps to "B. Disease Overview: [disease]", "therapeutic_landscape" maps to "C. Therapeutic Landscape for [disease]", "current_treatment_guidelines" maps to "D. Current Treatment Guidelines for [disease]", "competitor_analysis" maps to "E. Competitor Analysis for [disease]", "clinical_trials_analysis" maps to "F. Clinical Trials Analysis for [drug_name] in [disease]", "market_opportunity_analysis" maps to "G. Market & Opportunity Analysis for [drug_name] in [disease]").
 - Ensure each section is scoped so an evidence collector can research it independently.
-- Keep descriptions and key questions concise and specific to the indication and drug.
+- Generate 3-5 distinct key questions per section.
+- Output must be raw JSON only (no Markdown fences, no prose).
 
 You must create exactly one ResearchSection for each predefined section.
 
-Store your output in the shared state under the key "research_plan" as a JSON object."""
+Return only the ResearchPlan JSON object itself (no wrapper key, no Markdown fences, no extra text)."""

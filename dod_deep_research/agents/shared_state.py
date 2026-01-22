@@ -18,7 +18,7 @@ class SharedState(BaseModel):
     - research_plan (ResearchPlan): Meta-planner → Collectors
     - evidence_store_section_* (CollectorResponse): Collectors → Deterministic aggregation function
     - evidence_store (EvidenceStore): Aggregation function → ResearchHead/Writer
-    - research_head_plan (ResearchHeadPlan): ResearchHead → Targeted Collectors
+    - research_head_plan (ResearchHeadPlan): ResearchHead → Guidance for targeted collectors
     - deep_research_output (MarkdownReport): Writer → Final
     """
 
@@ -40,7 +40,7 @@ class SharedState(BaseModel):
     )
     research_head_plan: ResearchHeadPlan | None = Field(
         default=None,
-        description="ResearchHeadPlan model: Gap analysis and targeted retrieval tasks (ResearchHead output)",
+        description="ResearchHeadPlan model: Guidance for targeted retrieval tasks (ResearchHead output)",
     )
     deep_research_output: MarkdownReport | None = Field(
         default=None,

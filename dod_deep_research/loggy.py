@@ -1,6 +1,7 @@
 """Logging configuration for the application."""
 
 import logging
+import warnings
 
 
 def setup_logging(level: int = logging.INFO) -> logging.Logger:
@@ -9,9 +10,21 @@ def setup_logging(level: int = logging.INFO) -> logging.Logger:
         level=level,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+    # Suppress specific warnings
+    warnings.filterwarnings(
+        "ignore",
+        message="Your application has authenticated using end user credentials",
+        category=UserWarning,
+    )
+    warnings.filterwarnings(
+        "ignore",
+        message=".*EXPERIMENTAL.*",
+        category=UserWarning,
+    )
     # Suppress noisy client logs
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("mcp").setLevel(logging.WARNING)
     logging.getLogger("mcp.client").setLevel(logging.WARNING)
     logging.getLogger("mcp.client.streamable_http").setLevel(logging.WARNING)

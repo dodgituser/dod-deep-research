@@ -23,7 +23,7 @@ async def write_long_report(
     app_name: str,
     user_id: str,
     base_state: dict[str, Any],
-) -> tuple[MarkdownReport, list[dict]]:
+) -> MarkdownReport:
     """
     Write a report by iteratively generating each section.
 
@@ -34,14 +34,10 @@ async def write_long_report(
         base_state (dict[str, Any]): Shared state containing plan and evidence.
 
     Returns:
-        tuple[MarkdownReport, list[dict]]: Final report and JSON responses.
+        MarkdownReport: Final report.
     """
     research_plan_dict = base_state.get("research_plan")
     evidence_store_dict = base_state.get("evidence_store")
-    if not research_plan_dict:
-        raise ValueError("Missing research_plan in state for long writer.")
-    if not evidence_store_dict:
-        raise ValueError("Missing evidence_store in state for long writer.")
 
     research_plan = ResearchPlan(**research_plan_dict)
     evidence_store = EvidenceStore(**evidence_store_dict)
@@ -57,8 +53,6 @@ async def write_long_report(
     )
     report_draft = f"# {report_title}\n\n"
     report_draft += format_table_of_contents(research_plan.sections)
-
-    json_responses: list[dict] = []
 
     for section in research_plan.sections:
         session = await runner.session_service.create_session(
@@ -79,7 +73,7 @@ async def write_long_report(
                 "allowed_evidence_ids": allowed_evidence_ids,
             },
         )
-        responses = await run_agent(
+        await run_agent(
             runner,
             session.user_id,
             session.id,
@@ -87,11 +81,15 @@ async def write_long_report(
                 parts=[types.Part.from_text(text="Write the section.")],
                 role="user",
             ),
+            output_keys="section_draft",
         )
-        json_responses.extend(responses)
-        if not responses:
-            raise ValueError(f"No response for section '{section.name}'.")
-        section_draft = SectionDraft(**responses[-1])
+        session = await runner.session_service.get_session(
+            app_name=app_name,
+            user_id=session.user_id,
+            session_id=session.id,
+        )
+        section_draft_raw = session.state.get("section_draft")
+        section_draft = SectionDraft(**section_draft_raw)
         section_markdown = normalize_section_markdown(
             section_draft.section_markdown,
             str(section.name),
@@ -102,49 +100,48 @@ async def write_long_report(
     references_section = build_references_section(cited_ids, evidence_store)
     report_markdown = f"{report_draft}\n{references_section}".strip() + "\n"
 
-    return MarkdownReport(report_markdown=report_markdown), json_responses
+    return MarkdownReport(report_markdown=report_markdown)
 
 
-async def run_post_aggregation(
+async def run_section_writer(
     app_name: str,
-    runner_post: runners.Runner,
+    section_writer_runner: runners.Runner,
     session_loop: runners.Session,
-) -> tuple[runners.Session, list[dict]]:
+) -> runners.Session:
     """
     Run the post-aggregation phase (writer).
 
     Args:
         app_name (str): App name for session creation.
-        runner_post (runners.Runner): Runner for the section writer agent.
+        section_writer_runner (runners.Runner): Runner for the section writer agent.
         session_loop (runners.Session): The loop session containing evidence and plan.
 
     Returns:
-        tuple[runners.Session, list[dict]]: Updated session and JSON responses.
+        runners.Session: Updated session.
     """
-    session_post = await runner_post.session_service.create_session(
+    session_post = await section_writer_runner.session_service.create_session(
         app_name=app_name,
         user_id=session_loop.user_id,
-        session_id=session_loop.id,
         state=session_loop.state.copy(),
     )
     evidence_store_dict = session_post.state.get("evidence_store")
     if evidence_store_dict:
         evidence_store = EvidenceStore(**evidence_store_dict)
         session_post = await persist_state_delta(
-            runner_post.session_service,
+            section_writer_runner.session_service,
             session_post,
             {"allowed_evidence_ids": [item.id for item in evidence_store.items]},
         )
 
-    report, json_responses = await write_long_report(
-        runner=runner_post,
+    report = await write_long_report(
+        runner=section_writer_runner,
         app_name=app_name,
         user_id=session_post.user_id,
         base_state=session_post.state,
     )
     session_post = await persist_state_delta(
-        runner_post.session_service,
+        section_writer_runner.session_service,
         session_post,
         {"deep_research_output": report.model_dump()},
     )
-    return session_post, json_responses
+    return session_post

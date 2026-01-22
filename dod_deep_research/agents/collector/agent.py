@@ -1,8 +1,19 @@
 """Evidence collector agent factory for section-specific evidence retrieval."""
 
-import os
+# NOTE: We avoid ADK output_schema here because EvidenceItem schema definitions and $refs
+# have been tripping up model/ADK structured outputs. See
+# https://github.com/cline/cline/issues/7897. We handle structured output parsing ourselves.
+# Tool calling and structured outputs don't work well together in ADK. See
+# https://github.com/openai/openai-agents-python/issues/1778 and the ADK hack in
+# google/adk-python@af63567 https://github.com/google/adk-python/commit/af635674b5d3c128cf21737056e091646283aeb7.
+# ADK temporarily removes output_schema to allow function calling and injects a prompt,
+# so this works only due to that hack, not because the model supports it natively.
 
-from typing import Callable
+import asyncio
+import os
+import json
+
+from typing import Any, Callable
 
 from google.adk import Agent
 from google.adk.agents import ParallelAgent
@@ -11,16 +22,19 @@ from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 from google.genai import types
 
+from dod_deep_research.agents.callbacks.after_agent_log_callback import (
+    after_agent_log_callback,
+)
 from dod_deep_research.agents.collector.prompt import (
     COLLECTOR_AGENT_PROMPT_TEMPLATE,
     TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE,
 )
-from dod_deep_research.agents.collector.schemas import CollectorResponse
-from dod_deep_research.agents.research_head.schemas import ResearchGap
-from dod_deep_research.core import get_http_options
+from dod_deep_research.utils.evidence import GapTask
+from dod_deep_research.core import get_http_options, inline_json_schema
 from dod_deep_research.models import GeminiModels
 from dod_deep_research.agents.tooling import reflect_step
 from dod_deep_research.utils.evidence import get_min_evidence
+from dod_deep_research.agents.collector.schemas import EvidenceItem
 import logging
 from google.genai.types import GenerateContentConfig
 
@@ -29,33 +43,52 @@ logger = logging.getLogger(__name__)
 EXA_DEFAULT_TOOLS = "web_search_exa,crawling_exa,company_research_exa"
 
 
+class CachedMcpToolset(McpToolset):
+    """Cache MCP tools to avoid repeated list_tools calls under concurrency."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._cached_tools = None
+        self._tools_lock = asyncio.Lock()
+
+    async def get_tools(self, readonly_context=None):  # type: ignore[override]
+        if self._cached_tools is not None:
+            return self._cached_tools
+
+        async with self._tools_lock:
+            if self._cached_tools is None:
+                self._cached_tools = await super().get_tools(readonly_context)
+
+        return self._cached_tools
+
+
 def _get_tools():
     """Get standard tools for collector agents."""
-    pubmed_toolset = McpToolset(
+    pubmed_toolset = CachedMcpToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=os.getenv("PUBMED_MCP_URL", "http://127.0.0.1:3017/mcp"),
-            timeout=60,
-            sse_read_timeout=60,
+            timeout=180,
+            sse_read_timeout=180,
             headers={"Accept": "application/json, text/event-stream"},
             terminate_on_close=False,
         ),
         tool_filter=["pubmed_search_articles", "pubmed_fetch_contents"],
     )
-    clinical_trials_toolset = McpToolset(
+    clinical_trials_toolset = CachedMcpToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=os.getenv("CLINICAL_TRIALS_MCP_URL", "http://127.0.0.1:3018/mcp"),
-            timeout=60,
-            sse_read_timeout=60,
+            timeout=180,
+            sse_read_timeout=180,
             headers={"Accept": "application/json, text/event-stream"},
             terminate_on_close=False,
         ),
         tool_filter=["clinicaltrials_search_studies", "clinicaltrials_get_study"],
     )
-    exa_toolset = McpToolset(
+    exa_toolset = CachedMcpToolset(
         connection_params=StreamableHTTPConnectionParams(
-            url=os.getenv("EXA_MCP_URL"),
-            timeout=60,
-            sse_read_timeout=60,
+            url=os.getenv("EXA_MCP_URL", "http://127.0.0.1:3019/mcp"),
+            timeout=10,
+            sse_read_timeout=10,
             headers={"Accept": "application/json, text/event-stream"},
             terminate_on_close=False,
         ),
@@ -76,7 +109,6 @@ def get_collector_tools():
 
 def create_collector_agent(
     section_name: str,
-    gap_override: ResearchGap | None = None,
     before_agent_callback: Callable[[CallbackContext], types.Content | None]
     | None = None,
 ) -> Agent:
@@ -85,36 +117,32 @@ def create_collector_agent(
 
     Args:
         section_name: Name of the section to collect evidence for.
-        gap_override: Optional research gap override for targeted collection.
         before_agent_callback: Callback to run before the agent executes.
 
     Returns:
         Agent: Configured collector agent for the section.
     """
     min_evidence = get_min_evidence(section_name)
-
-    if gap_override:
-        prompt = TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
-            section_name=section_name,
-            missing_questions=", ".join(gap_override.missing_questions) or "None",
-            notes=gap_override.notes or "None",
-            min_evidence=min_evidence,
-        )
-        agent_name = f"targeted_collector_{section_name}"
-    else:
-        prompt = COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
-            section_name=section_name, min_evidence=min_evidence
-        )
-        agent_name = f"collector_{section_name}"
+    evidence_item_schema = json.dumps(
+        inline_json_schema(EvidenceItem),
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=True,
+    )
+    prompt = COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
+        section_name=section_name,
+        min_evidence=min_evidence,
+        evidence_item_schema=evidence_item_schema,
+    )
+    agent_name = f"collector_{section_name}"
 
     agent = Agent(
         name=agent_name,
         instruction=prompt,
         tools=_get_tools(),
-        model=GeminiModels.GEMINI_FLASH_LATEST.value.replace("models/", ""),
+        model=GeminiModels.GEMINI_3_PRO.value.replace("models/", ""),
         include_contents="none",
         output_key=f"evidence_store_section_{section_name}",
-        output_schema=CollectorResponse,
         generate_content_config=GenerateContentConfig(
             temperature=0.1,
             http_options=get_http_options(),
@@ -123,10 +151,6 @@ def create_collector_agent(
 
     if before_agent_callback:
         agent.before_agent_callback = before_agent_callback
-
-    logger.debug(
-        f"""Collector agent {agent_name} created with tools: {agent.tools} and prompt: {agent.instruction}"""
-    )
     return agent
 
 
@@ -146,21 +170,61 @@ def create_collector_agents(
     return parallel_agent
 
 
-def create_targeted_collector_agent(gap: ResearchGap) -> Agent:
+def create_targeted_collector_agent(
+    gap: GapTask,
+    guidance: dict[str, Any] | None = None,
+) -> Agent:
     """
-    Create a targeted collector agent for a specific research gap.
+    Create a targeted collector agent for a specific gap task.
 
     Args:
-        gap: ResearchGap specifying the targeted collection parameters.
+        gap: GapTask specifying the targeted collection parameters.
+        guidance: Suggestions for the section. notes + suggested queries
 
     Returns:
         Agent: Configured targeted collector agent.
     """
-    return create_collector_agent(section_name=gap.section, gap_override=gap)
+    min_evidence = get_min_evidence(str(gap.section))
+    guidance_notes = ""
+    suggested_queries = ""
+    if guidance:
+        guidance_notes = str(guidance["notes"]).strip()
+        suggested_queries = ", ".join(guidance["suggested_queries"])
+    evidence_item_schema = json.dumps(
+        inline_json_schema(EvidenceItem),
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=True,
+    )
+    prompt = TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE.format(
+        section_name=gap.section,
+        missing_questions=", ".join(gap.missing_questions) or "None",
+        guidance_notes=guidance_notes or "None",
+        suggested_queries=suggested_queries or "None",
+        min_evidence=min_evidence,
+        evidence_item_schema=evidence_item_schema,
+    )
+    agent_name = f"targeted_collector_{gap.section}"
+
+    agent = Agent(
+        name=agent_name,
+        instruction=prompt,
+        tools=[t for t in _get_tools() if t != reflect_step],
+        model=GeminiModels.GEMINI_25_PRO.value.replace("models/", ""),
+        after_agent_callback=after_agent_log_callback,
+        include_contents="none",
+        output_key=f"evidence_store_section_{gap.section}",
+        generate_content_config=GenerateContentConfig(
+            temperature=0.1,
+            http_options=get_http_options(),
+        ),
+    )
+    return agent
 
 
 def create_targeted_collector_agents(
-    gaps: list[ResearchGap],
+    gap_tasks: list[GapTask],
+    guidance_map: dict[str, dict[str, Any]] | None = None,
     after_agent_callback: Callable[[CallbackContext], types.Content | None]
     | None = None,
 ) -> ParallelAgent:
@@ -168,27 +232,31 @@ def create_targeted_collector_agents(
     Create a parallel agent with targeted collectors for the given tasks.
 
     Args:
-        gaps: List of ResearchGap objects.
+        gap_tasks: List of GapTask objects.
+        guidance_map: Suggestions for each section. section -> notes + suggested queries
         after_agent_callback: Optional callback to run after collectors complete.
 
     Returns:
         ParallelAgent with targeted collector agents.
     """
-    if not gaps:
+    if not gap_tasks:
         return ParallelAgent(
             name="targeted_collectors_empty",
             sub_agents=[],
         )
 
-    collector_agents = [create_targeted_collector_agent(gap) for gap in gaps]
+    collector_agents = [
+        create_targeted_collector_agent(
+            gap,
+            guidance=guidance_map.get(str(gap.section)) if guidance_map else None,
+        )
+        for gap in gap_tasks
+    ]
 
     parallel_agent = ParallelAgent(
         name="targeted_collectors",
         sub_agents=collector_agents,
+        after_agent_callback=after_agent_callback,
     )
-
-    # Apply callback if provided
-    if after_agent_callback:
-        parallel_agent.after_agent_callback = after_agent_callback
 
     return parallel_agent

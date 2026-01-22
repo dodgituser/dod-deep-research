@@ -1,6 +1,7 @@
 """Schemas for collector agent."""
 
 import logging
+import hashlib
 
 from typing import Any, Annotated, Self
 
@@ -14,10 +15,10 @@ from dod_deep_research.core import inline_json_schema
 class EvidenceItem(BaseModel):
     """Evidence citation item."""
 
-    id: str = Field(
-        ...,
+    id: str | None = Field(
+        None,
         description=(
-            "Short evidence ID (e.g., 'E1'); will be prefixed with the section name."
+            "Short evidence ID; will be auto-generated from content hash if not provided."
         ),
     )
     source: EvidenceSource = Field(
@@ -40,10 +41,47 @@ class EvidenceItem(BaseModel):
         default_factory=list,
         description="Short topical tags to help retrieval and grouping.",
     )
+    supported_questions: list[str] = Field(
+        default_factory=list,
+        description="Exact key questions this evidence supports.",
+    )
     section: str = Field(
         ...,
         description="Section name this evidence supports (must match plan sections).",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def generate_id_and_normalize(cls, data: Any) -> Any:
+        """Generate deterministic ID and normalize fields."""
+        if not isinstance(data, dict):
+            return data
+
+        # Handle source_url alias
+        if not data.get("url") and data.get("source_url"):
+            data["url"] = data["source_url"]
+
+        # Always generate ID from content hash for consistency
+        url = data.get("url") or ""
+        quote = data.get("quote") or ""
+        content_sig = f"{url}|{quote}"
+        generated_hash = hashlib.sha256(content_sig.encode()).hexdigest()[:8]
+
+        # If section is available, use it to form the definitive ID immediately
+        section = data.get("section")
+        existing_id = data.get("id")
+        if section:
+            data["id"] = f"{section}_{generated_hash}"
+        else:
+            # Fallback: Use existing ID if it matches the hash (to preserve prefixes), otherwise overwrite with short hash
+            if (
+                not existing_id
+                or not isinstance(existing_id, str)
+                or not existing_id.endswith(generated_hash)
+            ):
+                data["id"] = generated_hash
+
+        return data
 
     @field_validator("section")
     @classmethod
@@ -57,7 +95,7 @@ class EvidenceItem(BaseModel):
     @model_validator(mode="after")
     def validate_and_prefix_id(self) -> Self:
         """Normalize evidence IDs by prefixing with the section name."""
-        if not self.id.startswith(f"{self.section}_"):
+        if self.id and not self.id.startswith(f"{self.section}_"):
             self.id = f"{self.section}_{self.id}"
         return self
 
@@ -111,9 +149,6 @@ class CollectorResponse(BaseModel):
                 continue
             normalized_item = dict(item)
             normalized_item.setdefault("section", section)
-            normalized_item.setdefault("id", f"E{index}")
-            if not normalized_item.get("url") and normalized_item.get("source_url"):
-                normalized_item["url"] = normalized_item["source_url"]
             normalized.append(normalized_item)
 
         data["evidence"] = normalized

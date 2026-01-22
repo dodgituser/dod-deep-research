@@ -19,6 +19,9 @@ from dod_deep_research.agents.callbacks.after_model_log_callback import (
 from dod_deep_research.agents.callbacks.after_tool_log_callback import (
     after_tool_log_callback,
 )
+from dod_deep_research.agents.callbacks.tool_payloads_callback import (
+    after_tool_payloads_callback,
+)
 from dod_deep_research.agents.callbacks.before_agent_log_callback import (
     before_agent_log_callback,
 )
@@ -150,6 +153,12 @@ class AgentLoggingPlugin(BasePlugin):
         Returns:
             dict | None: Returning a dict replaces the tool response.
         """
+        after_tool_payloads_callback(
+            tool=tool,
+            tool_args=tool_args,
+            tool_context=tool_context,
+            tool_response=result,
+        )
         return after_tool_log_callback(
             tool=tool,
             tool_response=result,

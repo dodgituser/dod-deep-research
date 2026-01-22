@@ -122,12 +122,15 @@ def extract_citation_ids(report_markdown: str) -> list[str]:
 
     seen: set[str] = set()
     ordered_ids: list[str] = []
-    for match in re.finditer(r"\[([A-Za-z0-9_]+_E\d+)\]", report_markdown):
-        evidence_id = match.group(1)
-        if evidence_id in seen:
-            continue
-        seen.add(evidence_id)
-        ordered_ids.append(evidence_id)
+    for match in re.finditer(r"\[([A-Za-z0-9_,\s]+)\]", report_markdown):
+        for raw_id in match.group(1).split(","):
+            evidence_id = raw_id.strip()
+            if not evidence_id:
+                continue
+            if evidence_id in seen:
+                continue
+            seen.add(evidence_id)
+            ordered_ids.append(evidence_id)
     return ordered_ids
 
 
