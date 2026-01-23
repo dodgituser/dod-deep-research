@@ -26,7 +26,8 @@ logger = logging.getLogger(__name__)
 
 async def run_iterative_research(
     app_name: str,
-    research_head_runner: runners.Runner,
+    research_head_parallel_runner: runners.Runner,
+    research_head_qual_runner: runners.Runner,
     session: runners.Session,
     max_iterations: int = 3,
 ) -> runners.Session:
@@ -35,7 +36,8 @@ async def run_iterative_research(
 
     Args:
         app_name (str): App name for sessions.
-        research_head_runner (runners.Runner): Research head runner.
+        research_head_parallel_runner (runners.Runner): Parallel research head runner.
+        research_head_qual_runner (runners.Runner): Qualitative research head runner.
         session (runners.Session): Session from pre-aggregation.
         max_iterations (int): Max loop iterations.
 
@@ -44,7 +46,7 @@ async def run_iterative_research(
     """
     logger.info("Starting gap-driven loop phase")
 
-    research_head_session = await research_head_runner.session_service.create_session(
+    research_head_session = await research_head_parallel_runner.session_service.create_session(
         app_name=app_name,
         user_id=session.user_id,
         state=session.state.copy(),
@@ -65,45 +67,58 @@ async def run_iterative_research(
 
         question_coverage = build_question_coverage(
             ResearchPlan(**plan_data), EvidenceStore(**store_data)
-        )
+        )  # Section -> question -> list of evidence IDs that support the question.
         logger.info(
             "Analyzing evidence coverage for %d sections", len(question_coverage)
         )
 
-        gap_tasks = build_gap_tasks(question_coverage, min_evidence=2)
+        gap_tasks = build_gap_tasks(
+            question_coverage, min_evidence=2
+        )  # build the gap tasks based on the question coverage and minimum evidence required
 
         research_head_session = await persist_state_delta(
-            research_head_runner.session_service,
+            research_head_parallel_runner.session_service,
             research_head_session,
             {
                 "gap_tasks": [task.model_dump() for task in gap_tasks],
                 "question_coverage": question_coverage,
             },
-        )  # update session with new gap tasks and question coverage (from drafters or targeted collectors)
-
-        if not gap_tasks:
-            logger.info("No gap tasks remain; ending gap-driven loop")
-            break
-        else:
-            logger.info("Identified %d gap tasks to address", len(gap_tasks))
+        )  # update state with new gap tasks and question coverage (from drafters or targeted collectors)
 
         continue_research_message = types.Content(
             parts=[types.Part.from_text(text="Provide guidance for the gap tasks.")],
             role="user",
-        )
-        await run_agent(
-            research_head_runner,
-            research_head_session.user_id,
-            research_head_session.id,
-            continue_research_message,
-            output_keys="research_head_plan",
-        )
-
-        research_head_session = await research_head_runner.session_service.get_session(
-            app_name=app_name,
-            user_id=research_head_session.user_id,
-            session_id=research_head_session.id,
-        )
+        )  # prompt the research head to provide guidance for the gap tasks
+        if gap_tasks:  # if deterministic gap tasks are identified, run both research heads to provide guidance
+            await run_agent(
+                research_head_parallel_runner,
+                research_head_session.user_id,
+                research_head_session.id,
+                continue_research_message,
+                output_keys=["research_head_quant_plan", "research_head_qual_plan"],
+            )
+            research_head_session = (
+                await research_head_parallel_runner.session_service.get_session(
+                    app_name=app_name,
+                    user_id=research_head_session.user_id,
+                    session_id=research_head_session.id,
+                )
+            )
+        else:  # if no deterministic gap tasks are identified, run the qualitative research head to propose qualitative gaps
+            await run_agent(
+                research_head_qual_runner,
+                research_head_session.user_id,
+                research_head_session.id,
+                continue_research_message,
+                output_keys="research_head_qual_plan",
+            )
+            research_head_session = (
+                await research_head_qual_runner.session_service.get_session(
+                    app_name=app_name,
+                    user_id=research_head_session.user_id,
+                    session_id=research_head_session.id,
+                )
+            )
 
         allowed_sections = {str(task.section) for task in gap_tasks}
         guidance_map = {
@@ -113,6 +128,10 @@ async def run_iterative_research(
             ).items()
             if section in allowed_sections
         }
+        if not gap_tasks:
+            logger.info("No gap tasks remain; ending gap-driven loop")
+            break
+        logger.info("Identified %d gap tasks to address", len(gap_tasks))
         guidance_keys = set(guidance_map.keys())
 
         all_output_keys = [
@@ -200,13 +219,13 @@ async def run_iterative_research(
 
         if state_delta:
             research_head_session = await persist_state_delta(
-                research_head_runner.session_service,
+                research_head_parallel_runner.session_service,
                 research_head_session,
                 state_delta,
             )  # reuse the same research head session but with updated evidence store
         else:
             research_head_session = (
-                await research_head_runner.session_service.get_session(
+                await research_head_parallel_runner.session_service.get_session(
                     app_name=app_name,
                     user_id=research_head_session.user_id,
                     session_id=research_head_session.id,

@@ -451,25 +451,55 @@ def extract_json_payload(raw_text: str) -> str:
     return text
 
 
+def merge_research_head_plans(state: dict[str, Any]) -> ResearchHeadPlan | None:
+    """
+    Merge quantitative and qualitative research head plans from state.
+
+    Args:
+        state (dict[str, Any]): Pipeline state containing research head plans.
+
+    Returns:
+        ResearchHeadPlan | None: Merged plan, or None if no guidance exists.
+    """
+    quant_raw = state.get("research_head_quant_plan")
+    qual_raw = state.get("research_head_qual_plan")
+
+    quant_plan = (
+        quant_raw
+        if isinstance(quant_raw, ResearchHeadPlan)
+        else ResearchHeadPlan(**quant_raw)
+        if quant_raw
+        else ResearchHeadPlan()
+    )
+    qual_plan = (
+        qual_raw
+        if isinstance(qual_raw, ResearchHeadPlan)
+        else ResearchHeadPlan(**qual_raw)
+        if qual_raw
+        else ResearchHeadPlan()
+    )
+
+    merged_guidance = [*quant_plan.guidance, *qual_plan.guidance]
+    if not merged_guidance:
+        return None
+
+    return ResearchHeadPlan(guidance=merged_guidance)
+
+
 def get_research_head_guidance(state: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """
     Extract research head guidance per section from state.
 
     Args:
-        state (dict[str, Any]): Pipeline state containing research_head_plan.
+        state (dict[str, Any]): Pipeline state containing research head plans.
 
     Returns:
         dict[str, dict[str, Any]]: Section -> guidance payload.
     """
-    plan_raw = state.get("research_head_plan")
-    if not plan_raw:
+    plan = merge_research_head_plans(state)
+    if not plan:
         return {}
 
-    plan = (
-        plan_raw
-        if isinstance(plan_raw, ResearchHeadPlan)
-        else ResearchHeadPlan(**plan_raw)
-    )
     logger.info("Sections with guidance: %s", [g.section for g in plan.guidance])
 
     guidance_map: dict[str, dict[str, Any]] = {}

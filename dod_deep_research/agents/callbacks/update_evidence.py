@@ -20,7 +20,7 @@ def update_evidence(
     callback_context: CallbackContext,
 ) -> types.Content | None:
     """
-    Aggregate evidence and update coverage after collectors complete.
+    Aggregate evidence and update evidence store after collectors complete.
 
     Args:
         callback_context (CallbackContext): Callback context with agent info and state.

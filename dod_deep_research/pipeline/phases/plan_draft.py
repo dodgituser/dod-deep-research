@@ -70,6 +70,8 @@ async def run_plan_draft(
         },
     )
 
+    research_plan_output_key = "research_plan_raw"
+
     await run_agent(
         plan_runner,
         session.user_id,
@@ -78,7 +80,7 @@ async def run_plan_draft(
             parts=[types.Part.from_text(text="Plan the research.")],
             role="user",
         ),
-        output_keys="research_plan_raw",
+        output_keys=research_plan_output_key,
     )
 
     updated_session = await plan_runner.session_service.get_session(
@@ -87,12 +89,14 @@ async def run_plan_draft(
         session_id=session.id,
     )
     research_plan = get_validated_model(
-        updated_session.state, ResearchPlan, "research_plan_raw"
-    )
+        updated_session.state, ResearchPlan, research_plan_output_key
+    )  # take the raw output and make it pydantic model
     updated_session = await persist_state_delta(
         plan_runner.session_service,
         updated_session,
-        {"research_plan": research_plan.model_dump()},
+        {
+            "research_plan": research_plan.model_dump()
+        },  # persist the validated research plan into the session state
     )
 
     updated_session = await persist_section_plan_to_state(
@@ -110,15 +114,6 @@ async def run_plan_draft(
         f"evidence_store_section_{section}" for section in (common_sections or [])
     ]
 
-    def build_collectors_for_missing(missing_keys: list[str]) -> object:
-        remaining_sections = [
-            key.removeprefix("evidence_store_section_") for key in missing_keys
-        ]
-        return create_collector_agents(
-            remaining_sections,
-            after_agent_callback=update_evidence,
-        )
-
     await run_agent(
         draft_runner,
         collectors_session.user_id,
@@ -130,13 +125,23 @@ async def run_plan_draft(
         output_keys=all_output_keys,
         max_retries=0,
         log_attempts=False,
-    )
+    )  # run the draft collectors based on the updated state from the planner
 
     updated_session = await draft_runner.session_service.get_session(
         app_name=app_name,
         user_id=collectors_session.user_id,
         session_id=collectors_session.id,
     )  # Get the final updated session after draft collectors execution
+
+    def build_collectors_for_missing(missing_keys: list[str]) -> object:
+        remaining_sections = [
+            key.removeprefix("evidence_store_section_") for key in missing_keys
+        ]
+        return create_collector_agents(
+            remaining_sections,
+            after_agent_callback=update_evidence,
+        )  # create the collector agents based on the remaining sections (sections that are not in the evidence store)
+
     updated_session = await retry_missing_outputs(
         app_name=app_name,
         user_id=collectors_session.user_id,
@@ -146,6 +151,6 @@ async def run_plan_draft(
         run_message="Collect evidence for any remaining sections.",
         log_label="draft collectors",
         agent_prefix="collector_",
-    )
+    )  # retry the draft collectors based on the remaining sections (sections that are not in the evidence store) until max attempts or all sections are collected
     logger.info("Pre-aggregation phase completed")
     return updated_session

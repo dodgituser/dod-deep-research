@@ -18,7 +18,8 @@ class SharedState(BaseModel):
     - research_plan (ResearchPlan): Meta-planner → Collectors
     - evidence_store_section_* (CollectorResponse): Collectors → Deterministic aggregation function
     - evidence_store (EvidenceStore): Aggregation function → ResearchHead/Writer
-    - research_head_plan (ResearchHeadPlan): ResearchHead → Guidance for targeted collectors
+    - research_head_quant_plan (ResearchHeadPlan): Quant ResearchHead → Guidance for deterministic gaps
+    - research_head_qual_plan (ResearchHeadPlan): Qual ResearchHead → Guidance for qualitative gaps
     - deep_research_output (MarkdownReport): Writer → Final
     """
 
@@ -38,9 +39,13 @@ class SharedState(BaseModel):
         default=None,
         description="EvidenceStore model: Centralized evidence store with indexing and deduplication (Aggregation function output)",
     )
-    research_head_plan: ResearchHeadPlan | None = Field(
+    research_head_quant_plan: ResearchHeadPlan | None = Field(
         default=None,
-        description="ResearchHeadPlan model: Guidance for targeted retrieval tasks (ResearchHead output)",
+        description="ResearchHeadPlan model: Guidance for deterministic gap tasks (Quant ResearchHead output)",
+    )
+    research_head_qual_plan: ResearchHeadPlan | None = Field(
+        default=None,
+        description="ResearchHeadPlan model: Guidance for qualitative gap tasks (Qual ResearchHead output)",
     )
     deep_research_output: MarkdownReport | None = Field(
         default=None,

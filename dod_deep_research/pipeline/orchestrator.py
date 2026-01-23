@@ -7,7 +7,10 @@ from typing import Any
 
 from dod_deep_research.utils.evidence import EvidenceStore
 
-from dod_deep_research.agents.research_head.agent import research_head_agent
+from dod_deep_research.agents.research_head.agent import (
+    RESEARCH_HEAD_PARALLEL_AGENT,
+    RESEARCH_HEAD_QUAL_AGENT,
+)
 from dod_deep_research.agents.planner.agent import create_planner_agent
 from dod_deep_research.agents.schemas import get_common_sections
 from dod_deep_research.agents.collector.agent import create_collector_agents
@@ -112,12 +115,16 @@ async def run_pipeline_async(
     ######################
     # Iterative Research
     ######################
-    research_head_runner = build_runner(
-        agent=research_head_agent, app_name=app_name
-    )  # target collectors are created dynamically based on plan
+    research_head_parallel_runner = build_runner(
+        agent=RESEARCH_HEAD_PARALLEL_AGENT, app_name=app_name
+    )
+    research_head_qual_runner = build_runner(
+        agent=RESEARCH_HEAD_QUAL_AGENT, app_name=app_name
+    )
     research_head_session = await run_iterative_research(
         app_name=app_name,
-        research_head_runner=research_head_runner,
+        research_head_parallel_runner=research_head_parallel_runner,
+        research_head_qual_runner=research_head_qual_runner,
         session=session,
     )  # pass the session downstream to the next phase
 
@@ -195,7 +202,8 @@ async def run_pipeline_async(
         disease_name=state.get("indication"),
         research_plan=state.get("research_plan"),
         evidence_store=state.get("evidence_store"),
-        research_head_plan=state.get("research_head_plan"),
+        research_head_quant_plan=state.get("research_head_quant_plan"),
+        research_head_qual_plan=state.get("research_head_qual_plan"),
         deep_research_output=state.get("deep_research_output"),
     )
 

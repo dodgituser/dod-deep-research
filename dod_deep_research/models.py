@@ -8,7 +8,3 @@ class GeminiModels(StrEnum):
     GEMINI_FLASH_LITE_LATEST = "models/gemini-flash-lite-latest"
     GEMINI_25_PRO = "models/gemini-2.5-pro"
     GEMINI_3_PRO = "models/gemini-3-pro-preview"
-
-
-class OpenAIModels(StrEnum):
-    O3_DEEP_RESEARCH = "o3-deep-research"

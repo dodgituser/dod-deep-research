@@ -29,7 +29,7 @@ from dod_deep_research.agents.collector.prompt import (
     COLLECTOR_AGENT_PROMPT_TEMPLATE,
     TARGETED_COLLECTOR_AGENT_PROMPT_TEMPLATE,
 )
-from dod_deep_research.utils.evidence import GapTask
+from dod_deep_research.agents.research_head.schemas import GapTask
 from dod_deep_research.core import get_http_options, inline_json_schema
 from dod_deep_research.models import GeminiModels
 from dod_deep_research.agents.tooling import reflect_step
@@ -39,8 +39,6 @@ import logging
 from google.genai.types import GenerateContentConfig
 
 logger = logging.getLogger(__name__)
-
-EXA_DEFAULT_TOOLS = "web_search_exa,crawling_exa,company_research_exa"
 
 
 class CachedMcpToolset(McpToolset):
@@ -100,11 +98,6 @@ def _get_tools():
         clinical_trials_toolset,
         exa_toolset,
     ]
-
-
-def get_collector_tools():
-    """Return the collector toolset including PubMed and ClinicalTrials."""
-    return _get_tools()
 
 
 def create_collector_agent(

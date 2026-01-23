@@ -1,8 +1,26 @@
 """Schemas for research head agent."""
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from dod_deep_research.agents.schemas import CommonSection
+
+
+class GapTask(BaseModel):
+    """Question-level gap task for targeted collection."""
+
+    section: CommonSection = Field(
+        ...,
+        description="Section that contains missing questions.",
+    )
+    missing_questions: list[str] = Field(
+        default_factory=list,
+        description="Missing research questions to address.",
+    )
+    min_evidence: int = Field(
+        description="Minimum evidence required per question.",
+    )
 
 
 class ResearchHeadGuidance(BaseModel):
@@ -12,6 +30,10 @@ class ResearchHeadGuidance(BaseModel):
         ...,
         description="Section name to guide targeted collection.",
     )
+    gap_type: Literal["deterministic", "qualitative"] = Field(
+        default="deterministic",
+        description="Whether this guidance targets a deterministic or qualitative gap.",
+    )
     notes: str = Field(
         default="",
         description="Short guidance on what to look for in this section.",
@@ -20,10 +42,6 @@ class ResearchHeadGuidance(BaseModel):
         default_factory=list,
         description="Suggested search queries for targeted collection.",
     )  # TODO how will the research head know how to suggest queries?
-    needs_more_research: bool = Field(
-        default=False,
-        description="True if the section needs more evidence despite meeting minimum counts (e.g. poor quality, outdated).",
-    )
 
 
 class ResearchHeadPlan(BaseModel):

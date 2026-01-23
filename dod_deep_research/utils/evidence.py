@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from dod_deep_research.agents.collector.schemas import CollectorResponse, EvidenceItem
 from dod_deep_research.agents.schemas import CommonSection, EvidenceSource, KeyValuePair
+from dod_deep_research.agents.research_head.schemas import GapTask
 from dod_deep_research.agents.planner.schemas import ResearchPlan
 from dod_deep_research.core import extract_json_payload
 
@@ -84,22 +85,6 @@ class EvidenceStore(BaseModel):
                 "All evidence IDs must be unique across the EvidenceStore."
             )
         return self
-
-
-class GapTask(BaseModel):
-    """Question-level gap task for targeted collection."""
-
-    section: CommonSection = Field(
-        ...,
-        description="Section that contains missing questions.",
-    )
-    missing_questions: list[str] = Field(
-        default_factory=list,
-        description="Missing research questions to address.",
-    )
-    min_evidence: int = Field(
-        description="Minimum evidence required per question.",
-    )
 
 
 def extract_section_stores(state: dict[str, Any]) -> dict[str, CollectorResponse]:

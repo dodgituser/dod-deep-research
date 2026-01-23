@@ -33,7 +33,7 @@ def create_planner_agent(indication_prompt: str | None = None) -> Agent:
     )
     instruction = PLANNER_AGENT_PROMPT.replace(
         "{research_plan_schema}", research_plan_schema
-    )
+    )  # replace the research_plan_schema in the prompt with the actual schema
     if indication_prompt:
         indication_block = (
             "--- BEGIN INDICATION PROMPT ---\n"
@@ -59,4 +59,4 @@ Do not collect evidence, do not write the report, and do not assign tasks.
             http_options=get_http_options(),
         ),
         output_key="research_plan_raw",
-    )
+    )  # return the research_plan_raw from the agent (we will parse this later)

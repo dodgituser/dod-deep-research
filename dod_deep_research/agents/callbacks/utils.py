@@ -54,19 +54,3 @@ def log_agent_event(agent_name: str, callback_type: str, payload: Any) -> None:
         entry = {"timestamp": timestamp, "payload": payload}
     with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
         handle.write(json.dumps(entry, default=str) + "\n")
-
-
-def format_payload(payload: Any) -> str:
-    """
-    Format payloads as JSON when possible.
-
-    Args:
-        payload (Any): Payload to serialize.
-
-    Returns:
-        str: Serialized payload string.
-    """
-    try:
-        return json.dumps(payload, default=str)
-    except TypeError:
-        return str(payload)
