@@ -14,8 +14,10 @@ from dod_deep_research.core import (
     run_agent,
     persist_state_delta,
 )
-from dod_deep_research.utils.evidence import build_gap_tasks
+from dod_deep_research.utils.evidence import build_gap_tasks, get_min_evidence
 from dod_deep_research.agents.planner.schemas import ResearchPlan
+from dod_deep_research.agents.research_head.schemas import GapTask
+from dod_deep_research.agents.schemas import CommonSection
 from dod_deep_research.utils.evidence import (
     EvidenceStore,
     build_question_coverage,
@@ -89,7 +91,7 @@ async def run_iterative_research(
             parts=[types.Part.from_text(text="Provide guidance for the gap tasks.")],
             role="user",
         )  # prompt the research head to provide guidance for the gap tasks
-        if gap_tasks:  # if deterministic gap tasks are identified, run both research heads to provide guidance
+        if gap_tasks:  # if quantitative gap tasks are identified, run both research heads to provide guidance
             await run_agent(
                 research_head_parallel_runner,
                 research_head_session.user_id,
@@ -104,7 +106,7 @@ async def run_iterative_research(
                     session_id=research_head_session.id,
                 )
             )
-        else:  # if no deterministic gap tasks are identified, run the qualitative research head to propose qualitative gaps
+        else:  # if no quantitative gap tasks are identified, run the qualitative research head to propose qualitative gaps
             await run_agent(
                 research_head_qual_runner,
                 research_head_session.user_id,
@@ -120,24 +122,33 @@ async def run_iterative_research(
                 )
             )
 
-        allowed_sections = {str(task.section) for task in gap_tasks}
-        guidance_map = {
-            section: guidance
-            for section, guidance in get_research_head_guidance(
-                research_head_session.state
-            ).items()
-            if section in allowed_sections
-        }
+        guidance_map = get_research_head_guidance(research_head_session.state)
         if not gap_tasks:
-            logger.info("No gap tasks remain; ending gap-driven loop")
+            logger.info("No quantitative gap tasks remain; ending gap-driven loop")
             break
-        logger.info("Identified %d gap tasks to address", len(gap_tasks))
-        guidance_keys = set(guidance_map.keys())
+        if not guidance_map:
+            logger.info("No guidance returned; ending gap-driven loop")
+            break
 
+        guided_tasks: list[GapTask] = []
+        for section, guidance in guidance_map.items():
+            guided_tasks.append(
+                GapTask(
+                    section=CommonSection(section),
+                    missing_questions=list(guidance["missing_questions"]),
+                    min_evidence=get_min_evidence(section),
+                )
+            )
+
+        logger.info(
+            "Running targeted collectors for %d guidance sections",
+            len(guided_tasks),
+        )
+        guidance_keys = set(guidance_map.keys())
         all_output_keys = [
-            f"evidence_store_section_{task.section}" for task in gap_tasks
+            f"evidence_store_section_{task.section}" for task in guided_tasks
         ]
-        gap_tasks_by_section = {str(task.section): task for task in gap_tasks}
+        gap_tasks_by_section = {str(task.section): task for task in guided_tasks}
 
         def build_targeted_collectors_for_missing(missing_keys: list[str]) -> object:
             missing_sections = {
@@ -160,7 +171,7 @@ async def run_iterative_research(
             )
 
         targeted_collectors = create_targeted_collector_agents(
-            gap_tasks,
+            guided_tasks,
             guidance_map=guidance_map,
             after_agent_callback=update_evidence,
         )  # create dynamic targeted collector agents based on remaining gap tasks and guidance from research head

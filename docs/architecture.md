@@ -6,7 +6,8 @@ graph TD
     end
 
     subgraph "Iterative Research Loop"
-        D[Research Head Agent] -- analyzes --> E{Evidence Store};
+        D1[Quant Research Head] -- deterministic gaps --> E{Evidence Store};
+        D2[Qual Research Head] -- qualitative gaps --> E;
         E -- gaps --> F[Targeted Collector Agents];
         F -- new evidence --> E;
     end

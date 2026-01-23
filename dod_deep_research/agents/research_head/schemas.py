@@ -30,18 +30,25 @@ class ResearchHeadGuidance(BaseModel):
         ...,
         description="Section name to guide targeted collection.",
     )
-    gap_type: Literal["deterministic", "qualitative"] = Field(
-        default="deterministic",
-        description="Whether this guidance targets a deterministic or qualitative gap.",
+    gap_type: Literal["quantitative", "qualitative"] = Field(
+        default="quantitative",
+        description="Whether this guidance targets a quantitative or qualitative gap.",
+    )
+    missing_questions: list[str] = Field(
+        ...,
+        min_length=1,
+        description="Missing research questions to address for this section.",
     )
     notes: str = Field(
-        default="",
+        ...,
+        min_length=1,
         description="Short guidance on what to look for in this section.",
     )
     suggested_queries: list[str] = Field(
-        default_factory=list,
+        ...,
+        min_length=1,
         description="Suggested search queries for targeted collection.",
-    )  # TODO how will the research head know how to suggest queries?
+    )
 
 
 class ResearchHeadPlan(BaseModel):
