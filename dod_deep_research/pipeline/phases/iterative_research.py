@@ -53,6 +53,7 @@ async def run_iterative_research(
         user_id=session.user_id,
         state=session.state.copy(),
     )  # create new session for loop phase while maintaining state from previous phase this will be the same session throughout the loop
+    # TODO: deep research may 1 shot
 
     for research_iteration in range(1, max_iterations + 1):
         logger.info("Gap-driven loop iteration %s", research_iteration)
@@ -123,9 +124,6 @@ async def run_iterative_research(
             )
 
         guidance_map = get_research_head_guidance(research_head_session.state)
-        if not gap_tasks:
-            logger.info("No quantitative gap tasks remain; ending gap-driven loop")
-            break
         if not guidance_map:
             logger.info("No guidance returned; ending gap-driven loop")
             break
@@ -138,37 +136,17 @@ async def run_iterative_research(
                     missing_questions=list(guidance["missing_questions"]),
                     min_evidence=get_min_evidence(section),
                 )
-            )
+            )  # construct the gap tasks based on the guidance from the research head
 
         logger.info(
             "Running targeted collectors for %d guidance sections",
             len(guided_tasks),
         )
-        guidance_keys = set(guidance_map.keys())
+        guidance_keys = set(guidance_map.keys())  # Section -> guidance payload.
         all_output_keys = [
             f"evidence_store_section_{task.section}" for task in guided_tasks
         ]
         gap_tasks_by_section = {str(task.section): task for task in guided_tasks}
-
-        def build_targeted_collectors_for_missing(missing_keys: list[str]) -> object:
-            missing_sections = {
-                key.removeprefix("evidence_store_section_") for key in missing_keys
-            }
-            missing_tasks = [
-                gap_tasks_by_section[section]
-                for section in missing_sections
-                if section in gap_tasks_by_section
-            ]
-            guidance_subset = {
-                section: guidance_map[section]
-                for section in missing_sections
-                if section in guidance_keys
-            }
-            return create_targeted_collector_agents(
-                missing_tasks,
-                guidance_map=guidance_subset,
-                after_agent_callback=update_evidence,
-            )
 
         targeted_collectors = create_targeted_collector_agents(
             guided_tasks,
@@ -203,6 +181,28 @@ async def run_iterative_research(
             user_id=targeted_session.user_id,
             session_id=targeted_session.id,
         )  # get updated state from targeted collectors
+
+        # this builds the targeted collectors for the sections that were not successful above
+        def build_targeted_collectors_for_missing(missing_keys: list[str]) -> object:
+            missing_sections = {
+                key.removeprefix("evidence_store_section_") for key in missing_keys
+            }
+            missing_tasks = [
+                gap_tasks_by_section[section]
+                for section in missing_sections
+                if section in gap_tasks_by_section
+            ]
+            guidance_subset = {
+                section: guidance_map[section]
+                for section in missing_sections
+                if section in guidance_keys
+            }
+            return create_targeted_collector_agents(
+                missing_tasks,
+                guidance_map=guidance_subset,
+                after_agent_callback=update_evidence,
+            )
+
         targeted_session = await retry_missing_outputs(
             app_name=app_name,
             user_id=research_head_session.user_id,
@@ -212,7 +212,7 @@ async def run_iterative_research(
             run_message="Collect evidence for gap tasks that were identified.",
             log_label="targeted collectors",
             agent_prefix="targeted_collector_",
-        )
+        )  # retry the targeted collectors for the sections that were not successful above
 
         # Propagate new evidence back to research head session
         state_delta = {}
