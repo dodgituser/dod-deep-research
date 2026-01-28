@@ -1,4 +1,26 @@
 services:
+  neo4j-cypher-mcp:
+    build:
+      context: ../mcp-neo4j/servers/mcp-neo4j-cypher
+      dockerfile: Dockerfile
+    image: mcp-neo4j-cypher:local
+    container_name: mcp-neo4j-cypher-server
+    ports:
+      - "3020:8000"
+    environment:
+      - NEO4J_URI=bolt://host.docker.internal:17687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-password}
+      - NEO4J_DATABASE=neo4j
+      - NEO4J_TRANSPORT=http
+      - NEO4J_MCP_SERVER_HOST=0.0.0.0
+      - NEO4J_MCP_SERVER_PORT=8000
+      - NEO4J_MCP_SERVER_PATH=/api/mcp/
+      - NEO4J_MCP_SERVER_ALLOWED_HOSTS=localhost,127.0.0.1,neo4j-cypher-mcp
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
   pubmed-mcp:
     build:
       context: ../pubmed-mcp-server
@@ -59,6 +81,7 @@ services:
       - PUBMED_MCP_URL=http://pubmed-mcp:3017/mcp
       - CLINICAL_TRIALS_MCP_URL=http://clinical-trials-mcp:3018/mcp
       - EXA_MCP_URL=http://exa-mcp:3000/mcp
+      - NEO4J_MCP_URL=http://neo4j-cypher-mcp:8000/api/mcp/
       - EXA_API_KEY=${EXA_API_KEY:-}
       - GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcloud/application_default_credentials.json
       - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-}
@@ -67,6 +90,7 @@ services:
     volumes:
       - ${HOME}/.config/gcloud/application_default_credentials.json:/tmp/gcloud/application_default_credentials.json:ro
     depends_on:
+      - neo4j-cypher-mcp
       - pubmed-mcp
       - clinical-trials-mcp
       - exa-mcp
