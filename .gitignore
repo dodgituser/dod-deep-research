@@ -140,8 +140,9 @@ com.streamerai.batch1.plist
 com.streamerai.batch2.plist
 run_batch.sh
 
-# Ignore all .adk folders
+# Ignore ADK runtime folders anywhere in the repo
 .adk/
+**/.adk/
 
 # Generated for ADK Cloud Run deploy
 dod_deep_research/requirements.txt
