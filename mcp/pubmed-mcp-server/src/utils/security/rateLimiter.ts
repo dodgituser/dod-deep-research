@@ -259,5 +259,5 @@ export class RateLimiter {
  */
 export const rateLimiter = new RateLimiter({
   windowMs: 15 * 60 * 1000, // Default: 15 minutes
-  maxRequests: 100, // Default: 100 requests per window
+  maxRequests: 2000, // Raised to reduce Cloud Run MCP 429s under parallel collector load
 });

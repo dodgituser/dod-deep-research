@@ -68,15 +68,12 @@ def test_mcp_toolset_factories_add_id_token_for_cloud_run_urls(monkeypatch) -> N
     ]
 
 
-def test_root_agent_includes_pipeline_and_mcp_tools() -> None:
-    """Validates root agent tool list includes pipeline + MCP connectors."""
+def test_root_agent_exposes_pipeline_tool_only() -> None:
+    """Validates root agent tool list only exposes pipeline execution."""
     from dod_deep_research import agent
 
     reloaded = importlib.reload(agent)
     tools = reloaded.root_agent.tools
 
     assert any(getattr(tool, "__name__", "") == "run_deep_research_pipeline" for tool in tools)
-    mcp_toolsets_in_root = [
-        tool for tool in tools if isinstance(tool, mcp_toolsets.CachedMcpToolset)
-    ]
-    assert len(mcp_toolsets_in_root) == 4
+    assert len(tools) == 1

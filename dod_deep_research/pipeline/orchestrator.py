@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from dod_deep_research.utils.evidence import EvidenceStore
@@ -35,6 +36,20 @@ from dod_deep_research.prompts.indication_prompt import generate_indication_prom
 from dod_deep_research.utils.persistence import persist_output_artifacts
 
 logger = logging.getLogger(__name__)
+
+
+def _run_pipeline_in_new_loop(coro: Any) -> SharedState:
+    """
+    Runs a coroutine in a dedicated event loop from a worker thread.
+
+    Args:
+        coro (Any): Coroutine to execute.
+
+    Returns:
+        SharedState: Pipeline shared state returned by the coroutine.
+    """
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        return executor.submit(asyncio.run, coro).result()
 
 
 async def run_pipeline_async(
@@ -245,14 +260,17 @@ def run_pipeline(
     Returns:
         SharedState: Populated shared state with all agent outputs.
     """
-    return asyncio.run(
-        run_pipeline_async(
-            indication=indication,
-            drug_name=drug_name,
-            drug_form=drug_form,
-            drug_generic_name=drug_generic_name,
-            indication_aliases=indication_aliases,
-            drug_aliases=drug_aliases,
-            **kwargs,
-        )
+    pipeline_coro = run_pipeline_async(
+        indication=indication,
+        drug_name=drug_name,
+        drug_form=drug_form,
+        drug_generic_name=drug_generic_name,
+        indication_aliases=indication_aliases,
+        drug_aliases=drug_aliases,
+        **kwargs,
     )
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(pipeline_coro)
+    return _run_pipeline_in_new_loop(pipeline_coro)
