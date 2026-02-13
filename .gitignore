@@ -142,4 +142,7 @@ run_batch.sh
 
 # Ignore all .adk folders
 .adk/
+
+# Generated for ADK Cloud Run deploy
+dod_deep_research/requirements.txt
 /outputs/agent_logs/

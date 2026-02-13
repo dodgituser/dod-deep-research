@@ -1,7 +1,9 @@
 # Include MCP-related targets
 include mcp.mk
 
-.PHONY: check-quality fix-quality commit clean compose-up compose-down tunnel-neo4j-http tunnel-neo4j-bolt run-pipeline run log-print
+.PHONY: check-quality fix-quality commit clean compose-up compose-down tunnel-neo4j-http tunnel-neo4j-bolt run-pipeline run log-print deploy-agent-cloud-run export-requirements
+
+AGENT_SERVICE_NAME ?= dod-deep-research-agent
 
 check-quality:
 	@echo "Checking formatting and linting with ruff..."
@@ -128,3 +130,32 @@ log-print:
 		exit 1; \
 	fi; \
 	cat $$files | sed -E 's/^\\[[^]]+\\] //' | jq $$jq_opts "$$jq_filter" | eval "$$unescape_cmd"
+
+export-requirements:
+	@echo "Generating requirements.txt for ADK Cloud Run deploy..."
+	uv export --no-dev -o dod_deep_research/requirements.txt
+
+deploy-agent-cloud-run: export-requirements
+	@test -n "$(GCP_PROJECT)" || (echo "GCP_PROJECT required (set in mcp.mk or override)"; exit 1)
+	@test -n "$(GCP_REGION)" || (echo "GCP_REGION required (set in mcp.mk or override)"; exit 1)
+	@test -n "$${PUBMED_MCP_URL}" || (echo "PUBMED_MCP_URL env var required"; exit 1)
+	@test -n "$${CLINICAL_TRIALS_MCP_URL}" || (echo "CLINICAL_TRIALS_MCP_URL env var required"; exit 1)
+	@test -n "$${EXA_MCP_URL}" || (echo "EXA_MCP_URL env var required"; exit 1)
+	@envfile=$$(mktemp); \
+	printf '%s\n' \
+		"GOOGLE_CLOUD_PROJECT: $(GCP_PROJECT)" \
+		"GOOGLE_CLOUD_LOCATION: $(GCP_REGION)" \
+		"GOOGLE_GENAI_USE_VERTEXAI: \"$${GOOGLE_GENAI_USE_VERTEXAI:-True}\"" \
+		"PUBMED_MCP_URL: \"$$PUBMED_MCP_URL\"" \
+		"CLINICAL_TRIALS_MCP_URL: \"$$CLINICAL_TRIALS_MCP_URL\"" \
+		"EXA_MCP_URL: \"$$EXA_MCP_URL\"" \
+		> $$envfile; \
+	uv run adk deploy cloud_run \
+		--project=$(GCP_PROJECT) \
+		--region=$(GCP_REGION) \
+		--service_name=$(AGENT_SERVICE_NAME) \
+		--with_ui \
+		dod_deep_research \
+		-- --allow-unauthenticated \
+		--env-vars-file=$$envfile; \
+	ec=$$?; rm -f $$envfile; exit $$ec
