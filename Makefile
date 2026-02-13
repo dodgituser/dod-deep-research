@@ -1,9 +1,10 @@
 # Include MCP-related targets
 include mcp.mk
 
-.PHONY: check-quality fix-quality commit clean compose-up compose-down tunnel-neo4j-http tunnel-neo4j-bolt run-pipeline run log-print deploy-agent-cloud-run export-requirements
+.PHONY: check-quality fix-quality commit clean compose-up compose-down tunnel-neo4j-http tunnel-neo4j-bolt run-pipeline run log-print deploy-agent-cloud-run export-requirements create-outputs-bucket
 
 AGENT_SERVICE_NAME ?= dod-deep-research-agent
+OUTPUTS_BUCKET ?= dod-deep-research-outputs
 
 check-quality:
 	@echo "Checking formatting and linting with ruff..."
@@ -133,7 +134,7 @@ log-print:
 
 export-requirements:
 	@echo "Generating requirements.txt for ADK Cloud Run deploy..."
-	uv export --no-dev -o dod_deep_research/requirements.txt
+	uv export --no-dev --no-hashes -o dod_deep_research/requirements.txt
 
 deploy-agent-cloud-run: export-requirements
 	@test -n "$(GCP_PROJECT)" || (echo "GCP_PROJECT required (set in mcp.mk or override)"; exit 1)
@@ -141,14 +142,16 @@ deploy-agent-cloud-run: export-requirements
 	@test -n "$${PUBMED_MCP_URL}" || (echo "PUBMED_MCP_URL env var required"; exit 1)
 	@test -n "$${CLINICAL_TRIALS_MCP_URL}" || (echo "CLINICAL_TRIALS_MCP_URL env var required"; exit 1)
 	@test -n "$${EXA_MCP_URL}" || (echo "EXA_MCP_URL env var required"; exit 1)
+	@test -n "$${NEO4J_MCP_URL}" || (echo "NEO4J_MCP_URL env var required"; exit 1)
 	@envfile=$$(mktemp); \
 	printf '%s\n' \
 		"GOOGLE_CLOUD_PROJECT: $(GCP_PROJECT)" \
-		"GOOGLE_CLOUD_LOCATION: $(GCP_REGION)" \
+		"GOOGLE_CLOUD_LOCATION: \"$(VERTEX_AI_LOCATION)\"" \
 		"GOOGLE_GENAI_USE_VERTEXAI: \"$${GOOGLE_GENAI_USE_VERTEXAI:-True}\"" \
 		"PUBMED_MCP_URL: \"$$PUBMED_MCP_URL\"" \
 		"CLINICAL_TRIALS_MCP_URL: \"$$CLINICAL_TRIALS_MCP_URL\"" \
 		"EXA_MCP_URL: \"$$EXA_MCP_URL\"" \
+		"NEO4J_MCP_URL: \"$$NEO4J_MCP_URL\"" \
 		> $$envfile; \
 	uv run adk deploy cloud_run \
 		--project=$(GCP_PROJECT) \
@@ -156,6 +159,11 @@ deploy-agent-cloud-run: export-requirements
 		--service_name=$(AGENT_SERVICE_NAME) \
 		--with_ui \
 		dod_deep_research \
-		-- --allow-unauthenticated \
+		-- --allow-unauthenticated --no-invoker-iam-check \
 		--env-vars-file=$$envfile; \
-	ec=$$?; rm -f $$envfile; exit $$ec
+	ec=$$?; rm -f $$envfile dod_deep_research/requirements.txt; exit $$ec
+
+create-outputs-bucket:
+	@test -n "$(GCP_PROJECT)" || (echo "GCP_PROJECT required (set in mcp.mk or override)"; exit 1)
+	@test -n "$(GCP_REGION)" || (echo "GCP_REGION required (set in mcp.mk or override)"; exit 1)
+	gcloud storage buckets create gs://$(OUTPUTS_BUCKET) --project=$(GCP_PROJECT) --location=$(GCP_REGION) --uniform-bucket-level-access

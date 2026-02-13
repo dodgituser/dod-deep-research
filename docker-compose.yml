@@ -1,7 +1,7 @@
 services:
   neo4j-cypher-mcp:
     build:
-      context: ../mcp-neo4j/servers/mcp-neo4j-cypher
+      context: ./mcp/mcp-neo4j/servers/mcp-neo4j-cypher
       dockerfile: Dockerfile
     image: mcp-neo4j-cypher:local
     container_name: mcp-neo4j-cypher-server

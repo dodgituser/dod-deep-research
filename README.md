@@ -122,6 +122,20 @@ Each run writes to `outputs/<indication>-<timestamp>/`:
 - `pipeline_evals.json`: Evaluation metrics
 - `agent_logs/`: Per-agent callbacks for debugging
 
+Each run also uploads outputs to `gs://dod-deep-research-outputs/` using the same
+relative pathing as local `outputs/` (for example
+`outputs/<indication>-<timestamp>/report.md` maps to
+`gs://dod-deep-research-outputs/<indication>-<timestamp>/report.md`).
+
+GCS upload is required and strict: if any artifact upload fails (including
+`agent_logs/` files), the pipeline run fails.
+
+To create the bucket:
+
+```bash
+make create-outputs-bucket GCP_PROJECT=prod1-svc-27ah GCP_REGION=us-central1
+```
+
 ## Benefits
 
 - **Avoids Duplication**: Parallel collectors share a single evidence store, preventing duplicate retrieval work

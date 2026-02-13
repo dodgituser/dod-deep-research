@@ -32,6 +32,7 @@ from dod_deep_research.pipeline.phases import (
     write_long_report,
 )
 from dod_deep_research.prompts.indication_prompt import generate_indication_prompt
+from dod_deep_research.utils.persistence import persist_output_artifacts
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +182,7 @@ async def run_pipeline_async(
 
     writer_output_dict = state.get("deep_research_output")
     output_dir = get_output_path(indication)
+    report_path = None
     if writer_output_dict:
         writer_output = MarkdownReport(**writer_output_dict)
         report_path = output_dir / "report.md"
@@ -196,6 +198,17 @@ async def run_pipeline_async(
     evals_file = output_dir / "pipeline_evals.json"
     evals_file.write_text(json.dumps(evals, indent=2, default=str))
     logger.info("Pipeline evals saved to: %s", evals_file)
+    persisted_artifacts = persist_output_artifacts(
+        output_dir=output_dir,
+        report_path=report_path,
+        state_file=state_file,
+        evals_file=evals_file,
+    )
+    logger.info(
+        "Uploaded %d artifacts to %s",
+        len(persisted_artifacts.artifacts),
+        persisted_artifacts.bucket_name,
+    )
 
     return SharedState(
         drug_name=state.get("drug_name"),
