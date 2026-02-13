@@ -9,8 +9,6 @@
 # ADK temporarily removes output_schema to allow function calling and injects a prompt,
 # so this works only due to that hack, not because the model supports it natively.
 
-import asyncio
-import os
 import json
 
 from typing import Any, Callable
@@ -18,8 +16,6 @@ from typing import Any, Callable
 from google.adk import Agent
 from google.adk.agents import ParallelAgent
 from google.adk.agents.callback_context import CallbackContext
-from google.adk.tools.mcp_tool import McpToolset
-from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 from google.genai import types
 
 from dod_deep_research.agents.callbacks.after_agent_log_callback import (
@@ -32,6 +28,11 @@ from dod_deep_research.agents.collector.prompt import (
 from dod_deep_research.agents.research_head.schemas import GapTask
 from dod_deep_research.core import get_http_options, inline_json_schema
 from dod_deep_research.models import GeminiModels
+from dod_deep_research.agents.mcp_toolsets import (
+    create_clinical_trials_toolset,
+    create_exa_toolset,
+    create_pubmed_toolset,
+)
 from dod_deep_research.agents.tooling import reflect_step
 from dod_deep_research.utils.evidence import get_min_evidence
 from dod_deep_research.agents.collector.schemas import EvidenceItem
@@ -41,62 +42,13 @@ from google.genai.types import GenerateContentConfig
 logger = logging.getLogger(__name__)
 
 
-class CachedMcpToolset(McpToolset):
-    """Cache MCP tools to avoid repeated list_tools calls under concurrency."""
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self._cached_tools = None
-        self._tools_lock = asyncio.Lock()
-
-    async def get_tools(self, readonly_context=None):  # type: ignore[override]
-        if self._cached_tools is not None:
-            return self._cached_tools
-
-        async with self._tools_lock:
-            if self._cached_tools is None:
-                self._cached_tools = await super().get_tools(readonly_context)
-
-        return self._cached_tools
-
-
 def _get_tools():
     """Get standard tools for collector agents."""
-    pubmed_toolset = CachedMcpToolset(
-        connection_params=StreamableHTTPConnectionParams(
-            url=os.getenv("PUBMED_MCP_URL", "http://127.0.0.1:3017/mcp"),
-            timeout=180,
-            sse_read_timeout=180,
-            headers={"Accept": "application/json, text/event-stream"},
-            terminate_on_close=False,
-        ),
-        tool_filter=["pubmed_search_articles", "pubmed_fetch_contents"],
-    )
-    clinical_trials_toolset = CachedMcpToolset(
-        connection_params=StreamableHTTPConnectionParams(
-            url=os.getenv("CLINICAL_TRIALS_MCP_URL", "http://127.0.0.1:3018/mcp"),
-            timeout=180,
-            sse_read_timeout=180,
-            headers={"Accept": "application/json, text/event-stream"},
-            terminate_on_close=False,
-        ),
-        tool_filter=["clinicaltrials_search_studies", "clinicaltrials_get_study"],
-    )
-    exa_toolset = CachedMcpToolset(
-        connection_params=StreamableHTTPConnectionParams(
-            url=os.getenv("EXA_MCP_URL", "http://127.0.0.1:3019/mcp"),
-            timeout=10,
-            sse_read_timeout=10,
-            headers={"Accept": "application/json, text/event-stream"},
-            terminate_on_close=False,
-        ),
-        tool_filter=["web_search_exa", "crawling_exa", "company_research_exa"],
-    )
     return [
-        pubmed_toolset,
+        create_pubmed_toolset(),
         reflect_step,
-        clinical_trials_toolset,
-        exa_toolset,
+        create_clinical_trials_toolset(),
+        create_exa_toolset(),
     ]
 
 

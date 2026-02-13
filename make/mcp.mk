@@ -6,10 +6,7 @@ CLINICAL_TRIALS_MCP_SRC := ../clinicaltrialsgov-mcp-server/
 EXA_MCP_SRC := ../exa-mcp-server/
 NEO4J_CYPHER_DIR := $(MCP_DIR)/mcp-neo4j/servers/mcp-neo4j-cypher
 
-# GCP Cloud Run configuration
-GCP_PROJECT ?= prod1-svc-27ah
-GCP_REGION ?= us-west1
-VERTEX_AI_LOCATION ?= global
+# MCP-specific deployment configuration
 ARTIFACT_REGISTRY_REPO ?= mcp-servers
 PUBMED_SERVICE := pubmed-mcp
 CLINICAL_TRIALS_SERVICE := clinicaltrials-mcp
@@ -32,6 +29,12 @@ NEO4J_NAMESPACE :=
 NEO4J_MCP_SERVER_ALLOWED_HOSTS := *
 NEO4J_MCP_SERVER_ALLOW_ORIGINS :=
 NEO4J_READ_TIMEOUT := 30
+
+# Agent-to-MCP Cloud Run URLs
+PUBMED_MCP_URL := https://pubmed-mcp-7024095287.us-west1.run.app/mcp
+CLINICAL_TRIALS_MCP_URL := https://clinicaltrials-mcp-7024095287.us-west1.run.app/mcp
+EXA_MCP_URL := https://exa-mcp-7024095287.us-west1.run.app/mcp
+NEO4J_MCP_URL := https://neo4j-cypher-mcp-7024095287.us-west1.run.app/api/mcp/
 
 # Artifact Registry image paths
 ARTIFACT_REGISTRY_BASE := $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT)/$(ARTIFACT_REGISTRY_REPO)

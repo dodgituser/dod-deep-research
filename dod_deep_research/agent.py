@@ -5,6 +5,12 @@ from pathlib import Path
 from google.adk import Agent
 from pydantic import BaseModel, Field
 
+from dod_deep_research.agents.mcp_toolsets import (
+    create_clinical_trials_toolset,
+    create_exa_toolset,
+    create_neo4j_toolset,
+    create_pubmed_toolset,
+)
 from dod_deep_research.deep_research import run_pipeline
 from dod_deep_research.models import GeminiModels
 
@@ -14,6 +20,20 @@ Before calling any tool, collect required inputs: indication and drug_name.
 Optional inputs: drug_form, drug_generic_name, indication_aliases, drug_aliases.
 When required inputs are present, call run_deep_research_pipeline exactly once.
 Return only the tool result with report_path.
+
+If the user asks to test MCP connectors, do not run the pipeline.
+Instead, run MCP connector checks sequentially in this order:
+1) PubMed 2) ClinicalTrials 3) Exa 4) Neo4j
+
+Use these minimal checks:
+- PubMed: pubmed_search_articles
+- ClinicalTrials: clinicaltrials_search_studies
+- Exa: web_search_exa
+- Neo4j: get_neo4j_schema
+
+For diagnostics responses, include both:
+- A concise summary per connector (pass/fail + reason)
+- A raw payload excerpt per connector
 """
 
 
@@ -25,6 +45,17 @@ class PipelineRunResult(BaseModel):
         default=None, description="Path to generated markdown report."
     )
     error: str | None = Field(default=None, description="Error message when failed.")
+
+
+class ConnectorDiagnosticResult(BaseModel):
+    """Structured summary model for connector diagnostics in responses."""
+
+    connector: str = Field(..., description="Connector name.")
+    status: str = Field(..., description="Connector status, e.g., pass or fail.")
+    summary: str = Field(..., description="Human-readable diagnostic summary.")
+    raw_excerpt: str = Field(
+        ..., description="Raw payload excerpt from tool response or error."
+    )
 
 
 def _find_latest_run_output(outputs_root: Path) -> Path | None:
@@ -105,5 +136,11 @@ root_agent = Agent(
     model=GeminiModels.GEMINI_FLASH_LATEST.value.replace("models/", ""),
     description="Runs the DOD deep research pipeline from ADK Web.",
     instruction=ROOT_AGENT_PROMPT,
-    tools=[run_deep_research_pipeline],
+    tools=[
+        run_deep_research_pipeline,
+        create_pubmed_toolset(),
+        create_clinical_trials_toolset(),
+        create_exa_toolset(),
+        create_neo4j_toolset(),
+    ],
 )
