@@ -39,6 +39,33 @@ def test_mcp_toolset_factories_honor_env_urls(monkeypatch) -> None:
     assert clinical.__dict__["_connection_params"].url == "https://ct.example/mcp"
     assert exa.__dict__["_connection_params"].url == "https://exa.example/mcp"
     assert neo4j.__dict__["_connection_params"].url == "https://neo4j.example/api/mcp/"
+    assert "Authorization" not in pubmed.__dict__["_connection_params"].headers
+
+
+def test_mcp_toolset_factories_add_id_token_for_cloud_run_urls(monkeypatch) -> None:
+    """Ensures Cloud Run MCP URLs include an OIDC Authorization header."""
+    monkeypatch.setenv("PUBMED_MCP_URL", "https://pubmed-abc-uw.a.run.app/mcp")
+    monkeypatch.setenv("NEO4J_MCP_URL", "https://neo4j-abc-uw.a.run.app/api/mcp/")
+
+    audiences: list[str] = []
+
+    def _fake_fetch(audience: str) -> str:
+        audiences.append(audience)
+        return "test-token"
+
+    monkeypatch.setattr(mcp_toolsets, "_fetch_identity_token", _fake_fetch)
+
+    pubmed = mcp_toolsets.create_pubmed_toolset()
+    neo4j = mcp_toolsets.create_neo4j_toolset()
+
+    pubmed_headers = pubmed.__dict__["_connection_params"].headers
+    neo4j_headers = neo4j.__dict__["_connection_params"].headers
+    assert pubmed_headers["Authorization"] == "Bearer test-token"
+    assert neo4j_headers["Authorization"] == "Bearer test-token"
+    assert audiences == [
+        "https://pubmed-abc-uw.a.run.app",
+        "https://neo4j-abc-uw.a.run.app",
+    ]
 
 
 def test_root_agent_includes_pipeline_and_mcp_tools() -> None:
