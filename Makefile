@@ -1,4 +1,7 @@
-.PHONY: check-quality fix-quality commit clean compose-up compose-down run-pipeline run log-print
+# Include MCP-related targets
+include mcp.mk
+
+.PHONY: check-quality fix-quality commit clean compose-up compose-down tunnel-neo4j-http tunnel-neo4j-bolt run-pipeline run log-print
 
 check-quality:
 	@echo "Checking formatting and linting with ruff..."
@@ -31,6 +34,14 @@ compose-up:
 compose-down:
 	@echo "Stopping docker compose services..."
 	docker compose -f docker-compose.yml down
+
+tunnel-neo4j-http:
+	@echo "Starting IAP tunnel to Neo4j HTTP port (7474)..."
+	gcloud compute start-iap-tunnel neo4j-1 7474 --local-host-port=localhost:17474 --zone=us-west1-b
+
+tunnel-neo4j-bolt:
+	@echo "Starting IAP tunnel to Neo4j Bolt port (7687)..."
+	gcloud compute start-iap-tunnel neo4j-1 7687 --local-host-port=localhost:17687 --zone=us-west1-b
 
 run-pipeline:
 	@if [ -z "$(INDICATION)" ] || [ -z "$(DRUG_NAME)" ]; then \

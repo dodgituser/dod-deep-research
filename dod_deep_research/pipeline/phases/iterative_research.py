@@ -77,7 +77,7 @@ async def run_iterative_research(
 
         gap_tasks = build_gap_tasks(
             question_coverage, min_evidence=2
-        )  # build the gap tasks based on the question coverage and minimum evidence required
+        )  # build the gap tasks based on the question coverage and minimum evidence required. gap tasks are deterministic.
 
         research_head_session = await persist_state_delta(
             research_head_parallel_runner.session_service,

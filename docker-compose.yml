@@ -23,7 +23,7 @@ services:
 
   pubmed-mcp:
     build:
-      context: ../pubmed-mcp-server
+      context: ./mcp/pubmed-mcp-server
       dockerfile: Dockerfile
     image: pubmed-mcp:local
     container_name: pubmed-mcp-server
@@ -40,7 +40,7 @@ services:
 
   clinical-trials-mcp:
     build:
-      context: ../clinicaltrialsgov-mcp-server
+      context: ./mcp/clinicaltrialsgov-mcp-server
       dockerfile: Dockerfile
     image: clinicaltrialsgov-mcp:local
     container_name: clinicaltrialsgov-mcp-server
@@ -55,7 +55,7 @@ services:
 
   exa-mcp:
     build:
-      context: ../exa-mcp-server
+      context: ./mcp/exa-mcp-server
       dockerfile: Dockerfile
     image: exa-mcp:local
     container_name: exa-mcp-server
