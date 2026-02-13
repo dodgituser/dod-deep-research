@@ -49,7 +49,7 @@ class _FakeClient:
 
 def _create_outputs_tree(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
     outputs_root = tmp_path / "outputs"
-    output_dir = outputs_root / "alz-20260213_120000"
+    output_dir = outputs_root / "alz-drug" / "20260213_120000_ab12cd34"
     output_dir.mkdir(parents=True)
     report_path = output_dir / "report.md"
     state_file = output_dir / "session_state.json"
@@ -58,7 +58,7 @@ def _create_outputs_tree(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
     state_file.write_text("{}\n")
     evals_file.write_text("{}\n")
 
-    log_dir = outputs_root / "agent_logs" / "planner_agent"
+    log_dir = output_dir / "agent_logs" / "planner_agent"
     log_dir.mkdir(parents=True)
     (log_dir / "planner_agent_callback_after_agent.jsonl").write_text("{}\n")
 
@@ -85,11 +85,17 @@ def test_persist_output_artifacts_uploads_with_mirrored_paths(
     )
 
     uploaded_object_names = [call.split("::", maxsplit=1)[0] for call in upload_calls]
-    assert "alz-20260213_120000/report.md" in uploaded_object_names
-    assert "alz-20260213_120000/session_state.json" in uploaded_object_names
-    assert "alz-20260213_120000/pipeline_evals.json" in uploaded_object_names
+    assert "alz-drug/20260213_120000_ab12cd34/report.md" in uploaded_object_names
     assert (
-        "agent_logs/planner_agent/planner_agent_callback_after_agent.jsonl"
+        "alz-drug/20260213_120000_ab12cd34/session_state.json"
+        in uploaded_object_names
+    )
+    assert (
+        "alz-drug/20260213_120000_ab12cd34/pipeline_evals.json"
+        in uploaded_object_names
+    )
+    assert (
+        "alz-drug/20260213_120000_ab12cd34/agent_logs/planner_agent/planner_agent_callback_after_agent.jsonl"
         in uploaded_object_names
     )
     assert len(persisted.artifacts) == len(upload_calls)
@@ -105,7 +111,7 @@ def test_persist_output_artifacts_fails_run_on_any_upload_error(
         persistence.storage,
         "Client",
         lambda: _FakeClient(
-            fail_object="alz-20260213_120000/session_state.json",
+            fail_object="alz-drug/20260213_120000_ab12cd34/session_state.json",
             calls=upload_calls,
         ),
     )

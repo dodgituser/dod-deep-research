@@ -87,6 +87,8 @@ async def run_pipeline_async(
     app_name = "deep_research"
     user_id = "user"
 
+    output_dir = get_output_path(indication, drug_name)
+    output_dir.mkdir(parents=True, exist_ok=True)
     indication_prompt = generate_indication_prompt(
         disease=indication,
         drug_name=drug_name,
@@ -125,6 +127,7 @@ async def run_pipeline_async(
         indication_aliases=indication_aliases,
         drug_aliases=drug_aliases,
         common_sections=common_sections,
+        run_output_dir=str(output_dir),
         **kwargs,
     )  # pass the session downstream to the next phases
 
@@ -196,7 +199,6 @@ async def run_pipeline_async(
             state = final_session.state
 
     writer_output_dict = state.get("deep_research_output")
-    output_dir = get_output_path(indication)
     report_path = None
     if writer_output_dict:
         writer_output = MarkdownReport(**writer_output_dict)
@@ -208,7 +210,7 @@ async def run_pipeline_async(
     state_file.write_text(json.dumps(state, indent=2, default=str))
     logger.info("Session state saved to: %s", state_file)
 
-    agent_logs_dir = output_dir.parent / "agent_logs"
+    agent_logs_dir = output_dir / "agent_logs"
     evals = pipeline_eval(agent_logs_dir, evidence_store_dict)
     evals_file = output_dir / "pipeline_evals.json"
     evals_file.write_text(json.dumps(evals, indent=2, default=str))

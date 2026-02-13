@@ -31,7 +31,12 @@ def format_state(state: Any) -> str:
     return text
 
 
-def log_agent_event(agent_name: str, callback_type: str, payload: Any) -> None:
+def log_agent_event(
+    agent_name: str,
+    callback_type: str,
+    payload: Any,
+    run_output_dir: str | None = None,
+) -> None:
     """
     Append a message to the per-agent log file.
 
@@ -39,12 +44,16 @@ def log_agent_event(agent_name: str, callback_type: str, payload: Any) -> None:
         agent_name (str): Agent name for log file naming.
         callback_type (str): Callback type used for the log file name.
         payload (Any): Payload to append as JSONL.
+        run_output_dir (str | None): Optional run output directory path.
     """
     safe_name = sanitize_agent_name(agent_name or "unknown")
     safe_callback = sanitize_agent_name(callback_type or "unknown")
-    logs_dir = (
-        Path(__file__).resolve().parents[2] / "outputs" / "agent_logs" / safe_name
-    )
+    if run_output_dir:
+        logs_dir = Path(run_output_dir) / "agent_logs" / safe_name
+    else:
+        logs_dir = (
+            Path(__file__).resolve().parents[2] / "outputs" / "agent_logs" / safe_name
+        )
     logs_dir.mkdir(parents=True, exist_ok=True)
     log_path = logs_dir / f"{safe_name}_callback_{safe_callback}.jsonl"
     timestamp = datetime.now().isoformat()

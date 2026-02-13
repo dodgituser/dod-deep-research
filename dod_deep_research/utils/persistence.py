@@ -46,7 +46,7 @@ def _collect_artifact_paths(
         artifact_paths.append(report_path)
     artifact_paths.extend(required_files)
 
-    agent_logs_dir = output_dir.parent / "agent_logs"
+    agent_logs_dir = output_dir / "agent_logs"
     if agent_logs_dir.exists():
         artifact_paths.extend(
             path for path in sorted(agent_logs_dir.rglob("*")) if path.is_file()
@@ -76,7 +76,7 @@ def persist_output_artifacts(
         FileNotFoundError: If required local artifacts are missing.
         RuntimeError: If any artifact fails to upload to GCS.
     """
-    outputs_root = output_dir.parent
+    outputs_root = output_dir.parent.parent
     artifact_paths = _collect_artifact_paths(
         output_dir=output_dir,
         report_path=report_path,

@@ -21,5 +21,6 @@ def before_model_log_callback(
     """
     agent_name = callback_context.agent_name or "unknown"
     payload = {"payload": {"prompt": llm_request}}
-    log_agent_event(agent_name, "before_model", payload)
+    run_output_dir = callback_context.state.get("run_output_dir")
+    log_agent_event(agent_name, "before_model", payload, run_output_dir=run_output_dir)
     return None

@@ -20,5 +20,6 @@ def before_agent_log_callback(
     """
     agent_name = callback_context.agent_name or "unknown"
     payload = {"payload": {"state": format_state(callback_context.state)}}
-    log_agent_event(agent_name, "before_agent", payload)
+    run_output_dir = callback_context.state.get("run_output_dir")
+    log_agent_event(agent_name, "before_agent", payload, run_output_dir=run_output_dir)
     return None

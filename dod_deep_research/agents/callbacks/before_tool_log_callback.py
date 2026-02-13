@@ -23,6 +23,7 @@ def before_tool_log_callback(
         dict[str, Any] | None: Returning a dict skips tool execution.
     """
     agent_name = tool_context.agent_name or "unknown"
+    run_output_dir = tool_context.state.get("run_output_dir")
     payload = {"payload": {"tool_name": tool.name, "tool_args": args}}
-    log_agent_event(agent_name, "before_tool", payload)
+    log_agent_event(agent_name, "before_tool", payload, run_output_dir=run_output_dir)
     return None

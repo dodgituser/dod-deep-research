@@ -32,7 +32,13 @@ def _find_latest_run_output(outputs_root: Path) -> Path | None:
     if not outputs_root.exists():
         return None
 
-    run_dirs = [path for path in outputs_root.iterdir() if path.is_dir()]
+    run_dirs = [
+        run_dir
+        for run_group_dir in outputs_root.iterdir()
+        if run_group_dir.is_dir()
+        for run_dir in run_group_dir.iterdir()
+        if run_dir.is_dir()
+    ]
     if not run_dirs:
         return None
 

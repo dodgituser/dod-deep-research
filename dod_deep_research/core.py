@@ -2,10 +2,10 @@
 
 import json
 import logging
-import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
+from uuid import uuid4
 
 from google.adk import runners
 from google.adk.apps.app import App
@@ -19,6 +19,21 @@ from dod_deep_research.agents.research_head.schemas import ResearchHeadPlan
 
 
 logger = logging.getLogger(__name__)
+
+
+def _slugify_for_path(value: str) -> str:
+    """
+    Build a filesystem-safe slug for run directory names.
+
+    Args:
+        value (str): Raw value to sanitize.
+
+    Returns:
+        str: Sanitized lowercase slug.
+    """
+    collapsed = "_".join(value.strip().lower().split())
+    safe = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in collapsed)
+    return safe.strip("_") or "unknown"
 
 
 def get_validated_model(
@@ -397,21 +412,27 @@ async def run_agent(
         )
 
 
-def get_output_path(indication: str) -> Path:
+def get_output_path(indication: str, drug_name: str) -> Path:
     """
     Create and return the output directory for a pipeline run.
 
     Args:
         indication (str): Indication name used to namespace outputs.
+        drug_name (str): Drug name used to namespace outputs.
 
     Returns:
         Path: Path to the output directory for this run.
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    short_suffix = uuid4().hex[:8]
+    run_id = f"{timestamp}_{short_suffix}"
+    disease_slug = _slugify_for_path(indication)
+    drug_slug = _slugify_for_path(drug_name)
+    run_group = f"{disease_slug}-{drug_slug}"
     outputs_dir = Path(__file__).parent / "outputs"
     outputs_dir.mkdir(exist_ok=True)
-    output_dir = outputs_dir / f"{indication}-{timestamp}"
-    output_dir.mkdir(exist_ok=True)
+    output_dir = outputs_dir / run_group / run_id
+    output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir
 
 
@@ -537,16 +558,13 @@ async def persist_section_plan_to_state(
 
 def prepare_outputs_dir() -> Path:
     """
-    Create the outputs directory and clear any existing run subdirectories.
+    Create the outputs directory.
 
     Returns:
         Path: Path to the outputs directory.
     """
     outputs_dir = Path(__file__).resolve().parent / "outputs"
     outputs_dir.mkdir(exist_ok=True)
-    for entry in outputs_dir.iterdir():
-        if entry.is_dir():
-            shutil.rmtree(entry)
     return outputs_dir
 
 
