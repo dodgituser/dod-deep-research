@@ -51,3 +51,4 @@ tunnel-neo4j-bolt:
 
 include make/mcp.mk
 include make/agent.mk
+include make/test_agent.mk

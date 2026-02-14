@@ -35,6 +35,8 @@ PUBMED_MCP_URL := https://pubmed-mcp-7024095287.us-west1.run.app/mcp
 CLINICAL_TRIALS_MCP_URL := https://clinicaltrials-mcp-7024095287.us-west1.run.app/mcp
 EXA_MCP_URL := https://exa-mcp-7024095287.us-west1.run.app/mcp
 NEO4J_MCP_URL := https://neo4j-cypher-mcp-7024095287.us-west1.run.app/api/mcp/
+# Test OLS4 MCP server
+OLS_MCP_URL := https://www.ebi.ac.uk/ols4/api/mcp
 
 # Artifact Registry image paths
 ARTIFACT_REGISTRY_BASE := $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT)/$(ARTIFACT_REGISTRY_REPO)
@@ -217,9 +219,6 @@ deploy-mcp-neo4j-cloud: push-mcp-neo4j-cloud
 deploy-mcp-all-cloud: deploy-mcp-pubmed-cloud deploy-mcp-clinical-trials-cloud deploy-mcp-exa-cloud deploy-mcp-neo4j-cloud
 	@echo "Deployed all MCP servers to Cloud Run."
 
-# Test OLS4 MCP server
-OLS4_MCP_URL := https://www.ebi.ac.uk/ols4/api/mcp
-
 list-ols4-mcp-tools:
 	@echo "Initializing session with OLS4 MCP server..."
 	@SESSION_ID=$$(curl -s -v -X POST \
@@ -235,7 +234,7 @@ list-ols4-mcp-tools:
 				"clientInfo": {"name": "curl", "version": "1.0"} \
 			} \
 		}' \
-		$(OLS4_MCP_URL) 2>&1 | grep -i 'Mcp-Session-Id:' | awk '{print $$3}' | tr -d '\r'); \
+		$(OLS_MCP_URL) 2>&1 | grep -i 'Mcp-Session-Id:' | awk '{print $$3}' | tr -d '\r'); \
 	if [ -z "$$SESSION_ID" ]; then \
 		echo "Error: Failed to get session ID"; \
 		exit 1; \
@@ -252,4 +251,4 @@ list-ols4-mcp-tools:
 			"method": "tools/list", \
 			"params": {} \
 		}' \
-		$(OLS4_MCP_URL)
+		$(OLS_MCP_URL)
