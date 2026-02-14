@@ -77,19 +77,12 @@ def test_mcp_toolset_factories_add_id_token_for_cloud_run_urls(monkeypatch) -> N
     ]
 
 
-def test_root_agent_exposes_pipeline_and_ols_toolset() -> None:
-    """Validates root agent exposes pipeline execution and OLS MCP tools."""
+def test_root_agent_exposes_pipeline_tool_only() -> None:
+    """Validates root agent tool list only exposes pipeline execution."""
     from dod_deep_research import agent
 
     reloaded = importlib.reload(agent)
     tools = reloaded.root_agent.tools
 
     assert any(getattr(tool, "__name__", "") == "run_deep_research_pipeline" for tool in tools)
-    ols_toolsets_in_root = [
-        tool
-        for tool in tools
-        if isinstance(tool, mcp_toolsets.CachedMcpToolset)
-        and tool.__dict__["_connection_params"].url == "https://www.ebi.ac.uk/ols4/api/mcp"
-    ]
-    assert len(ols_toolsets_in_root) == 1
-    assert len(tools) == 2
+    assert len(tools) == 1
