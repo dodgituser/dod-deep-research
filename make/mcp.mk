@@ -56,7 +56,7 @@ RSYNC_EXCLUDES := \
 	--exclude 'coverage' \
 	--exclude 'logs'
 
-.PHONY: sync-mcp build-mcp-pubmed build-mcp-clinical-trials build-mcp-exa build-mcp-neo4j build-mcp-all setup-artifact-registry setup-cloud-run-vpc-connector build-mcp-pubmed-cloud build-mcp-clinical-trials-cloud build-mcp-exa-cloud build-mcp-neo4j-cloud build-mcp-all-cloud push-mcp-pubmed-cloud push-mcp-clinical-trials-cloud push-mcp-exa-cloud push-mcp-neo4j-cloud push-mcp-all-cloud deploy-mcp-pubmed-cloud deploy-mcp-clinical-trials-cloud deploy-mcp-exa-cloud deploy-mcp-neo4j-cloud deploy-mcp-all-cloud
+.PHONY: sync-mcp build-mcp-pubmed build-mcp-clinical-trials build-mcp-exa build-mcp-neo4j build-mcp-all setup-artifact-registry setup-cloud-run-vpc-connector build-mcp-pubmed-cloud build-mcp-clinical-trials-cloud build-mcp-exa-cloud build-mcp-neo4j-cloud build-mcp-all-cloud push-mcp-pubmed-cloud push-mcp-clinical-trials-cloud push-mcp-exa-cloud push-mcp-neo4j-cloud push-mcp-all-cloud deploy-mcp-pubmed-cloud deploy-mcp-clinical-trials-cloud deploy-mcp-exa-cloud deploy-mcp-neo4j-cloud deploy-mcp-all-cloud list-ols4-mcp-tools
 
 sync-mcp:
 	@echo "Syncing MCP source snapshots into $(MCP_DIR)..."
@@ -216,3 +216,40 @@ deploy-mcp-neo4j-cloud: push-mcp-neo4j-cloud
 
 deploy-mcp-all-cloud: deploy-mcp-pubmed-cloud deploy-mcp-clinical-trials-cloud deploy-mcp-exa-cloud deploy-mcp-neo4j-cloud
 	@echo "Deployed all MCP servers to Cloud Run."
+
+# Test OLS4 MCP server
+OLS4_MCP_URL := https://www.ebi.ac.uk/ols4/api/mcp
+
+list-ols4-mcp-tools:
+	@echo "Initializing session with OLS4 MCP server..."
+	@SESSION_ID=$$(curl -s -v -X POST \
+		-H "Accept: text/event-stream, application/json" \
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"jsonrpc": "2.0", \
+			"id": 1, \
+			"method": "initialize", \
+			"params": { \
+				"protocolVersion": "2024-11-05", \
+				"capabilities": {}, \
+				"clientInfo": {"name": "curl", "version": "1.0"} \
+			} \
+		}' \
+		$(OLS4_MCP_URL) 2>&1 | grep -i 'Mcp-Session-Id:' | awk '{print $$3}' | tr -d '\r'); \
+	if [ -z "$$SESSION_ID" ]; then \
+		echo "Error: Failed to get session ID"; \
+		exit 1; \
+	fi; \
+	echo "Session ID: $$SESSION_ID"; \
+	echo "Listing tools..."; \
+	curl -N -X POST \
+		-H "Accept: text/event-stream, application/json" \
+		-H "Content-Type: application/json" \
+		-H "Mcp-Session-Id: $$SESSION_ID" \
+		-d '{ \
+			"jsonrpc": "2.0", \
+			"id": 2, \
+			"method": "tools/list", \
+			"params": {} \
+		}' \
+		$(OLS4_MCP_URL)

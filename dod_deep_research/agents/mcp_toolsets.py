@@ -147,3 +147,17 @@ def create_neo4j_toolset() -> CachedMcpToolset:
         ),
         tool_filter=["get_neo4j_schema"],
     )
+
+
+def create_ols_toolset() -> CachedMcpToolset:
+    """Creates the OLS4 MCP toolset."""
+    url = os.getenv("OLS_MCP_URL", "https://www.ebi.ac.uk/ols4/api/mcp")
+    return CachedMcpToolset(
+        connection_params=StreamableHTTPConnectionParams(
+            url=url,
+            timeout=60,
+            sse_read_timeout=60,
+            headers=_build_mcp_headers(url),
+            terminate_on_close=False,
+        ),
+    )

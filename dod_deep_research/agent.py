@@ -5,6 +5,7 @@ from pathlib import Path
 from google.adk import Agent
 from pydantic import BaseModel, Field
 
+from dod_deep_research.agents.mcp_toolsets import create_ols_toolset
 from dod_deep_research.deep_research import run_pipeline
 from dod_deep_research.models import GeminiModels
 
@@ -14,6 +15,11 @@ Before calling any tool, collect required inputs: indication and drug_name.
 Optional inputs: drug_form, drug_generic_name, indication_aliases, drug_aliases.
 When required inputs are present, call run_deep_research_pipeline exactly once.
 Return only the tool result with report_path.
+
+If the user asks to test MCP connectors, do not run the pipeline.
+Run an OLS MCP check first using search_terms with a minimal query.
+Return a concise pass/fail summary and a raw payload excerpt for the OLS check.
+You may use any available OLS MCP tool to complete diagnostics.
 """
 
 
@@ -113,5 +119,6 @@ root_agent = Agent(
     instruction=ROOT_AGENT_PROMPT,
     tools=[
         run_deep_research_pipeline,
+        create_ols_toolset(),
     ],
 )
