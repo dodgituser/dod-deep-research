@@ -1,4 +1,4 @@
-.PHONY: export-test-agent-requirements deploy-test-agent-cloud-run
+.PHONY: export-test-agent-requirements deploy-test-agent-cloud-run verify-test-agent-cloud-run-env
 
 TEST_AGENT_SERVICE_NAME ?= dod-deep-research-test-agent
 
@@ -34,3 +34,12 @@ deploy-test-agent-cloud-run: export-test-agent-requirements
 		-- --allow-unauthenticated --no-invoker-iam-check \
 		--env-vars-file=$$envfile; \
 	ec=$$?; rm -f $$envfile tests/agents/requirements.txt; exit $$ec
+
+verify-test-agent-cloud-run-env:
+	@test -n "$(GCP_PROJECT)" || (echo "GCP_PROJECT required (set in Makefile or override)"; exit 1)
+	@test -n "$(GCP_REGION)" || (echo "GCP_REGION required (set in Makefile or override)"; exit 1)
+	@gcloud run services describe $(TEST_AGENT_SERVICE_NAME) \
+		--project=$(GCP_PROJECT) \
+		--region=$(GCP_REGION) \
+		--format='table(spec.template.spec.containers[0].env[].name,spec.template.spec.containers[0].env[].value)' \
+		| egrep 'PUBMED_MCP_URL|CLINICAL_TRIALS_MCP_URL|EXA_MCP_URL|NEO4J_MCP_URL|OLS_MCP_URL|GOOGLE_CLOUD_PROJECT|GOOGLE_CLOUD_LOCATION|GOOGLE_GENAI_USE_VERTEXAI'
